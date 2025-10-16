@@ -10,9 +10,17 @@ const { verifyEmailTransport } = require('./utils/email');
 
 const app = express();
 const server = http.createServer(app);
+
+// Configure allowed origins
+const allowedOrigins = [
+  "http://localhost:5174", // Development
+  "http://localhost:5173", // Development
+  process.env.FRONTEND_URL // Production
+].filter(Boolean);
+
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5174", // Vite default port
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }
@@ -20,7 +28,7 @@ const io = socketIo(server, {
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5174",
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -36,9 +44,10 @@ app.use(session({
     touchAfter: 24 * 3600 // lazy session update
   }),
   cookie: {
-    secure: false, // set to true if using https
+    secure: process.env.NODE_ENV === 'production', // true in production with https
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
   }
 }));
 
