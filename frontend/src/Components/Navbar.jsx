@@ -268,15 +268,19 @@ function Navbar() {
             >
               <motion.h1
                 style={{
-                  fontSize: isHomePage ? logoSize : isDesktop ? "2.8vw" : "7vw",
+                  fontSize: isHomePage 
+                    ? (isScroll ? (isDesktop ? "2rem" : "1.5rem") : logoSize)
+                    : isDesktop ? "2rem" : "1.5rem",
                   y: isHomePage ? logoY : 0,
                   x: isHomePage ? logoX : isDesktop ? 0 : -11,
+                  letterSpacing: isScroll ? "0.15em" : "0.25em",
+                  whiteSpace: "nowrap",
                 }}
-                className={`font-serif transition-colors duration-500 ${
+                className={`font-serif transition-all duration-500 ${
                   isDark ? "text-red-500" : "text-red-600"
                 }`}
               >
-                {isDesktop ? "S H I V A L I K" : "SHIVALIK"}
+                {isDesktop ? "SHIVALIK" : "SHIVALIK"}
               </motion.h1>
             </div>
           </Link>
