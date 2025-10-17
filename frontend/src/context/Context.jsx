@@ -6,11 +6,12 @@ import io from "socket.io-client";
 import axios from "axios";
 import { useAuth } from "./Auth/AuthContext";
 import { useCart } from "./CartContext";
+import config from "../config/api";
 
 export const ProductsData = createContext();
 
 // Initialize socket connection
-const socket = io('http://localhost:5000');
+const socket = io(config.socketUrl);
 
 // Fallback products in case API is not available
 const fallbackProducts = [
@@ -151,7 +152,7 @@ export function Context({ children }) {
   // Fetch products from API
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/products');
+      const response = await axios.get(`${config.apiUrl}/api/products`);
       if (response.data.success) {
         setProduct(response.data.products);
       }
