@@ -4,6 +4,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ProductsData } from '../context/Context';
+import config from '../config/api';
 
 // Category keyword mapping for better filtering
 const CATEGORY_MAP = {
@@ -68,7 +69,7 @@ export default function Category() {
 
       // Fetch category details to get the proper name
       try {
-        const catResp = await axios.get('http://localhost:5000/api/categories');
+        const catResp = await axios.get(`${config.apiUrl}/api/categories`);
         if (catResp.data.success) {
           const foundCat = catResp.data.categories.find(c => c.slug === slug);
           if (foundCat && isMounted) {
@@ -82,7 +83,7 @@ export default function Category() {
       // Try backend first, then strictly filter by slug
       try {
         const q = encodeURIComponent(slug);
-        const resp = await axios.get(`http://localhost:5000/api/products?category=${q}`);
+        const resp = await axios.get(`${config.apiUrl}/api/products?category=${q}`);
         const serverItems = Array.isArray(resp?.data?.products) ? resp.data.products : [];
         const filteredServer = filterBySlug(serverItems, slug);
         if (isMounted && filteredServer.length > 0) {

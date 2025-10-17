@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import config from '../config/api';
 
 const StatsContext = createContext();
 
@@ -48,7 +49,7 @@ export const StatsProvider = ({ children }) => {
   // Fetch user stats from API
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/stats');
+      const response = await fetch(`${config.apiUrl}/api/stats`);
       if (response.ok) {
         const data = await response.json();
         // Store user count in localStorage for consistency

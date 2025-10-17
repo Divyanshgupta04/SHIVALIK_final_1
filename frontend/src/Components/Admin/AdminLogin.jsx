@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import config from '../../config/api';
 
 const AdminLogin = () => {
   const [credentials, setCredentials] = useState({
@@ -24,7 +25,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', credentials);
+      const response = await axios.post(`${config.apiUrl}/api/auth/login`, credentials);
       
       if (response.data.success) {
         // Store token in localStorage
