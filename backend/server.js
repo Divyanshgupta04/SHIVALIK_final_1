@@ -48,10 +48,10 @@ app.use(session({
     touchAfter: 24 * 3600 // lazy session update
   }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // true in production with https
+    secure: false, // Set to false since using HTTP (set to true when using HTTPS)
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+    sameSite: 'lax' // Use 'lax' for HTTP, 'strict' for HTTPS
   }
 }));
 
