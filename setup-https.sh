@@ -4,7 +4,7 @@ set -e
 echo "🔒 Setting up HTTPS for sshjk.in..."
 
 DOMAIN="sshjk.in"
-EMAIL="your-email@example.com"  # Change this to your email
+EMAIL="sshubjk@gmail.com"
 
 # Step 1: Install certbot
 echo ""
