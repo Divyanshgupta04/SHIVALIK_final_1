@@ -15,7 +15,11 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:5174", // Development
   "http://localhost:5173", // Development
-  process.env.FRONTEND_URL // Production
+  "http://sshjk.in", // Production domain
+  "https://sshjk.in", // Production domain HTTPS
+  "http://www.sshjk.in", // Production domain with www
+  "https://www.sshjk.in", // Production domain with www HTTPS
+  process.env.FRONTEND_URL // Production (from env)
 ].filter(Boolean);
 
 const io = socketIo(server, {
