@@ -12,6 +12,7 @@ import { useTheme } from '../context/ThemeContext'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import config from '../config/api'
 
 function Hero() {
   const { isDark } = useTheme()
@@ -37,7 +38,7 @@ function Hero() {
   const fetchCategories = async () => {
     try {
       console.log('Fetching categories from API...')
-      const res = await axios.get('http://localhost:5000/api/categories')
+      const res = await axios.get(`${config.apiUrl}/api/categories`)
       console.log('API Response:', res.data)
       if (res.data.success) {
         // Map categories from database
