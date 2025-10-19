@@ -39,7 +39,9 @@ app.use(cors({
 app.use(express.json());
 
 // Session configuration
-app.use(session({
+const isProduction = process.env.NODE_ENV === 'production';
+
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-session-secret-key',
   resave: false,
   saveUninitialized: false,
@@ -48,13 +50,23 @@ app.use(session({
     touchAfter: 24 * 3600 // lazy session update
   }),
   cookie: {
-    domain: '.sshjk.in', // Allow cookie across all subdomains
-    secure: true, // HTTPS enabled
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    sameSite: 'none' // Required for cross-subdomain with secure cookies
   }
-}));
+};
+
+// Production-specific cookie settings
+if (isProduction) {
+  sessionConfig.cookie.domain = '.sshjk.in'; // Allow cookie across all subdomains
+  sessionConfig.cookie.secure = true; // HTTPS only in production
+  sessionConfig.cookie.sameSite = 'none'; // Required for cross-subdomain with secure cookies
+} else {
+  // Development settings
+  sessionConfig.cookie.secure = false;
+  sessionConfig.cookie.sameSite = 'lax';
+}
+
+app.use(session(sessionConfig));
 
 // MongoDB connection
 const connectDB = async () => {
