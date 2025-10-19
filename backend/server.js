@@ -48,10 +48,10 @@ app.use(session({
     touchAfter: 24 * 3600 // lazy session update
   }),
   cookie: {
-    secure: false, // Set to false since using HTTP (set to true when using HTTPS)
+    secure: true, // HTTPS enabled
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    sameSite: 'lax' // Use 'lax' for HTTP, 'strict' for HTTPS
+    sameSite: 'lax' // HTTPS strict mode
   }
 }));
 
