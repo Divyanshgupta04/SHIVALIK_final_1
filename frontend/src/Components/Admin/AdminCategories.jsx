@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import axios from 'axios'
 import { FiPlus, FiEdit, FiTrash2, FiLogOut, FiX } from 'react-icons/fi'
+import config from '../../config/api'
 
 const CategoryModal = ({ show, onClose, onSubmit, title, isEdit = false, formData, setFormData }) => {
   if (!show) return null
@@ -115,7 +116,7 @@ const AdminCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/categories')
+      const res = await axios.get(`${config.apiUrl}/api/categories`)
       if (res.data.success) setCategories(res.data.categories)
     } catch (e) {
       toast.error('Failed to load categories')
@@ -145,7 +146,7 @@ const AdminCategories = () => {
   const addCategory = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('http://localhost:5000/api/categories', formData, getAuthHeaders())
+      const res = await axios.post(`${config.apiUrl}/api/categories`, formData, getAuthHeaders())
       if (res.data.success) { 
         toast.success('Category added'); 
         setShowAddModal(false); 
@@ -159,7 +160,7 @@ const AdminCategories = () => {
   const editCategory = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.put(`http://localhost:5000/api/categories/${selectedCategory.slug}`, formData, getAuthHeaders())
+      const res = await axios.put(`${config.apiUrl}/api/categories/${selectedCategory.slug}`, formData, getAuthHeaders())
       if (res.data.success) { 
         toast.success('Category updated'); 
         setShowEditModal(false); 
@@ -174,7 +175,7 @@ const AdminCategories = () => {
   const deleteCategory = async (slug) => {
     if (!window.confirm('Delete this category? Products with this category will not be deleted.')) return
     try {
-      const res = await axios.delete(`http://localhost:5000/api/categories/${slug}`, getAuthHeaders())
+      const res = await axios.delete(`${config.apiUrl}/api/categories/${slug}`, getAuthHeaders())
       if (res.data.success) { 
         toast.success('Category deleted'); 
         fetchCategories() 

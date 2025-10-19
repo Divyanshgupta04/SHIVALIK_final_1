@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { FiLogOut, FiEye } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
+import config from '../../config/api'
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([])
@@ -30,7 +31,7 @@ const AdminOrders = () => {
   const fetchOrders = async (p = 1) => {
     try {
       const statusQuery = statusFilter !== 'all' ? `&status=${statusFilter}` : ''
-      const res = await axios.get(`http://localhost:5000/api/admin/orders?page=${p}&limit=10${statusQuery}`, getAuthHeaders())
+      const res = await axios.get(`${config.apiUrl}/api/admin/orders?page=${p}&limit=10${statusQuery}`, getAuthHeaders())
       if (res.data.success) {
         setOrders(res.data.orders)
         setPagination(res.data.pagination || { hasNext: false, hasPrev: false })
@@ -43,7 +44,7 @@ const AdminOrders = () => {
 
   const fetchOrderDetails = async (orderId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/admin/orders/${orderId}`, getAuthHeaders())
+      const res = await axios.get(`${config.apiUrl}/api/admin/orders/${orderId}`, getAuthHeaders())
       if (res.data.success) {
         setSelectedOrder(res.data.order)
         setShowOrderModal(true)
@@ -56,7 +57,7 @@ const AdminOrders = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     setUpdatingStatus(true)
     try {
-      const res = await axios.put(`http://localhost:5000/api/admin/orders/${orderId}/status`, 
+      const res = await axios.put(`${config.apiUrl}/api/admin/orders/${orderId}/status`,
         { status: newStatus }, 
         getAuthHeaders()
       )

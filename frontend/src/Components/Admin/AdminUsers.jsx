@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { FiLogOut } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
+import config from '../../config/api'
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([])
@@ -26,7 +27,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async (p = 1) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/admin/users?page=${p}&limit=10`, getAuthHeaders())
+      const res = await axios.get(`${config.apiUrl}/api/admin/users?page=${p}&limit=10`, getAuthHeaders())
       if (res.data.success) {
         setUsers(res.data.users)
         setPagination(res.data.pagination || { hasNext: false, hasPrev: false })

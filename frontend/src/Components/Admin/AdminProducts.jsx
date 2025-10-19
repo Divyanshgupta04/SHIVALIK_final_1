@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import axios from 'axios'
 import { FiPlus, FiEdit, FiTrash2, FiLogOut, FiX } from 'react-icons/fi'
+import config from '../../config/api'
 
 const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData, setFormData, categories = [], newCategoryName, setNewCategoryName, onAddCategory, addingCategory = false }) => {
   if (!show) return null
@@ -104,7 +105,7 @@ const AdminProducts = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/categories')
+      const res = await axios.get(`${config.apiUrl}/api/categories`)
       if (res.data.success) setCategories(res.data.categories)
     } catch (e) {
       // ignore
@@ -113,7 +114,7 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/products', getAuthHeaders())
+      const res = await axios.get(`${config.apiUrl}/api/admin/products`, getAuthHeaders())
       if (res.data.success) setProducts(res.data.products)
     } catch (e) {
       // no-op
@@ -142,7 +143,7 @@ const AdminProducts = () => {
   const addCategory = async () => {
     try {
       setAddingCategory(true)
-      const res = await axios.post('http://localhost:5000/api/categories', { name: newCategoryName }, getAuthHeaders())
+      const res = await axios.post(`${config.apiUrl}/api/categories`, { name: newCategoryName }, getAuthHeaders())
       if (res.data.success) {
         const newCat = res.data.category
         setCategories(prev => [...prev, newCat])
@@ -161,7 +162,7 @@ const AdminProducts = () => {
   const addProduct = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('http://localhost:5000/api/admin/products', formData, getAuthHeaders())
+      const res = await axios.post(`${config.apiUrl}/api/admin/products`, formData, getAuthHeaders())
       if (res.data.success) { toast.success('Product added'); setShowAddModal(false); fetchProducts() }
     } catch (e) { toast.error('Failed to add product') }
   }
@@ -169,7 +170,7 @@ const AdminProducts = () => {
   const editProduct = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.put(`http://localhost:5000/api/admin/products/${selectedProduct.id}`, formData, getAuthHeaders())
+      const res = await axios.put(`${config.apiUrl}/api/admin/products/${selectedProduct.id}`, formData, getAuthHeaders())
       if (res.data.success) { toast.success('Product updated'); setShowEditModal(false); setSelectedProduct(null); fetchProducts() }
     } catch (e) { toast.error('Failed to update product') }
   }
@@ -177,7 +178,7 @@ const AdminProducts = () => {
   const deleteProduct = async (id) => {
     if (!window.confirm('Delete this product?')) return
     try {
-      const res = await axios.delete(`http://localhost:5000/api/admin/products/${id}`, getAuthHeaders())
+      const res = await axios.delete(`${config.apiUrl}/api/admin/products/${id}`, getAuthHeaders())
       if (res.data.success) { toast.success('Product deleted'); fetchProducts() }
     } catch (e) { toast.error('Failed to delete product') }
   }
