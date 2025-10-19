@@ -6,7 +6,7 @@ import config from '../../config/api';
 const AuthContext = createContext();
 
 // Configure axios defaults
-axios.defaults.baseURL = `${config.apiUrl}/api`;
+axios.defaults.baseURL = config.apiUrl;
 axios.defaults.withCredentials = true;
 
 export const useAuth = () => {
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const response = await axios.get('/user-auth/me');
+      const response = await axios.get('/api/user-auth/me');
       if (response.data.success) {
         setUser(response.data.user);
       }
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
   // Passwordless: Request OTP (name + email)
   const requestOtp = async (data) => {
     try {
-      const response = await axios.post('/user-auth/request-otp', data);
+      const response = await axios.post('/api/user-auth/request-otp', data);
       if (response.data.success) {
         setTempUserId(response.data.userId);
         setAuthType('login');
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   // Passwordless: Verify OTP
   const verifyOtp = async (otp) => {
     try {
-      const response = await axios.post('/user-auth/verify-otp', {
+      const response = await axios.post('/api/user-auth/verify-otp', {
         userId: tempUserId,
         otp
       });
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
   // Deprecated legacy login (kept for compatibility)
   const login = async (credentials) => {
     try {
-      const response = await axios.post('/user-auth/login', credentials);
+      const response = await axios.post('/api/user-auth/login', credentials);
       if (response.data.success) {
         setTempUserId(response.data.userId);
         setAuthType('login');
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }) => {
   // Deprecated legacy verify login (kept for compatibility)
   const verifyLogin = async (otp) => {
     try {
-      const response = await axios.post('/user-auth/verify-login', {
+      const response = await axios.post('/api/user-auth/verify-login', {
         userId: tempUserId,
         otp
       });
@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await axios.post('/user-auth/resend-otp', {
+      const response = await axios.post('/api/user-auth/resend-otp', {
         userId: tempUserId,
         type: 'login'
       });
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = async () => {
     try {
-      await axios.post('/user-auth/logout');
+      await axios.post('/api/user-auth/logout');
       setUser(null);
       setAuthStep('form');
       setTempUserId(null);

@@ -34,7 +34,7 @@ export const CartProvider = ({ children }) => {
     if (user) {
       // Load cart from server for authenticated users
       try {
-        const response = await axios.get('/cart');
+        const response = await axios.get('/api/cart');
         if (response.data.success) {
           setCart(response.data.cart);
         }
@@ -70,7 +70,7 @@ export const CartProvider = ({ children }) => {
     if (!user) return;
     
     try {
-      await axios.post('/cart/sync', { localCart });
+      await axios.post('/api/cart/sync', { localCart });
       // Reload cart after sync
       loadCart();
     } catch (error) {
@@ -100,7 +100,7 @@ export const CartProvider = ({ children }) => {
     try {
       if (user) {
         // Add to server cart for authenticated users
-        const response = await axios.post('/cart/add', {
+        const response = await axios.post('/api/cart/add', {
           productId: product.id,
           quantity
         });
@@ -152,7 +152,7 @@ export const CartProvider = ({ children }) => {
     try {
       if (user) {
         // Update on server for authenticated users
-        const response = await axios.put('/cart/update', {
+        const response = await axios.put('/api/cart/update', {
           productId,
           quantity
         });
@@ -197,7 +197,7 @@ export const CartProvider = ({ children }) => {
     try {
       if (user) {
         // Clear server cart for authenticated users
-        const response = await axios.delete('/cart/clear');
+        const response = await axios.delete('/api/cart/clear');
         
         if (response.data.success) {
           setCart([]);
