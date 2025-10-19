@@ -20,7 +20,7 @@ const Address = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get('/user-auth/address');
+        const res = await axios.get('/api/user-auth/address');
         if (res.data.success && res.data.address) {
           setForm(prev => ({ ...prev, ...res.data.address }));
         }
@@ -37,7 +37,7 @@ const Address = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await axios.put('/user-auth/address', form);
+      const res = await axios.put('/api/user-auth/address', form);
       if (res.data.success) {
         toast.success('Address saved');
         navigate('/pay', { 

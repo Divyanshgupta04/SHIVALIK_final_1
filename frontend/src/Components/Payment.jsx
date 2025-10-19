@@ -38,7 +38,7 @@ function Payment() {
     if (user) {
       setAddressLoading(true)
       try {
-        const res = await axios.get('/user-auth/address')
+        const res = await axios.get('/api/user-auth/address')
         if (res.data.success && res.data.address) {
           setUserAddress(res.data.address)
         } else {
@@ -103,7 +103,7 @@ function Payment() {
       }
 
       // Create order on backend
-      const orderResponse = await axios.post('/payment/create-order', {
+      const orderResponse = await axios.post('/api/payment/create-order', {
         amount: total
       })
 
@@ -134,7 +134,7 @@ function Payment() {
           setOrderProcessing(true)
           try {
             // Verify payment on backend
-            const verifyResponse = await axios.post('/payment/verify-payment', {
+            const verifyResponse = await axios.post('/api/payment/verify-payment', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
