@@ -21,8 +21,8 @@ function Account() {
     try {
       // Fetch orders and address
       const [ordersRes, addrRes] = await Promise.all([
-        axios.get('/payment/orders').catch(() => ({ data: { success: true, orders: [] } })),
-        axios.get('/user-auth/address').catch(() => ({ data: { success: false } })),
+        axios.get('/api/payment/orders').catch(() => ({ data: { success: true, orders: [] } })),
+        axios.get('/api/user-auth/address').catch(() => ({ data: { success: false } })),
       ])
       if (ordersRes?.data?.success) setOrders(ordersRes.data.orders || [])
       if (addrRes?.data?.success) setUserAddress(addrRes.data.address || null)
