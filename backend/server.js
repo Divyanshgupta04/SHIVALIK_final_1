@@ -48,10 +48,11 @@ app.use(session({
     touchAfter: 24 * 3600 // lazy session update
   }),
   cookie: {
+    domain: '.sshjk.in', // Allow cookie across all subdomains
     secure: true, // HTTPS enabled
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    sameSite: 'lax' // HTTPS strict mode
+    sameSite: 'none' // Required for cross-subdomain with secure cookies
   }
 }));
 
