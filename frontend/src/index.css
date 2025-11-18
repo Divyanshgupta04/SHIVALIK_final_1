@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Theme tokens (light as default) */
+:root {
+  --bg: #f8fafc;            /* slate-50 */
+  --surface: #ffffff;        /* white */
+  --text: #0f172a;           /* slate-900 */
+  --muted: #6b7280;          /* gray-500 */
+  --primary: #ef4444;        /* red-500 */
+  --primary-600: #dc2626;    /* red-600 */
+  --primary-700: #b91c1c;    /* red-700 */
+  --ring: #60a5fa;           /* blue-400 */
+  --card: #ffffff;           /* surface */
+  --border: #e5e7eb;         /* gray-200 */
+  --shadow: 0 10px 24px rgba(2, 6, 23, 0.08);
+  --radius: 16px;
+}
+
+/************
+ Dark mode overrides (html gets class="dark" from ThemeContext)
+*************/
+.dark {
+  --bg: #0b0f19;            /* slate-950-ish */
+  --surface: #0f172a;       /* slate-900 */
+  --text: #e5e7eb;          /* gray-200 */
+  --muted: #94a3b8;         /* slate-400 */
+  --primary: #ef4444;       /* red-500 */
+  --primary-600: #f43f5e;   /* rose-500 for accent */
+  --primary-700: #e11d48;   /* rose-600 */
+  --ring: #38bdf8;          /* sky-400 */
+  --card: #111827;          /* gray-900 */
+  --border: #1f2937;        /* gray-800 */
+  --shadow: 0 10px 24px rgba(255, 255, 255, 0.06);
+}
+
+/* Base resets and typography */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root { margin: 0; padding: 0; }
+
+/* Text selection */
+::selection { background: var(--primary); color: #fff; }
+
+/************
+ Tailwind layers: base element polish
+*************/
+@layer base {
+  h1 { @apply text-3xl sm:text-4xl font-extrabold tracking-tight; }
+  h2 { @apply text-2xl sm:text-3xl font-bold; }
+  h3 { @apply text-xl sm:text-2xl font-semibold; }
+  p  { @apply leading-7; color: var(--text); }
+  a  { @apply underline-offset-4; color: var(--primary); }
+  a:hover { color: var(--primary-600); }
+
+  button, input, textarea, select {
+    @apply outline-none;
+  }
+}
+
+/************
+ Tailwind layers: components (reusable UI)
+*************/
+@layer components {
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium transition-colors duration-200;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-600); }
+  .btn-primary:active { background: var(--primary-700); }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover {
+    background: color-mix(in oklab, var(--surface) 80%, var(--text));
+  }
+
+  .input, .select, .textarea {
+    @apply w-full px-3 py-2 rounded-xl transition-colors duration-200;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .input:focus, .select:focus, .textarea:focus {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 35%, transparent);
+    border-color: color-mix(in oklab, var(--ring) 50%, var(--border));
+  }
+}
+
+/* Subtle scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--text) 25%, transparent);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--text) 35%, transparent);
+}
+
+/* Existing utility kept */
+.stroke-text-red {
+  -webkit-text-stroke: 2px white; /* White outline stroke */
+  color: transparent; /* Fill transparent */
+}
