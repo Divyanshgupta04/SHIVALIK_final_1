@@ -111,7 +111,7 @@ router.post('/seed', auth, async (req, res) => {
       { name: 'Tax', slug: 'tax', imageUrl: '/src/assets/tax.jpg' },
       { name: 'Land Record', slug: 'land-record', imageUrl: '/src/assets/land.jpg' },
       { name: 'Certificate', slug: 'certificate', imageUrl: '/src/assets/Car.jpg' },
-      { name: 'Library', slug: 'library', imageUrl: '/src/assets/li.jpg' }
+      { name: 'Library Section', slug: 'library', imageUrl: '/src/assets/li.jpg' }
     ];
 
     const results = [];
