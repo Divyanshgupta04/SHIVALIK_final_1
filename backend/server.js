@@ -106,6 +106,9 @@ app.use('/api/cart', require('./routes/cart'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/categories', require('./routes/categories'));
+// Library-specific routes
+app.use('/api/library/categories', require('./routes/libraryCategories'));
+app.use('/api/library/books', require('./routes/libraryBooks'));
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

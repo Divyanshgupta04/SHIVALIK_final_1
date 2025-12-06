@@ -22,6 +22,8 @@ import AdminProducts from './Components/Admin/AdminProducts';
 import AdminUsers from './Components/Admin/AdminUsers';
 import AdminOrders from './Components/Admin/AdminOrders';
 import AdminCategories from './Components/Admin/AdminCategories';
+import AdminLibraryCategories from './Components/Admin/AdminLibraryCategories';
+import AdminLibraryBooks from './Components/Admin/AdminLibraryBooks';
 import SignIn from './Components/UserAuth/SignIn';
 import SignUp from './Components/UserAuth/SignUp';
 import ProtectedRoute from './Components/UserAuth/ProtectedRoute';
@@ -31,6 +33,8 @@ import { ProductsData } from './context/Context';
 import { StatsProvider } from './context/StatsContext';
 import Category from './Components/Category';
 import ProductDetail from './Components/ProductDetail';
+import LibraryCategories from './Components/Library/LibraryCategories';
+import LibraryBooks from './Components/Library/LibraryBooks';
 
 function App() {
   const { theme } = useTheme();
@@ -51,6 +55,8 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/categories" element={<AdminCategories />} />
+        <Route path="/admin/library/categories" element={<AdminLibraryCategories />} />
+        <Route path="/admin/library/books" element={<AdminLibraryBooks />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         
@@ -93,6 +99,8 @@ function App() {
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/category/:slug" element={<Category />} />
+                <Route path="/library" element={<LibraryCategories />} />
+                <Route path="/library/:slug" element={<LibraryBooks />} />
                 <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
                 <Route path='/cart-Detail' element={<ProtectedRoute><CartDetail/></ProtectedRoute>} />
                 <Route path='/about' element={<About/>} />

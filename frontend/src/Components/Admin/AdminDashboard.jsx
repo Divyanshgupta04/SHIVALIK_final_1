@@ -8,7 +8,7 @@ import {
   FiPlus, FiEdit, FiTrash2, FiLogOut, FiBarChart, FiUsers, FiShoppingCart, 
   FiDollarSign, FiTrendingUp, FiPackage, FiEye, FiStar, FiActivity,
   FiHome, FiSettings, FiHelpCircle, FiMenu, FiX, FiArrowUp, FiArrowDown,
-  FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid
+  FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid, FiBook
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -442,6 +442,12 @@ const AdminDashboard = () => {
                 </a>
                 <a href="/admin/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiGrid/> <span>Categories</span>
+                </a>
+                <a href="/admin/library/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
+                  <FiBook/> <span>Library Categories</span>
+                </a>
+                <a href="/admin/library/books" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
+                  <FiBook/> <span>Library Books</span>
                 </a>
                 <a href="/admin/orders" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiShoppingCart/> <span>Orders</span>

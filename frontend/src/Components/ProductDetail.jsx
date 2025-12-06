@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ProductsData } from '../context/Context';
 import { FiShoppingCart, FiHeart, FiShare2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import axios from 'axios';
+import config from '../config/api';
 
 function ProductDetail() {
   const { id } = useParams();
@@ -16,33 +18,74 @@ function ProductDetail() {
   const [mainImage, setMainImage] = useState('');
   const [allImages, setAllImages] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [isLibraryBook, setIsLibraryBook] = useState(false);
 
   useEffect(() => {
-    if (allProducts && allProducts.length > 0) {
-      const foundProduct = allProducts.find(p => p.id === parseInt(id));
-      if (foundProduct) {
-        setProduct(foundProduct);
-        setMainImage(foundProduct.src);
-        
-        // Combine main image with additional images
-        const productImages = [foundProduct.src];
-        if (foundProduct.images && foundProduct.images.length > 0) {
-          productImages.push(...foundProduct.images);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setIsLibraryBook(false);
+      setProduct(null);
+
+      // 1) Try normal products from context first
+      if (allProducts && allProducts.length > 0) {
+        const foundProduct = allProducts.find(p => p.id === parseInt(id));
+        if (foundProduct) {
+          if (cancelled) return;
+          setProduct(foundProduct);
+          setMainImage(foundProduct.src);
+
+          const productImages = [foundProduct.src];
+          if (foundProduct.images && foundProduct.images.length > 0) {
+            productImages.push(...foundProduct.images);
+          }
+          setAllImages(productImages);
+
+          const related = allProducts
+            .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
+            .slice(0, 4);
+          setRelatedProducts(related);
+          setLoading(false);
+          return;
         }
-        setAllImages(productImages);
-        
-        // Find related products from same category
-        const related = allProducts
-          .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
-          .slice(0, 4);
-        setRelatedProducts(related);
       }
-      setLoading(false);
+
+      // 2) If not found, try library books API so /product/:id also works for library items
+      try {
+        const res = await axios.get(`${config.apiUrl}/api/library/books/${id}`);
+        if (!cancelled && res.data?.success && res.data.book) {
+          const b = res.data.book;
+          const mapped = {
+            id: b.id,
+            title: b.title,
+            description: b.description,
+            price: b.price,
+            src: b.src,
+            category: (b.category && (b.category.name || b.category.slug)) || 'Library',
+          };
+
+          setProduct(mapped);
+          setMainImage(mapped.src);
+          setAllImages(mapped.src ? [mapped.src] : []);
+          setRelatedProducts([]); // Optional: could fetch related library books by category
+          setIsLibraryBook(true);
+        }
+      } catch (e) {
+        // ignore, will fall through to not-found state
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
+
+    load();
+    return () => { cancelled = true; };
   }, [id, allProducts]);
 
   const handleAddToCart = () => {
-    if (product) {
+    if (!product) return;
+    // For now, Add to Cart only works for normal products managed in context
+    if (!isLibraryBook) {
       HandleClickAdd(product.id);
     }
   };

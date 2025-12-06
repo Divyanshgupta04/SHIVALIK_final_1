@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
@@ -53,6 +53,7 @@ function filterBySlug(items = [], slug) {
 
 export default function Category() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { isDark } = useTheme();
   const { product: allProducts, loading: contextLoading } = useContext(ProductsData);
 
@@ -61,7 +62,17 @@ export default function Category() {
   const [error, setError] = useState(null);
   const [categoryName, setCategoryName] = useState('');
 
+  // Special case: redirect "library" category to the dedicated Library section
   useEffect(() => {
+    if (slug === 'library') {
+      navigate('/library', { replace: true });
+    }
+  }, [slug, navigate]);
+
+  useEffect(() => {
+    // If we are redirecting to /library, skip loading logic for this page
+    if (slug === 'library') return;
+
     let isMounted = true;
     async function load() {
       setLoading(true);
@@ -125,33 +136,34 @@ export default function Category() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item, index) => (
-              <motion.div
-                key={item.id || `${slug}-${index}`}
-                className={`${isDark ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10' : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'} group rounded-2xl overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)]`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.03 }}
-                whileHover={{ y: -4 }}
-              >
-                <div className="relative h-48 overflow-hidden">
-                  {item.src ? (
-                    <img src={item.src} alt={item.title || 'Item'} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110" />
-                  ) : (
-                    <div className={`absolute inset-0 flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>No image</div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-1 line-clamp-1">{item.title || 'Item'}</h3>
-                  {item.description && (
-                    <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mb-3 line-clamp-2`}>{item.description}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    {item.price ? (
-                      <span className={`${isDark ? 'text-blue-300' : 'text-blue-700'} font-bold text-xl`}>₹{item.price}</span>
-                    ) : <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Contact for pricing</span>}
+              <Link key={item.id || `${slug}-${index}`} to={`/product/${item.id}`}>
+                <motion.div
+                  className={`${isDark ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10' : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'} group rounded-2xl overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)]`}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.03 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    {item.src ? (
+                      <img src={item.src} alt={item.title || 'Item'} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110" />
+                    ) : (
+                      <div className={`absolute inset-0 flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>No image</div>
+                    )}
                   </div>
-                </div>
-              </motion.div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-1 line-clamp-1">{item.title || 'Item'}</h3>
+                    {item.description && (
+                      <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mb-3 line-clamp-2`}>{item.description}</p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      {item.price ? (
+                        <span className={`${isDark ? 'text-blue-300' : 'text-blue-700'} font-bold text-xl`}>₹{item.price}</span>
+                      ) : <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Contact for pricing</span>}
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </div>
         )}
