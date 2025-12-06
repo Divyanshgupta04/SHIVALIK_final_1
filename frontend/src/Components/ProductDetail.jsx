@@ -23,60 +23,44 @@ function ProductDetail() {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      setLoading(true);
-      setIsLibraryBook(false);
-      setProduct(null);
+   async function load() {
+  setLoading(true);
+  setIsLibraryBook(false);
 
-      // 1) Try normal products from context first
-      if (allProducts && allProducts.length > 0) {
-        const foundProduct = allProducts.find(p => p.id === parseInt(id));
-        if (foundProduct) {
-          if (cancelled) return;
-          setProduct(foundProduct);
-          setMainImage(foundProduct.src);
+  // 1) Try library book FIRST
+  try {
+    const res = await axios.get(`${config.apiUrl}/api/library/books/${id}`);
+    if (res.data?.success && res.data.book) {
+      const b = res.data.book;
+      const mapped = {
+        id: b.id,
+        title: b.title,
+        description: b.description,
+        price: b.price,
+        src: b.src,
+        category: b.category?.name || 'Library',
+      };
 
-          const productImages = [foundProduct.src];
-          if (foundProduct.images && foundProduct.images.length > 0) {
-            productImages.push(...foundProduct.images);
-          }
-          setAllImages(productImages);
-
-          const related = allProducts
-            .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
-            .slice(0, 4);
-          setRelatedProducts(related);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // 2) If not found, try library books API so /product/:id also works for library items
-      try {
-        const res = await axios.get(`${config.apiUrl}/api/library/books/${id}`);
-        if (!cancelled && res.data?.success && res.data.book) {
-          const b = res.data.book;
-          const mapped = {
-            id: b.id,
-            title: b.title,
-            description: b.description,
-            price: b.price,
-            src: b.src,
-            category: (b.category && (b.category.name || b.category.slug)) || 'Library',
-          };
-
-          setProduct(mapped);
-          setMainImage(mapped.src);
-          setAllImages(mapped.src ? [mapped.src] : []);
-          setRelatedProducts([]); // Optional: could fetch related library books by category
-          setIsLibraryBook(true);
-        }
-      } catch (e) {
-        // ignore, will fall through to not-found state
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      setProduct(mapped);
+      setMainImage(mapped.src);
+      setAllImages([mapped.src]);
+      setIsLibraryBook(true);
+      setLoading(false);
+      return; // STOP HERE → DO NOT CHECK normal products
     }
+  } catch (err) {}
+
+  // 2) If not a library book → load normal product
+  const foundProduct = allProducts.find(p => p.id === parseInt(id));
+  if (foundProduct) {
+    setProduct(foundProduct);
+    setMainImage(foundProduct.src);
+    setAllImages([foundProduct.src, ...(foundProduct.images || [])]);
+  }
+
+  setLoading(false);
+}
+
 
     load();
     return () => { cancelled = true; };
