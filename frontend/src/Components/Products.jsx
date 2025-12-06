@@ -54,9 +54,17 @@ function Products() {
                         <div className="flex items-center justify-between mb-3">
                           <span className={`${isDark ? 'text-blue-300' : 'text-blue-700'} font-bold text-xl`}>₹{item.price}</span>
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
-<Link to="/checkout/address" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                        <div className="flex flex-col gap-2">
+                          <Link
+                            to={`/product/${item.id}`}
+                            className={`${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} w-full inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}
+                          >
+                            View Details
+                          </Link>
+                          <div className="flex gap-2">
+                            <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
+                            <Link to="/checkout/address" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -88,9 +96,17 @@ function Products() {
                         <span className={`${isDark ? 'text-blue-300' : 'text-blue-700'} font-bold text-xl`}>₹{item.price}</span>
                         <span className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-sm line-through`}>₹{Math.floor(Number(item.price) * 1.2)}</span>
                       </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
-<Link to="/checkout/address" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                      <div className="flex flex-col gap-2">
+                        <Link
+                          to={`/product/${item.id}`}
+                          className={`${isDark ? 'bg-gray-800 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} w-full inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}
+                        >
+                          View Details
+                        </Link>
+                        <div className="flex gap-2">
+                          <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
+                          <Link to="/checkout/address" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                        </div>
                       </div>
                     </div>
                   </motion.div>

@@ -9,34 +9,104 @@ import { IoCloseSharp } from "react-icons/io5";
 import { useAuth } from "../context/Auth/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import navBackground from "../assets/images/navimg.JPG";
+import axios from "axios";
+import config from "../config/api";
 
 // Search Overlay Component
 const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState([]); // Products
+  const [bookResults, setBookResults] = useState([]);     // Library books
+  const [categoryResults, setCategoryResults] = useState([]); // Categories
   const [loading, setLoading] = useState(false);
+  const [libraryBooks, setLibraryBooks] = useState([]);
+  const [libraryLoaded, setLibraryLoaded] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const { product: allProducts } = useContext(ProductsData);
 
+  // Load all library books once when search overlay opens
+  useEffect(() => {
+    if (!isOpen || libraryLoaded) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await axios.get(`${config.apiUrl}/api/library/books`);
+        if (!cancelled && res.data?.success && Array.isArray(res.data.books)) {
+          setLibraryBooks(res.data.books);
+        }
+      } catch (_) {
+        if (!cancelled) setLibraryBooks([]);
+      } finally {
+        if (!cancelled) setLibraryLoaded(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, libraryLoaded]);
+
+  // Load all product categories once when search overlay opens
+  useEffect(() => {
+    if (!isOpen || categoriesLoaded) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await axios.get(`${config.apiUrl}/api/categories`);
+        if (!cancelled && res.data?.success && Array.isArray(res.data.categories)) {
+          setCategories(res.data.categories);
+        }
+      } catch (_) {
+        if (!cancelled) setCategories([]);
+      } finally {
+        if (!cancelled) setCategoriesLoaded(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, categoriesLoaded]);
+
+  // Filter products, library books, and categories by search query
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setSearchResults([]);
+      setBookResults([]);
+      setCategoryResults([]);
       return;
     }
 
     setLoading(true);
     const timer = setTimeout(() => {
       const query = searchQuery.toLowerCase();
-      const filtered = (allProducts || []).filter(product => 
+
+      const filteredProducts = (allProducts || []).filter(product => 
         product.title?.toLowerCase().includes(query) ||
         product.description?.toLowerCase().includes(query) ||
         product.category?.toLowerCase().includes(query)
       );
-      setSearchResults(filtered);
+
+      const filteredBooks = (libraryBooks || []).filter(book => 
+        book.title?.toLowerCase().includes(query)
+      );
+
+      const filteredCategories = (categories || []).filter(cat =>
+        cat.name?.toLowerCase().includes(query) ||
+        cat.slug?.toLowerCase().includes(query)
+      );
+
+      setSearchResults(filteredProducts);
+      setBookResults(filteredBooks);
+      setCategoryResults(filteredCategories);
       setLoading(false);
     }, 300); // Debounce search
 
     return () => clearTimeout(timer);
-  }, [searchQuery, allProducts]);
+  }, [searchQuery, allProducts, libraryBooks, categories]);
 
   const handleClose = () => {
     setSearchQuery('');
@@ -100,68 +170,188 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
             <div className="flex flex-col items-center justify-center py-20">
               <IoIosSearch className={`text-6xl mb-4 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
               <p className={`text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                Start typing to search products
+                Start typing to search products or library books
               </p>
             </div>
-          ) : searchResults.length === 0 ? (
+          ) : searchResults.length === 0 && bookResults.length === 0 && categoryResults.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
               <p className={`text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                No products found for "{searchQuery}"
+                No matches found for "{searchQuery}"
               </p>
             </div>
           ) : (
-            <div>
-              <p className={`mb-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {searchResults.map((product) => (
-                  <Link
-                    key={product.id}
-                    to={`/product/${product.id}`}
-                    onClick={handleClose}
-                    className={`group rounded-lg overflow-hidden transition-all ${
-                      isDark 
-                        ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
-                        : 'bg-white hover:shadow-lg border border-gray-200'
-                    }`}
-                  >
-                    <div className="aspect-square overflow-hidden">
-                      <img
-                        src={product.src}
-                        alt={product.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className={`font-medium mb-1 line-clamp-1 ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {product.title}
-                      </h3>
-                      <p className={`text-sm mb-2 line-clamp-2 ${
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        {product.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className={`font-semibold ${
-                          isDark ? 'text-red-400' : 'text-red-600'
-                        }`}>
-                          ₹{product.price}
-                        </span>
-                        {product.category && (
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+            <div className="space-y-8">
+              {/* Category results */}
+              {categoryResults.length > 0 && (
+                <div>
+                  <p className={`mb-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Categories: {categoryResults.length} match{categoryResults.length !== 1 ? 'es' : ''}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {categoryResults.map((cat) => (
+                      <Link
+                        key={cat.slug}
+                        to={`/category/${cat.slug}`}
+                        onClick={handleClose}
+                        className={`group rounded-lg overflow-hidden transition-all ${
+                          isDark 
+                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
+                            : 'bg-white hover:shadow-lg border border-gray-200'
+                        }`}
+                      >
+                        <div className="aspect-square overflow-hidden">
+                          {cat.imageUrl ? (
+                            <img
+                              src={cat.imageUrl}
+                              alt={cat.name}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className={`w-full h-full flex items-center justify-center text-sm ${
+                              isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {cat.name}
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className={`font-medium mb-1 line-clamp-1 ${
+                            isDark ? 'text-white' : 'text-gray-900'
                           }`}>
-                            {product.category}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                            {cat.name}
+                          </h3>
+                          <p className={`text-xs ${
+                            isDark ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
+                            /category/{cat.slug}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Product results */}
+              {searchResults.length > 0 && (
+                <div>
+                  <p className={`mb-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {searchResults.map((product) => (
+                      <Link
+                        key={product.id}
+                        to={`/product/${product.id}`}
+                        onClick={handleClose}
+                        className={`group rounded-lg overflow-hidden transition-all ${
+                          isDark 
+                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
+                            : 'bg-white hover:shadow-lg border border-gray-200'
+                        }`}
+                      >
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={product.src}
+                            alt={product.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className={`font-medium mb-1 line-clamp-1 ${
+                            isDark ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {product.title}
+                          </h3>
+                          <p className={`text-sm mb-2 line-clamp-2 ${
+                            isDark ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
+                            {product.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className={`font-semibold ${
+                              isDark ? 'text-red-400' : 'text-red-600'
+                            }`}>
+                              ₹{product.price}
+                            </span>
+                            {product.category && (
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {product.category}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Library books results */}
+              {bookResults.length > 0 && (
+                <div>
+                  <p className={`mb-4 mt-6 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Library books: {bookResults.length} match{bookResults.length !== 1 ? 'es' : ''}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {bookResults.map((book) => (
+                      <Link
+                        key={book.id}
+                        to={book.category?.slug ? `/library/${book.category.slug}` : '/library'}
+                        onClick={handleClose}
+                        className={`group rounded-lg overflow-hidden transition-all ${
+                          isDark 
+                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
+                            : 'bg-white hover:shadow-lg border border-gray-200'
+                        }`}
+                      >
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={book.src}
+                            alt={book.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className={`font-medium mb-1 line-clamp-1 ${
+                            isDark ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {book.title}
+                          </h3>
+                          {book.author && (
+                            <p className={`text-xs mb-1 ${
+                              isDark ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
+                              by {book.author}
+                            </p>
+                          )}
+                          <p className={`text-sm mb-2 line-clamp-2 ${
+                            isDark ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
+                            {book.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className={`font-semibold ${
+                              isDark ? 'text-red-400' : 'text-red-600'
+                            }`}>
+                              ₹{book.price}
+                            </span>
+                            {book.category?.name && (
+                              <span className={`text-xs px-2 py-1 rounded ${
+                                isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {book.category.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
