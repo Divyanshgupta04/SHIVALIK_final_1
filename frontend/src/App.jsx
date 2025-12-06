@@ -98,6 +98,7 @@ function App() {
                 {/* Other Routes */}
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                {/* <Route path="/library/book/:id" element={<ProductDetail/>}/> */}
                 <Route path="/category/:slug" element={<Category />} />
                 <Route path="/library" element={<LibraryCategories />} />
                 <Route path="/library/:slug" element={<LibraryBooks />} />
