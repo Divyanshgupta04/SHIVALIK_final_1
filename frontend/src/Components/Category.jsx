@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ProductsData } from '../context/Context';
 import config from '../config/api';
+import PanService from './PanService';
 
 // Category keyword mapping for better filtering
 const CATEGORY_MAP = {
@@ -72,6 +73,8 @@ export default function Category() {
   useEffect(() => {
     // If we are redirecting to /library, skip loading logic for this page
     if (slug === 'library') return;
+    // Dedicated PAN flow has its own component and does not need product/category data
+    if (slug === 'pan') return;
 
     let isMounted = true;
     async function load() {
@@ -118,6 +121,11 @@ export default function Category() {
   }, [slug, allProducts]);
 
   const heading = categoryName || titleCase(slug);
+
+  // Special UI for PAN card category based on provided flow
+  if (slug === 'pan') {
+    return <PanService />;
+  }
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
