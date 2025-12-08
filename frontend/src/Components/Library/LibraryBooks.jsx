@@ -68,7 +68,11 @@ function LibraryBooks() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {books.map((book, index) => (
-              <Link key={book.id || `${slug}-${index}`} to={`/product/${book.id}`}>
+              <Link
+                key={book.id || `${slug}-${index}`}
+                to={`/product/${book.id}`}
+                state={{ fromLibrary: true }}
+              >
                 <motion.div
                   className={`${isDark
                     ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10'

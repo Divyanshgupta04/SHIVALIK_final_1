@@ -24,6 +24,7 @@ import AdminOrders from './Components/Admin/AdminOrders';
 import AdminCategories from './Components/Admin/AdminCategories';
 import AdminLibraryCategories from './Components/Admin/AdminLibraryCategories';
 import AdminLibraryBooks from './Components/Admin/AdminLibraryBooks';
+import AdminPanTypes from './Components/Admin/AdminPanTypes';
 import SignIn from './Components/UserAuth/SignIn';
 import SignUp from './Components/UserAuth/SignUp';
 import ProtectedRoute from './Components/UserAuth/ProtectedRoute';
@@ -55,6 +56,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/categories" element={<AdminCategories />} />
+        <Route path="/admin/pan-types" element={<AdminPanTypes />} />
         <Route path="/admin/library/categories" element={<AdminLibraryCategories />} />
         <Route path="/admin/library/books" element={<AdminLibraryBooks />} />
         <Route path="/admin/users" element={<AdminUsers />} />
