@@ -22,6 +22,7 @@ import AdminProducts from './Components/Admin/AdminProducts';
 import AdminUsers from './Components/Admin/AdminUsers';
 import AdminOrders from './Components/Admin/AdminOrders';
 import AdminCategories from './Components/Admin/AdminCategories';
+import AdminCatalog from './Components/Admin/Catalog/AdminCatalog';
 import AdminLibraryCategories from './Components/Admin/AdminLibraryCategories';
 import AdminLibraryBooks from './Components/Admin/AdminLibraryBooks';
 import AdminPanTypes from './Components/Admin/AdminPanTypes';
@@ -29,6 +30,7 @@ import SignIn from './Components/UserAuth/SignIn';
 import SignUp from './Components/UserAuth/SignUp';
 import ProtectedRoute from './Components/UserAuth/ProtectedRoute';
 import Address from './Components/Checkout/Address';
+import Checkout from './Components/Checkout/Checkout';
 import { useTheme } from './context/ThemeContext';
 import { ProductsData } from './context/Context';
 import { StatsProvider } from './context/StatsContext';
@@ -56,6 +58,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/categories" element={<AdminCategories />} />
+        <Route path="/admin/catalog" element={<AdminCatalog />} />
         <Route path="/admin/pan-types" element={<AdminPanTypes />} />
         <Route path="/admin/library/categories" element={<AdminLibraryCategories />} />
         <Route path="/admin/library/books" element={<AdminLibraryBooks />} />
@@ -109,6 +112,8 @@ function App() {
                 <Route path='/about' element={<About/>} />
                 <Route path='/contact' element={<Contact/>} />
                 <Route path='/account' element={<ProtectedRoute><Account/></ProtectedRoute>} />
+                <Route path='/checkout' element={<ProtectedRoute><Checkout/></ProtectedRoute>} />
+                {/* Legacy route kept for compatibility with existing Payment page */}
                 <Route path='/checkout/address' element={<ProtectedRoute><Address/></ProtectedRoute>} />
                 <Route path='/pay' element={<ProtectedRoute><Payment/></ProtectedRoute>} />
                 <Route path='*' element={<NotFound/>} />

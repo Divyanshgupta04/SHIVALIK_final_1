@@ -6,6 +6,7 @@ import Context from './context/Context.jsx';
 import { AuthProvider } from './context/Auth/AuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
+import { CatalogProvider } from './context/CatalogContext.jsx';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -15,10 +16,12 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
-            <Context>
-              <App />
-              <Toaster  />
-            </Context>
+            <CatalogProvider>
+              <Context>
+                <App />
+                <Toaster />
+              </Context>
+            </CatalogProvider>
           </CartProvider>
         </AuthProvider>
       </ThemeProvider>

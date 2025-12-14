@@ -202,14 +202,14 @@ function Cart() {
                 
                 <button
                   disabled={cart.length === 0}
-                  onClick={() => navigate('/checkout/address')}
+                  onClick={() => navigate('/checkout')}
                   className={`w-full mt-6 py-3 px-4 font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                     isDark 
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' 
                       : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
                   }`}
                 >
-                  Proceed to Checkout →
+                  Proceed to Order →
                 </button>
                 
                 <p className={`text-center text-xs mt-4 ${
