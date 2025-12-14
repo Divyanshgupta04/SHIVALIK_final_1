@@ -63,6 +63,7 @@ export default function Checkout() {
   const [idData, setIdData] = useState(null);
   const [deliveryData, setDeliveryData] = useState(null);
   const [savingAddress, setSavingAddress] = useState(false);
+  const [savingIdentity, setSavingIdentity] = useState(false);
 
   // Load from session storage (so user can't accidentally lose progress by navigating)
   useEffect(() => {
@@ -125,9 +126,36 @@ export default function Checkout() {
     }
   };
 
-  const onIdSubmit = (data) => {
-    setIdData(data);
-    setStep('delivery');
+  const onIdSubmit = async (data) => {
+    // Persist identity form data to backend (optional but requested)
+    setSavingIdentity(true);
+    try {
+      const cartSnapshot = (cart || []).map((i) => ({
+        productId: i.productId,
+        title: i.title,
+        quantity: i.quantity,
+        price: i.price,
+        productType: i.productType,
+      }));
+
+      const res = await axios.post('/api/identity-forms', {
+        formType: requiredIdForm,
+        ...data,
+        cartSnapshot,
+      });
+
+      const identityFormId = res?.data?.identityForm?.id;
+      setIdData(identityFormId ? { ...data, identityFormId } : data);
+      setStep('delivery');
+    } catch (err) {
+      // Don't block checkout if backend save fails
+      console.error('Failed to save identity form (continuing checkout):', err);
+      toast.error('Failed to save identity form (continuing)');
+      setIdData(data);
+      setStep('delivery');
+    } finally {
+      setSavingIdentity(false);
+    }
   };
 
   const onDeliverySubmit = async (data) => {
@@ -242,6 +270,7 @@ export default function Checkout() {
                 initialValue={idData}
                 onBack={goBack}
                 onSubmit={onIdSubmit}
+                disabled={savingIdentity}
               />
             )}
 
@@ -250,6 +279,7 @@ export default function Checkout() {
                 initialValue={idData}
                 onBack={goBack}
                 onSubmit={onIdSubmit}
+                disabled={savingIdentity}
               />
             )}
 
@@ -258,6 +288,7 @@ export default function Checkout() {
                 initialValue={idData}
                 onBack={goBack}
                 onSubmit={onIdSubmit}
+                disabled={savingIdentity}
               />
             )}
 
