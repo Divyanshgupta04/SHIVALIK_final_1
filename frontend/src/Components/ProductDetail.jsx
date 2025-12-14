@@ -58,9 +58,8 @@ function ProductDetail() {
         }
       }
 
-      // Normal product lookup
-      const numericId = parseInt(id, 10);
-      const foundProduct = allProducts.find(p => p.id === numericId);
+      // Normal product lookup (support numeric or string ids)
+      const foundProduct = allProducts.find(p => String(p.id) === String(id));
       if (!cancelled && foundProduct) {
         setProduct(foundProduct);
         setMainImage(foundProduct.src);

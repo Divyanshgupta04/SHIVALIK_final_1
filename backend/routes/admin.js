@@ -12,7 +12,7 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, images } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
@@ -27,7 +27,11 @@ router.post('/products', auth, async (req, res) => {
       price,
       src,
       images: images || [],
-      category
+      category,
+      categoryId,
+      subCategoryId,
+      productType: productType || 'both',
+      hasForm: !!hasForm
     });
 
     await product.save();
@@ -51,11 +55,15 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, images } = req.body;
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm } = req.body;
     
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
+    if (typeof categoryId !== 'undefined') update.categoryId = categoryId;
+    if (typeof subCategoryId !== 'undefined') update.subCategoryId = subCategoryId;
+    if (typeof productType !== 'undefined') update.productType = productType;
     if (typeof images !== 'undefined') update.images = images;
+    if (typeof hasForm !== 'undefined') update.hasForm = !!hasForm;
 
     const product = await Product.findOneAndUpdate(
       { id: req.params.id },

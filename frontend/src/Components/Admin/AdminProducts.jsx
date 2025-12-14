@@ -61,6 +61,17 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
               </button>
             </div>
           </div>
+          <div className="pt-2">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!formData.hasForm}
+                onChange={e => handleChange('hasForm', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Enable form for this product</span>
+            </label>
+          </div>
           <div className="flex gap-3 pt-2">
             <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
               {isEdit ? 'Update' : 'Add'} Product
@@ -81,7 +92,7 @@ const AdminProducts = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [formData, setFormData] = useState({ id: '', title: '', description: '', price: '', src: '', category: '' })
+  const [formData, setFormData] = useState({ id: '', title: '', description: '', price: '', src: '', category: '', hasForm: false })
   const [categories, setCategories] = useState([])
   const [newCategoryName, setNewCategoryName] = useState('')
   const [addingCategory, setAddingCategory] = useState(false)
@@ -131,12 +142,12 @@ const AdminProducts = () => {
   const openAdd = () => {
     const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0
     const defaultCategory = categories[0]?.slug || ''
-    setFormData({ id: maxId + 1, title: '', description: '', price: '', src: '', category: defaultCategory })
+    setFormData({ id: maxId + 1, title: '', description: '', price: '', src: '', category: defaultCategory, hasForm: false })
     setShowAddModal(true)
   }
   const openEdit = (p) => { 
     setSelectedProduct(p); 
-    setFormData({ id: p.id, title: p.title, description: p.description, price: p.price, src: p.src, category: p.category || '' }); 
+    setFormData({ id: p.id, title: p.title, description: p.description, price: p.price, src: p.src, category: p.category || '', hasForm: !!p.hasForm }); 
     setShowEditModal(true) 
   }
 

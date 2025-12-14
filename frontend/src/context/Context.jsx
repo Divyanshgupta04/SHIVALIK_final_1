@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useMediaQuery } from "react-responsive";
 import { useScroll, useTransform } from "framer-motion";
@@ -6,6 +6,8 @@ import io from "socket.io-client";
 import axios from "axios";
 import { useAuth } from "./Auth/AuthContext";
 import { useCart } from "./CartContext";
+import { useCatalog } from "./CatalogContext";
+import { slugifyName } from "../utils/slug";
 import config from "../config/api";
 
 export const ProductsData = createContext();
@@ -116,6 +118,11 @@ const fallbackProducts = [
 export function Context({ children }) {
   const { user } = useAuth();
   const { addToCart: addToCartDynamic, cart, itemCount } = useCart();
+  const {
+    products: catalogProducts,
+    categoriesById: catalogCategoriesById,
+    subCategoriesById: catalogSubCategoriesById,
+  } = useCatalog();
   
   const [product, setProduct] = useState(fallbackProducts);
   const [addCart, setAddCart] = useState([]); // Keep for backward compatibility
@@ -233,9 +240,49 @@ export function Context({ children }) {
     }),
   };
 
+  const catalogProductsMapped = useMemo(() => {
+    // Map admin-catalog products into the public product card shape used by the UI.
+    // This makes /admin/catalog products show up in /products and be cart-addable.
+    return (catalogProducts || []).map((p) => {
+      const category = catalogCategoriesById?.get?.(p.categoryId);
+      const subCategory = catalogSubCategoriesById?.get?.(p.subCategoryId);
+
+      return {
+        id: p.id,
+        title: p.name,
+        description: subCategory?.name
+          ? `${subCategory.name} • ${category?.name || 'Service'}`
+          : (category?.name || 'Service'),
+        price: String(p.price),
+        src: p.imageDataUrl || 'https://via.placeholder.com/600x400?text=Service',
+
+        // Extra fields for better storefront filtering + future UI.
+        categoryId: p.categoryId,
+        subCategoryId: p.subCategoryId,
+        categoryName: category?.name || '',
+        subCategoryName: subCategory?.name || '',
+
+        // Store as a slug so routing and filtering work (e.g. "Aadhaar Services" -> "aadhaar-services").
+        category: slugifyName(category?.name || ''),
+        productType: p.productType || 'both',
+      };
+    });
+  }, [catalogProducts, catalogCategoriesById, catalogSubCategoriesById]);
+
+  const mergedProducts = useMemo(() => {
+    // API/fallback products first, then admin-catalog products.
+    // If Catalog Manager is connected to DB, the same product can appear in both sources.
+    const map = new Map();
+    for (const p of [...(product || []), ...(catalogProductsMapped || [])]) {
+      if (!p) continue;
+      map.set(String(p.id), p);
+    }
+    return Array.from(map.values());
+  }, [product, catalogProductsMapped]);
+
   // Add to cart handler - Updated to use dynamic cart
   const HandleClickAdd = async (id) => {
-    const productData = product.find((item) => item.id === id);
+    const productData = mergedProducts.find((item) => String(item.id) === String(id));
     if (productData) {
       await addToCartDynamic(productData, 1);
       // Also update legacy addCart for backward compatibility
@@ -244,7 +291,7 @@ export function Context({ children }) {
   };
 
   const Value = {
-    product,
+    product: mergedProducts,
     HandleClickAdd,
     addCart: cart || addCart, // Use dynamic cart, fallback to legacy
     cartItemCount: itemCount,

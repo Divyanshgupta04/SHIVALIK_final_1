@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import Show from './Show'
 import Partner from '../assets/Partner.jpg'
 import Pan from '../assets/Pan.jpg'
@@ -9,6 +9,8 @@ import land from '../assets/land.jpg'
 import certi from '../assets/Car.jpg'
 import li from '../assets/li.jpg'
 import { useTheme } from '../context/ThemeContext'
+import { useCatalog } from '../context/CatalogContext'
+import { slugifyName } from '../utils/slug'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
@@ -16,7 +18,9 @@ import config from '../config/api'
 
 function Hero() {
   const { isDark } = useTheme()
-  const [categories, setCategories] = useState([])
+  const { categories: catalogCategories } = useCatalog()
+
+  const [apiCategories, setApiCategories] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Local fallback images for when imageUrl is a local path
@@ -35,6 +39,32 @@ function Hero() {
     fetchCategories()
   }, [])
 
+  const categories = useMemo(() => {
+    // Merge DB categories + AdminCatalog (localStorage) categories.
+    // Prefer DB data if slug conflicts.
+    const map = new Map()
+
+    for (const c of apiCategories || []) {
+      if (!c?.slug) continue
+      map.set(c.slug, c)
+    }
+
+    for (const c of catalogCategories || []) {
+      const slug = slugifyName(c?.name || '')
+      if (!slug) continue
+      if (map.has(slug)) continue
+
+      map.set(slug, {
+        id: c.id,
+        slug,
+        name: c.name,
+        img: c.imageDataUrl || '',
+      })
+    }
+
+    return Array.from(map.values())
+  }, [apiCategories, catalogCategories])
+
   const fetchCategories = async () => {
     try {
       console.log('Fetching categories from API...')
@@ -48,7 +78,7 @@ function Hero() {
           img: localImages[cat.imageUrl] || cat.imageUrl || ''
         }))
         console.log('Mapped categories:', dbCategories)
-        setCategories(dbCategories)
+        setApiCategories(dbCategories)
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error)

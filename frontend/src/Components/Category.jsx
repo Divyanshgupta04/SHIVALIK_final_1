@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ProductsData } from '../context/Context';
+import { useCatalog } from '../context/CatalogContext';
+import { normalizeForCompare, slugifyName } from '../utils/slug';
 import config from '../config/api';
 import PanService from './PanService';
 
@@ -26,7 +28,7 @@ function titleCase(str = '') {
 }
 
 function normalize(s = '') {
-  return s.toLowerCase();
+  return normalizeForCompare(s);
 }
 
 function filterBySlug(items = [], slug) {
@@ -57,6 +59,23 @@ export default function Category() {
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const { product: allProducts, loading: contextLoading } = useContext(ProductsData);
+  const { categories: catalogCategories, subCategories: catalogSubCategories } = useCatalog();
+
+  const catalogCategory = useMemo(() => {
+    return (catalogCategories || []).find((c) => slugifyName(c?.name || '') === String(slug)) || null;
+  }, [catalogCategories, slug]);
+
+  const catalogCategoryName = catalogCategory?.name || '';
+
+  const subCategoriesForCatalogCategory = useMemo(() => {
+    if (!catalogCategory) return [];
+    return (catalogSubCategories || [])
+      .filter((sc) => sc.categoryId === catalogCategory.id)
+      .slice()
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  }, [catalogCategory, catalogSubCategories]);
+
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState('');
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,12 +95,15 @@ export default function Category() {
     // Dedicated PAN flow has its own component and does not need product/category data
     if (slug === 'pan') return;
 
+    // Reset sub-category selection when switching categories
+    setSelectedSubCategoryId('');
+
     let isMounted = true;
     async function load() {
       setLoading(true);
       setError(null);
 
-      // Fetch category details to get the proper name
+      // Fetch category details to get the proper name (DB categories)
       try {
         const catResp = await axios.get(`${config.apiUrl}/api/categories`);
         if (catResp.data.success) {
@@ -91,7 +113,7 @@ export default function Category() {
           }
         }
       } catch (_) {
-        // Ignore and use slug as fallback
+        // Ignore - admin-catalog categories (localStorage) are handled separately.
       }
 
       // Try backend first, then strictly filter by slug
@@ -109,8 +131,20 @@ export default function Category() {
         // Ignore network/API errors and fallback to context
       }
 
-      // Fallback to context products and strict filter
-      const filteredLocal = filterBySlug(allProducts || [], slug);
+      // Fallback to context products.
+      // If this slug belongs to an AdminCatalog category, prefer id-based matching.
+      let filteredLocal;
+      if (catalogCategory) {
+        filteredLocal = (allProducts || []).filter((p) => {
+          // For admin-catalog products we now attach categoryId/subCategoryId.
+          if (p?.categoryId) return String(p.categoryId) === String(catalogCategory.id);
+          // Fallback for older shapes.
+          return normalize(p?.category || '') === normalize(slug);
+        });
+      } else {
+        filteredLocal = filterBySlug(allProducts || [], slug);
+      }
+
       if (isMounted) {
         setItems(filteredLocal);
         setLoading(false);
@@ -120,12 +154,17 @@ export default function Category() {
     return () => { isMounted = false; };
   }, [slug, allProducts]);
 
-  const heading = categoryName || titleCase(slug);
+  const heading = categoryName || catalogCategoryName || titleCase(slug);
 
   // Special UI for PAN card category based on provided flow
   if (slug === 'pan') {
     return <PanService />;
   }
+
+  const visibleItems = useMemo(() => {
+    if (!selectedSubCategoryId) return items;
+    return (items || []).filter((p) => String(p?.subCategoryId || '') === String(selectedSubCategoryId));
+  }, [items, selectedSubCategoryId]);
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -135,15 +174,71 @@ export default function Category() {
           <Link to="/" className={`text-sm ${isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>← Back to Home</Link>
         </div>
 
+        {/* AdminCatalog sub-categories (only for catalog-driven categories) */}
+        {catalogCategory && subCategoriesForCatalogCategory.length > 0 && (
+          <div className={`mb-8 rounded-2xl border p-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-blue-100 bg-white'}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Sub-Categories</div>
+                <div className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Select a sub-category to filter services.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedSubCategoryId('')}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+                  !selectedSubCategoryId
+                    ? (isDark ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-600 text-white border-blue-600')
+                    : (isDark ? 'border-white/20 text-gray-200 hover:bg-white/10' : 'border-gray-300 text-gray-700 hover:bg-gray-50')
+                }`}
+              >
+                All
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {subCategoriesForCatalogCategory.map((sc) => (
+                <button
+                  key={sc.id}
+                  type="button"
+                  onClick={() => setSelectedSubCategoryId(sc.id)}
+                  className={`text-left rounded-xl border overflow-hidden transition ${
+                    selectedSubCategoryId === sc.id
+                      ? (isDark ? 'border-blue-500 bg-blue-500/10' : 'border-blue-400 bg-blue-50')
+                      : (isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50')
+                  }`}
+                >
+                  <div className="aspect-[4/3] bg-black/10">
+                    {sc.imageDataUrl ? (
+                      <img src={sc.imageDataUrl} alt={sc.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        No Image
+                      </div>
+                    )}
+                  </div>
+                  <div className={`p-3 text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {sc.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading || contextLoading ? (
           <div className="py-16 text-center text-lg opacity-80">Loading {heading}...</div>
         ) : error ? (
           <div className="py-16 text-center text-red-500">{error}</div>
-        ) : items.length === 0 ? (
-          <div className="py-16 text-center opacity-80">No items found for {heading}.</div>
+        ) : visibleItems.length === 0 ? (
+          <div className="py-16 text-center opacity-80">
+            {selectedSubCategoryId ? 'No items found in this sub-category.' : `No items found for ${heading}.`}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item, index) => (
+            {visibleItems.map((item, index) => (
               <Link key={item.id || `${slug}-${index}`} to={`/product/${item.id}`}>
                 <motion.div
                   className={`${isDark ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10' : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'} group rounded-2xl overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)]`}

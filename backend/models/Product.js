@@ -30,11 +30,37 @@ const ProductSchema = new mongoose.Schema({
     default: []
   },
   // Optional category for filtering (kept optional to avoid breaking existing flows)
+  // For Catalog Manager products, we store the parent category slug here.
   category: {
     type: String,
     trim: true,
     lowercase: true,
     default: undefined
+  },
+
+  // Catalog Manager linkage (optional so existing products don't break)
+  categoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    default: undefined
+  },
+  subCategoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SubCategory',
+    default: undefined
+  },
+
+  // Identity requirement used by checkout flow
+  productType: {
+    type: String,
+    enum: ['aadhaar', 'pan', 'both'],
+    default: 'both'
+  },
+
+  // Toggle to indicate whether this product has its own dedicated form
+  hasForm: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

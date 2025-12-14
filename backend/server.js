@@ -106,6 +106,7 @@ app.use('/api/cart', require('./routes/cart'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/categories', require('./routes/categories'));
+app.use('/api/subcategories', require('./routes/subcategories'));
 app.use('/api/pan-types', require('./routes/panTypes'));
 // Library-specific routes
 app.use('/api/library/categories', require('./routes/libraryCategories'));

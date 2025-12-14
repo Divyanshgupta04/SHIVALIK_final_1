@@ -8,14 +8,19 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { category, q } = req.query;
+    const { category, q, categoryId, subCategoryId } = req.query;
 
     const buildRegex = (s) => ({ $regex: String(s).trim(), $options: 'i' });
 
-    let filter = {};
+    // Base filter for exact ids (when present)
+    const base = {};
+    if (categoryId) base.categoryId = categoryId;
+    if (subCategoryId) base.subCategoryId = subCategoryId;
+
+    let textFilter = null;
     if (category) {
       const rgx = buildRegex(category);
-      filter = {
+      textFilter = {
         $or: [
           { category: rgx },
           { title: rgx },
@@ -24,13 +29,18 @@ router.get('/', async (req, res) => {
       };
     } else if (q) {
       const rgx = buildRegex(q);
-      filter = {
+      textFilter = {
         $or: [
           { title: rgx },
           { description: rgx },
           { category: rgx }
         ]
       };
+    }
+
+    let filter = base;
+    if (textFilter) {
+      filter = Object.keys(base).length ? { $and: [base, textFilter] } : textFilter;
     }
 
     const products = await Product.find(filter).sort({ id: 1 });

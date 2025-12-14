@@ -10,7 +10,11 @@ function Products() {
 
   const newArrivals = useMemo(() => {
     if (!product?.length) return []
-    const sorted = [...product].sort((a, b) => Number(a.id) - Number(b.id))
+    const toNum = (v) => {
+      const n = Number(v)
+      return Number.isFinite(n) ? n : 0
+    }
+    const sorted = [...product].sort((a, b) => toNum(a.id) - toNum(b.id))
     return sorted.slice(-6)
   }, [product])
 
@@ -63,7 +67,7 @@ function Products() {
                           </Link>
                           <div className="flex gap-2">
                             <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
-                            <Link to="/checkout/address" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                            <Link to="/checkout" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
                           </div>
                         </div>
                       </div>
@@ -105,7 +109,7 @@ function Products() {
                         </Link>
                         <div className="flex gap-2">
                           <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
-                          <Link to="/checkout/address" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                          <Link to="/checkout" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
                         </div>
                       </div>
                     </div>
