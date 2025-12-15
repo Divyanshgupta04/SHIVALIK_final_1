@@ -8,7 +8,7 @@ import {
   FiPlus, FiEdit, FiTrash2, FiLogOut, FiBarChart, FiUsers, FiShoppingCart, 
   FiDollarSign, FiTrendingUp, FiPackage, FiEye, FiStar, FiActivity,
   FiHome, FiSettings, FiHelpCircle, FiMenu, FiX, FiArrowUp, FiArrowDown,
-  FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid, FiBook
+  FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid, FiBook, FiCreditCard
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -93,6 +93,18 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
               required
             />
           </div>
+          {/* Toggle to connect/detach a form with this product */}
+          <div className="pt-2">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!formData.hasForm}
+                onChange={(e) => handleInputChange('hasForm', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Enable form for this product</span>
+            </label>
+          </div>
           <div className="flex gap-3 pt-4">
             <button
               type="submit"
@@ -137,7 +149,8 @@ const AdminDashboard = () => {
     title: '',
     description: '',
     price: '',
-    src: ''
+    src: '',
+    hasForm: false,
   });
 
   useEffect(() => {
@@ -287,7 +300,8 @@ const AdminDashboard = () => {
       title: '',
       description: '',
       price: '',
-      src: ''
+      src: '',
+      hasForm: false,
     });
   };
 
@@ -362,7 +376,8 @@ const AdminDashboard = () => {
       title: product.title,
       description: product.description,
       price: product.price,
-      src: product.src
+      src: product.src,
+      hasForm: !!product.hasForm,
     });
     setShowEditModal(true);
   };
@@ -375,7 +390,8 @@ const AdminDashboard = () => {
       title: '',
       description: '',
       price: '',
-      src: ''
+      src: '',
+      hasForm: false,
     });
     setShowAddModal(true);
   };
@@ -442,6 +458,12 @@ const AdminDashboard = () => {
                 </a>
                 <a href="/admin/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiGrid/> <span>Categories</span>
+                </a>
+                <a href="/admin/catalog" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
+                  <FiGrid/> <span>Catalog Manager</span>
+                </a>
+                <a href="/admin/pan-types" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
+                  <FiCreditCard/> <span>PAN Types</span>
                 </a>
                 <a href="/admin/library/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiBook/> <span>Library Categories</span>

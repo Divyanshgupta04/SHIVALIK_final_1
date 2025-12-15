@@ -1,6 +1,8 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const Category = require('../models/Category');
+const SubCategory = require('../models/SubCategory');
+const Product = require('../models/Product');
 
 const router = express.Router();
 
@@ -89,6 +91,16 @@ router.delete('/:slug', auth, async (req, res) => {
 
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
+    }
+
+    // Cleanup: remove sub-categories and products under this category.
+    // This keeps Catalog Manager data consistent when managed via DB.
+    try {
+      await SubCategory.deleteMany({ categoryId: category._id });
+      await Product.deleteMany({ $or: [{ categoryId: category._id }, { category: category.slug }] });
+    } catch (e) {
+      console.error('Cascade delete category cleanup error:', e);
+      // Don't fail the request after the category is deleted.
     }
 
     res.json({ success: true, message: 'Category deleted successfully' });

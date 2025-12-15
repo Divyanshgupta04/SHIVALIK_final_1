@@ -8,6 +8,8 @@ import { Link, useLocation } from "react-router-dom";
 import { IoCloseSharp } from "react-icons/io5";
 import { useAuth } from "../context/Auth/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useCatalog } from "../context/CatalogContext";
+import { slugifyName } from "../utils/slug";
 import navBackground from "../assets/images/navimg.JPG";
 import axios from "axios";
 import config from "../config/api";
@@ -21,9 +23,36 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
   const [loading, setLoading] = useState(false);
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [libraryLoaded, setLibraryLoaded] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const { categories: catalogCategories } = useCatalog();
+
+  const [apiCategories, setApiCategories] = useState([]);
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
   const { product: allProducts } = useContext(ProductsData);
+
+  const categories = React.useMemo(() => {
+    // Merge DB categories + admin-catalog categories.
+    const map = new Map();
+
+    for (const c of apiCategories || []) {
+      if (!c?.slug) continue;
+      map.set(c.slug, c);
+    }
+
+    for (const c of catalogCategories || []) {
+      const slug = slugifyName(c?.name || '');
+      if (!slug) continue;
+      if (map.has(slug)) continue;
+
+      map.set(slug, {
+        id: c.id,
+        slug,
+        name: c.name,
+        imageUrl: c.imageDataUrl || '',
+      });
+    }
+
+    return Array.from(map.values());
+  }, [apiCategories, catalogCategories]);
 
   // Load all library books once when search overlay opens
   useEffect(() => {
@@ -57,10 +86,10 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
       try {
         const res = await axios.get(`${config.apiUrl}/api/categories`);
         if (!cancelled && res.data?.success && Array.isArray(res.data.categories)) {
-          setCategories(res.data.categories);
+          setApiCategories(res.data.categories);
         }
       } catch (_) {
-        if (!cancelled) setCategories([]);
+        if (!cancelled) setApiCategories([]);
       } finally {
         if (!cancelled) setCategoriesLoaded(true);
       }

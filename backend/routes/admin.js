@@ -2,6 +2,7 @@ const express = require('express');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const PanType = require('../models/PanType');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -11,7 +12,7 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, images } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
@@ -26,7 +27,11 @@ router.post('/products', auth, async (req, res) => {
       price,
       src,
       images: images || [],
-      category
+      category,
+      categoryId,
+      subCategoryId,
+      productType: productType || 'both',
+      hasForm: !!hasForm
     });
 
     await product.save();
@@ -50,11 +55,15 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, images } = req.body;
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm } = req.body;
     
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
+    if (typeof categoryId !== 'undefined') update.categoryId = categoryId;
+    if (typeof subCategoryId !== 'undefined') update.subCategoryId = subCategoryId;
+    if (typeof productType !== 'undefined') update.productType = productType;
     if (typeof images !== 'undefined') update.images = images;
+    if (typeof hasForm !== 'undefined') update.hasForm = !!hasForm;
 
     const product = await Product.findOneAndUpdate(
       { id: req.params.id },
@@ -292,6 +301,112 @@ router.put('/orders/:id/status', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Update order status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/admin/pan-types
+// @desc    List all PAN card types for admin management
+// @access  Private (Admin only)
+router.get('/pan-types', auth, async (req, res) => {
+  try {
+    const panTypes = await PanType.find().sort({ createdAt: -1 });
+    res.json({ success: true, panTypes });
+  } catch (error) {
+    console.error('Get admin PAN types error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/admin/pan-types
+// @desc    Create a new PAN card type
+// @access  Private (Admin only)
+router.post('/pan-types', auth, async (req, res) => {
+  try {
+    const { name, code, description, fee, discountPercent, iconUrl, isActive } = req.body;
+
+    if (!name || !code || typeof fee === 'undefined') {
+      return res.status(400).json({ message: 'Name, code and fee are required' });
+    }
+
+    const existing = await PanType.findOne({ code: String(code).toUpperCase() });
+    if (existing) {
+      return res.status(400).json({ message: 'PAN type with this code already exists' });
+    }
+
+    const panType = new PanType({
+      name,
+      code,
+      description,
+      fee,
+      discountPercent,
+      iconUrl,
+      isActive: typeof isActive === 'boolean' ? isActive : true
+    });
+
+    await panType.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'PAN type created successfully',
+      panType
+    });
+  } catch (error) {
+    console.error('Create PAN type error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/admin/pan-types/:id
+// @desc    Update an existing PAN card type
+// @access  Private (Admin only)
+router.put('/pan-types/:id', auth, async (req, res) => {
+  try {
+    const { name, description, fee, discountPercent, iconUrl, isActive } = req.body;
+
+    const update = {};
+    if (typeof name !== 'undefined') update.name = name;
+    if (typeof description !== 'undefined') update.description = description;
+    if (typeof fee !== 'undefined') update.fee = fee;
+    if (typeof discountPercent !== 'undefined') update.discountPercent = discountPercent;
+    if (typeof iconUrl !== 'undefined') update.iconUrl = iconUrl;
+    if (typeof isActive !== 'undefined') update.isActive = isActive;
+
+    const panType = await PanType.findByIdAndUpdate(
+      req.params.id,
+      update,
+      { new: true, runValidators: true }
+    );
+
+    if (!panType) {
+      return res.status(404).json({ message: 'PAN type not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'PAN type updated successfully',
+      panType
+    });
+  } catch (error) {
+    console.error('Update PAN type error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/admin/pan-types/:id
+// @desc    Delete a PAN card type
+// @access  Private (Admin only)
+router.delete('/pan-types/:id', auth, async (req, res) => {
+  try {
+    const panType = await PanType.findByIdAndDelete(req.params.id);
+
+    if (!panType) {
+      return res.status(404).json({ message: 'PAN type not found' });
+    }
+
+    res.json({ success: true, message: 'PAN type deleted successfully' });
+  } catch (error) {
+    console.error('Delete PAN type error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

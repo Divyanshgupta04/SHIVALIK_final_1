@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ProductsData } from '../context/Context';
@@ -10,6 +10,7 @@ import config from '../config/api';
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDark } = useTheme();
   const { product: allProducts, addCart, HandleClickAdd } = useContext(ProductsData);
   
@@ -23,48 +24,77 @@ function ProductDetail() {
   useEffect(() => {
     let cancelled = false;
 
-   async function load() {
-  setLoading(true);
-  setIsLibraryBook(false);
+    async function load() {
+      setLoading(true);
+      setIsLibraryBook(false);
 
-  // 1) Try library book FIRST
-  try {
-    const res = await axios.get(`${config.apiUrl}/api/library/books/${id}`);
-    if (res.data?.success && res.data.book) {
-      const b = res.data.book;
-      const mapped = {
+      const fromLibrary = location.state?.fromLibrary;
+
+      // Helper to map a library book into product-like shape
+      const mapLibraryBook = (b) => ({
         id: b.id,
         title: b.title,
         description: b.description,
         price: b.price,
         src: b.src,
         category: b.category?.name || 'Library',
-      };
+      });
 
-      setProduct(mapped);
-      setMainImage(mapped.src);
-      setAllImages([mapped.src]);
-      setIsLibraryBook(true);
-      setLoading(false);
-      return; // STOP HERE → DO NOT CHECK normal products
+      // If we are coming from a library page, prefer library book first
+      if (fromLibrary) {
+        try {
+          const res = await axios.get(`${config.apiUrl}/api/library/books/${id}`);
+          if (!cancelled && res.data?.success && res.data.book) {
+            const mapped = mapLibraryBook(res.data.book);
+            setProduct(mapped);
+            setMainImage(mapped.src);
+            setAllImages([mapped.src]);
+            setIsLibraryBook(true);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          // ignore and fall through to normal product lookup
+        }
+      }
+
+      // Normal product lookup (support numeric or string ids)
+      const foundProduct = allProducts.find(p => String(p.id) === String(id));
+      if (!cancelled && foundProduct) {
+        setProduct(foundProduct);
+        setMainImage(foundProduct.src);
+        setAllImages([foundProduct.src, ...(foundProduct.images || [])]);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: if this is not clearly a product, try library as a backup
+      if (!fromLibrary) {
+        try {
+          const res = await axios.get(`${config.apiUrl}/api/library/books/${id}`);
+          if (!cancelled && res.data?.success && res.data.book) {
+            const mapped = mapLibraryBook(res.data.book);
+            setProduct(mapped);
+            setMainImage(mapped.src);
+            setAllImages([mapped.src]);
+            setIsLibraryBook(true);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      if (!cancelled) {
+        setProduct(null);
+        setLoading(false);
+      }
     }
-  } catch (err) {}
-
-  // 2) If not a library book → load normal product
-  const foundProduct = allProducts.find(p => p.id === parseInt(id));
-  if (foundProduct) {
-    setProduct(foundProduct);
-    setMainImage(foundProduct.src);
-    setAllImages([foundProduct.src, ...(foundProduct.images || [])]);
-  }
-
-  setLoading(false);
-}
-
 
     load();
     return () => { cancelled = true; };
-  }, [id, allProducts]);
+  }, [id, allProducts, location.state]);
 
   const handleAddToCart = () => {
     if (!product) return;

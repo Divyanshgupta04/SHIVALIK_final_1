@@ -96,7 +96,20 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product, quantity = 1) => {
     setLoading(true);
-    
+
+    // Derive productType for identity verification flow.
+    // Priority: explicit product.productType -> guess from category/title -> default "both".
+    const rawType = String(product?.productType || '').toLowerCase();
+    const guessBase = `${String(product?.category || '')} ${String(product?.title || '')}`.toLowerCase();
+    const inferredType =
+      rawType === 'aadhaar' || rawType === 'pan' || rawType === 'both'
+        ? rawType
+        : guessBase.includes('pan')
+          ? 'pan'
+          : (guessBase.includes('aadhaar') || guessBase.includes('aadhar'))
+            ? 'aadhaar'
+            : 'both';
+
     try {
       if (user) {
         // Add to server cart for authenticated users
@@ -106,7 +119,16 @@ export const CartProvider = ({ children }) => {
         });
         
         if (response.data.success) {
-          setCart(response.data.cart);
+          const serverCart = Array.isArray(response.data.cart) ? response.data.cart : [];
+          // Frontend enrichment: attach productType if server doesn't store it.
+          const enriched = serverCart.map((item) => {
+            if (item?.productType) return item;
+            // Common shapes: {productId} or {product:{id}} depending on backend.
+            const pid = item?.productId ?? item?.product?.id;
+            if (pid === product?.id) return { ...item, productType: inferredType };
+            return item;
+          });
+          setCart(enriched);
           toast.success('Added to cart');
         }
       } else {
@@ -129,6 +151,7 @@ export const CartProvider = ({ children }) => {
             description: product.description,
             price: product.price,
             src: product.src,
+            productType: inferredType,
             quantity
           };
           newCart = [...cart, cartItem];
@@ -158,7 +181,15 @@ export const CartProvider = ({ children }) => {
         });
         
         if (response.data.success) {
-          setCart(response.data.cart);
+          const serverCart = Array.isArray(response.data.cart) ? response.data.cart : [];
+          // Preserve any locally-known productType if backend doesn't provide it.
+          const enriched = serverCart.map((item) => {
+            if (item?.productType) return item;
+            const pid = item?.productId ?? item?.product?.id;
+            const existing = cart.find((c) => (c?.productId ?? c?.product?.id) === pid);
+            return existing?.productType ? { ...item, productType: existing.productType } : item;
+          });
+          setCart(enriched);
           toast.success(quantity === 0 ? 'Item removed from cart' : 'Cart updated');
         }
       } else {
