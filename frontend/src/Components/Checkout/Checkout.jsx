@@ -20,31 +20,60 @@ const STORAGE_KEY = 'shivalik.checkout.v1';
 function getRequiredIdForm(cart) {
   let hasAadhaar = false;
   let hasPan = false;
-  let hasBoth = false;
 
   for (const item of cart || []) {
-    const t = String(item.productType || item.product_type || 'both').toLowerCase();
-    if (t === 'both') hasBoth = true;
-    if (t === 'aadhaar') hasAadhaar = true;
-    if (t === 'pan') hasPan = true;
+    // 1. Check explicit productType if available (Admin setting)
+    const type = String(item.productType || '').toLowerCase();
+
+    if (type === 'aadhaar') {
+      hasAadhaar = true;
+      continue;
+    }
+    if (type === 'pan') {
+      hasPan = true;
+      continue;
+    }
+    // If explicitly 'both', set both flags
+    if (type === 'both') {
+      hasAadhaar = true;
+      hasPan = true;
+      continue;
+    }
+
+    // explicit skip
+    if (type === 'none') {
+      continue;
+    }
+
+    // 2. Fallback: Check title/name for keywords case-insensitively
+    const title = String(item.title || item.name || '').toLowerCase();
+
+    if (title.includes('aadhaar') || title.includes('aadhar')) {
+      hasAadhaar = true;
+    }
+
+    if (title.includes('pan')) {
+      hasPan = true;
+    }
   }
 
-  if (hasBoth || (hasAadhaar && hasPan)) return 'universal';
+  // If both exist in cart, we use Universal form
+  if (hasAadhaar && hasPan) return 'universal';
   if (hasAadhaar) return 'aadhaar';
   if (hasPan) return 'pan';
+
   return null;
 }
 
 function StepPill({ active, done, children }) {
   return (
     <div
-      className={`rounded-full px-3 py-1 text-xs font-medium border ${
-        active
-          ? 'bg-indigo-600 text-white border-indigo-600'
-          : done
-            ? 'bg-green-50 text-green-700 border-green-200'
-            : 'bg-white text-gray-600 border-gray-200'
-      }`}
+      className={`rounded-full px-3 py-1 text-xs font-medium border ${active
+        ? 'bg-indigo-600 text-white border-indigo-600'
+        : done
+          ? 'bg-green-50 text-green-700 border-green-200'
+          : 'bg-white text-gray-600 border-gray-200'
+        }`}
     >
       {children}
     </div>
@@ -222,11 +251,10 @@ export default function Checkout() {
           <button
             type="button"
             onClick={goBack}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-              isDark
-                ? 'border-gray-600 bg-[#1a2332] text-gray-100 hover:bg-gray-700'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium ${isDark
+              ? 'border-gray-600 bg-[#1a2332] text-gray-100 hover:bg-gray-700'
+              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              }`}
           >
             Back
           </button>

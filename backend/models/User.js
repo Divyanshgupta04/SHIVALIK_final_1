@@ -13,6 +13,10 @@ const CartItemSchema = new mongoose.Schema({
   description: String,
   price: String,
   src: String,
+  productType: {
+    type: String,
+    default: 'both'
+  },
   quantity: {
     type: Number,
     default: 1,
@@ -66,9 +70,9 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -79,12 +83,12 @@ UserSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to generate OTP
-UserSchema.methods.generateOTP = function() {
+UserSchema.methods.generateOTP = function () {
   const otp = Math.floor(10000 + Math.random() * 90000).toString(); // 5-digit OTP
   this.otp = {
     code: otp,
@@ -95,31 +99,31 @@ UserSchema.methods.generateOTP = function() {
 };
 
 // Method to verify OTP
-UserSchema.methods.verifyOTP = function(candidateOTP) {
+UserSchema.methods.verifyOTP = function (candidateOTP) {
   if (!this.otp || !this.otp.code) {
     return { valid: false, message: 'No OTP found' };
   }
-  
+
   if (this.otp.expiresAt < new Date()) {
     return { valid: false, message: 'OTP has expired' };
   }
-  
+
   if (this.otp.attempts >= 3) {
     return { valid: false, message: 'Too many failed attempts' };
   }
-  
+
   if (this.otp.code !== candidateOTP) {
     this.otp.attempts += 1;
     return { valid: false, message: 'Invalid OTP' };
   }
-  
+
   // OTP is valid
   this.otp = undefined; // Clear OTP after successful verification
   return { valid: true };
 };
 
 // Method to clear expired OTP
-UserSchema.methods.clearExpiredOTP = function() {
+UserSchema.methods.clearExpiredOTP = function () {
   if (this.otp && this.otp.expiresAt < new Date()) {
     this.otp = undefined;
   }

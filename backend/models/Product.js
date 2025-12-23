@@ -50,10 +50,11 @@ const ProductSchema = new mongoose.Schema({
     default: undefined
   },
 
+
   // Identity requirement used by checkout flow
   productType: {
     type: String,
-    enum: ['aadhaar', 'pan', 'both'],
+    enum: ['aadhaar', 'pan', 'both', 'none'],
     default: 'both'
   },
 

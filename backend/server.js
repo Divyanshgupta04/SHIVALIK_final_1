@@ -76,7 +76,7 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
     console.log('MongoDB connected successfully');
-    
+
     // Auto-seed categories if database is empty
     const autoSeedCategories = require('./scripts/autoSeedCategories');
     await autoSeedCategories();
@@ -107,16 +107,13 @@ app.use('/api/payment', require('./routes/payment'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/subcategories', require('./routes/subcategories'));
-app.use('/api/pan-types', require('./routes/panTypes'));
 app.use('/api/identity-forms', require('./routes/identityForms'));
-// Library-specific routes
-app.use('/api/library/categories', require('./routes/libraryCategories'));
-app.use('/api/library/books', require('./routes/libraryBooks'));
+
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
-  
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
