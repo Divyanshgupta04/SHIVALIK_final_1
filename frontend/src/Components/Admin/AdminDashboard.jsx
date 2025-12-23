@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import config from '../../config/api';
-import { 
-  FiPlus, FiEdit, FiTrash2, FiLogOut, FiBarChart, FiUsers, FiShoppingCart, 
+import {
+  FiPlus, FiEdit, FiTrash2, FiLogOut, FiBarChart, FiUsers, FiShoppingCart,
   FiDollarSign, FiTrendingUp, FiPackage, FiEye, FiStar, FiActivity,
   FiHome, FiSettings, FiHelpCircle, FiMenu, FiX, FiArrowUp, FiArrowDown,
   FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid, FiBook, FiCreditCard
@@ -212,19 +212,19 @@ const AdminDashboard = () => {
       const response = await axios.get(`${config.apiUrl}/api/admin/orders?page=${page}&limit=50`, getAuthHeaders());
       if (response.data.success) {
         setOrders(response.data.orders.slice(0, 8)); // Keep only 8 for display
-        
+
         // Compute derived stats from all orders
         const allOrders = response.data.orders;
         const byStatus = {};
         let revenue = 0;
         const monthlyData = {};
         const productData = {};
-        
+
         allOrders.forEach(order => {
           // Status distribution
           byStatus[order.status] = (byStatus[order.status] || 0) + 1;
           revenue += order.total || 0;
-          
+
           // Monthly trends
           const month = new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short' });
           if (!monthlyData[month]) {
@@ -232,15 +232,15 @@ const AdminDashboard = () => {
           }
           monthlyData[month].orders += 1;
           monthlyData[month].revenue += order.total || 0;
-          
+
           // Product performance from order items
           if (order.items && Array.isArray(order.items)) {
             order.items.forEach(item => {
               const productName = item.title || 'Unknown Product';
               if (!productData[productName]) {
-                productData[productName] = { 
-                  name: productName, 
-                  sales: 0, 
+                productData[productName] = {
+                  name: productName,
+                  sales: 0,
                   revenue: 0,
                   quantity: 0
                 };
@@ -251,12 +251,12 @@ const AdminDashboard = () => {
             });
           }
         });
-        
+
         // Sort products by revenue and take top 6
         const topProducts = Object.values(productData)
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 6);
-        
+
         setOrderStats({
           totalOrders: response.data.pagination.totalOrders,
           revenue,
@@ -313,7 +313,7 @@ const AdminDashboard = () => {
         formData,
         getAuthHeaders()
       );
-      
+
       if (response.data.success) {
         toast.success('Product added successfully!');
         setShowAddModal(false);
@@ -335,7 +335,7 @@ const AdminDashboard = () => {
         formData,
         getAuthHeaders()
       );
-      
+
       if (response.data.success) {
         toast.success('Product updated successfully!');
         setShowEditModal(false);
@@ -356,7 +356,7 @@ const AdminDashboard = () => {
           `${config.apiUrl}/api/admin/products/${productId}`,
           getAuthHeaders()
         );
-        
+
         if (response.data.success) {
           toast.success('Product deleted successfully!');
           fetchProducts();
@@ -422,17 +422,17 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-3">
-              <button className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-700" onClick={() => setSidebarOpen(v=>!v)} aria-label="Toggle sidebar">
-                {sidebarOpen ? <FiX/> : <FiMenu/>}
+              <button className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-700" onClick={() => setSidebarOpen(v => !v)} aria-label="Toggle sidebar">
+                {sidebarOpen ? <FiX /> : <FiMenu />}
               </button>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => {fetchProducts(); fetchDashboardStats(); fetchOrders();}} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
-                <FiRefreshCw/> <span>Refresh</span>
+              <button onClick={() => { fetchProducts(); fetchDashboardStats(); fetchOrders(); }} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
+                <FiRefreshCw /> <span>Refresh</span>
               </button>
               <button onClick={handleLogout} className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
-                <FiLogOut/> <span>Logout</span>
+                <FiLogOut /> <span>Logout</span>
               </button>
             </div>
           </div>
@@ -446,42 +446,34 @@ const AdminDashboard = () => {
           <aside className={`w-full md:w-64 md:flex-shrink-0 ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
             <div className="bg-white rounded-xl border shadow-sm overflow-hidden md:sticky md:top-24">
               <div className="p-4 border-b font-semibold flex items-center gap-2 text-gray-800">
-                <FiHome className="text-gray-600"/> 
+                <FiHome className="text-gray-600" />
                 <span>Menu</span>
               </div>
               <nav className="p-2 space-y-1">
                 <a href="/admin/dashboard" className="flex items-center gap-3 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 font-medium">
-                  <FiActivity/> <span>Overview</span>
+                  <FiActivity /> <span>Overview</span>
                 </a>
                 <a href="/admin/products" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiPackage/> <span>Products</span>
+                  <FiPackage /> <span>Products</span>
                 </a>
                 <a href="/admin/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiGrid/> <span>Categories</span>
+                  <FiGrid /> <span>Categories</span>
                 </a>
                 <a href="/admin/catalog" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiGrid/> <span>Catalog Manager</span>
+                  <FiGrid /> <span>Catalog Manager</span>
                 </a>
-                <a href="/admin/pan-types" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiCreditCard/> <span>PAN Types</span>
-                </a>
-                <a href="/admin/library/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiBook/> <span>Library Categories</span>
-                </a>
-                <a href="/admin/library/books" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiBook/> <span>Library Books</span>
-                </a>
+
                 <a href="/admin/orders" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiShoppingCart/> <span>Orders</span>
+                  <FiShoppingCart /> <span>Orders</span>
                 </a>
                 <a href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiUsers/> <span>Users</span>
+                  <FiUsers /> <span>Users</span>
                 </a>
                 <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiSettings/> <span>Settings</span>
+                  <FiSettings /> <span>Settings</span>
                 </a>
                 <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiHelpCircle/> <span>Help</span>
+                  <FiHelpCircle /> <span>Help</span>
                 </a>
               </nav>
             </div>
@@ -489,358 +481,358 @@ const AdminDashboard = () => {
 
           {/* Main content */}
           <main className="flex-1 min-w-0 space-y-6">
-          {/* KPI cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">₹{orderStats.revenue?.toLocaleString()}</p>
+            {/* KPI cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="bg-white rounded-xl border shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Total Revenue</p>
+                    <p className="text-2xl font-bold text-gray-900">₹{orderStats.revenue?.toLocaleString()}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-emerald-50 text-emerald-600"><FiDollarSign /></div>
                 </div>
-                <div className="p-3 rounded-full bg-emerald-50 text-emerald-600"><FiDollarSign/></div>
+                <div className="mt-3 text-xs text-emerald-600 inline-flex items-center gap-1">
+                  <FiArrowUp /> <span>Live (from recent orders)</span>
+                </div>
               </div>
-              <div className="mt-3 text-xs text-emerald-600 inline-flex items-center gap-1">
-                <FiArrowUp/> <span>Live (from recent orders)</span>
+              <div className="bg-white rounded-xl border shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Total Products</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-indigo-50 text-indigo-600"><FiBarChart /></div>
+                </div>
+                <div className="mt-3 text-xs text-gray-500">
+                  <span>Latest: {stats.recentProducts?.[0]?.title || '—'}</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Users</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalUsers || 0}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-blue-50 text-blue-600"><FiUsers /></div>
+                </div>
+                <div className="mt-3 text-xs text-blue-600 inline-flex items-center gap-1">
+                  <FiArrowUp /> <span>{stats.verifiedUsers || 0} verified</span>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Orders</p>
+                    <p className="text-2xl font-bold text-gray-900">{orderStats.totalOrders}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-purple-50 text-purple-600"><FiShoppingCart /></div>
+                </div>
+                <div className="mt-3 text-xs text-gray-500">
+                  <span>Recent window</span>
+                </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Total Products</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
-                </div>
-                <div className="p-3 rounded-full bg-indigo-50 text-indigo-600"><FiBarChart/></div>
-              </div>
-              <div className="mt-3 text-xs text-gray-500">
-                <span>Latest: {stats.recentProducts?.[0]?.title || '—'}</span>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers || 0}</p>
-                </div>
-                <div className="p-3 rounded-full bg-blue-50 text-blue-600"><FiUsers/></div>
-              </div>
-              <div className="mt-3 text-xs text-blue-600 inline-flex items-center gap-1">
-                <FiArrowUp/> <span>{stats.verifiedUsers || 0} verified</span>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{orderStats.totalOrders}</p>
-                </div>
-                <div className="p-3 rounded-full bg-purple-50 text-purple-600"><FiShoppingCart/></div>
-              </div>
-              <div className="mt-3 text-xs text-gray-500">
-                <span>Recent window</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Charts section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Revenue Trends Chart */}
-            <div className="bg-white rounded-xl border shadow-sm p-5 lg:col-span-2">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Revenue Trends</h3>
-                <div className="text-xs text-gray-500 inline-flex items-center gap-2">
-                  <FiTrendingUp/> <span>Monthly Performance</span>
+            {/* Charts section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Revenue Trends Chart */}
+              <div className="bg-white rounded-xl border shadow-sm p-5 lg:col-span-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Revenue Trends</h3>
+                  <div className="text-xs text-gray-500 inline-flex items-center gap-2">
+                    <FiTrendingUp /> <span>Monthly Performance</span>
+                  </div>
                 </div>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={orderStats.monthly.length ? orderStats.monthly : [
+                      { name: 'Jan', orders: 12, revenue: 45000 },
+                      { name: 'Feb', orders: 19, revenue: 67000 },
+                      { name: 'Mar', orders: 15, revenue: 52000 },
+                      { name: 'Apr', orders: 25, revenue: 89000 },
+                      { name: 'May', orders: 22, revenue: 78000 },
+                      { name: 'Jun', orders: 30, revenue: 120000 }
+                    ]}>
+                      <defs>
+                        <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6B7280" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#6B7280" />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          name === 'revenue' ? `₹${value.toLocaleString()}` : value,
+                          name === 'revenue' ? 'Revenue' : 'Orders'
+                        ]}
+                        labelStyle={{ color: '#374151' }}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#3B82F6"
+                        strokeWidth={2}
+                        fill="url(#revenueGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Order Status Pie Chart */}
+              <div className="bg-white rounded-xl border shadow-sm p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Order Status</h3>
+                  <div className="text-xs text-gray-500">
+                    <span>Distribution</span>
+                  </div>
+                </div>
+
+                {/* Pie Chart */}
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Delivered', value: orderStats.byStatus?.delivered || 5, color: '#10B981' },
+                          { name: 'Processing', value: orderStats.byStatus?.processing || 2, color: '#F59E0B' },
+                          { name: 'Shipped', value: orderStats.byStatus?.shipped || 1, color: '#3B82F6' },
+                          { name: 'Pending', value: orderStats.byStatus?.pending || 4, color: '#8B5CF6' },
+                          { name: 'Cancelled', value: orderStats.byStatus?.cancelled || 4, color: '#EF4444' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={65}
+                        innerRadius={25}
+                        dataKey="value"
+                        startAngle={90}
+                        endAngle={450}
+                      >
+                        {[
+                          { name: 'Delivered', value: orderStats.byStatus?.delivered || 5, color: '#10B981' },
+                          { name: 'Processing', value: orderStats.byStatus?.processing || 2, color: '#F59E0B' },
+                          { name: 'Shipped', value: orderStats.byStatus?.shipped || 1, color: '#3B82F6' },
+                          { name: 'Pending', value: orderStats.byStatus?.pending || 4, color: '#8B5CF6' },
+                          { name: 'Cancelled', value: orderStats.byStatus?.cancelled || 4, color: '#EF4444' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value, name) => [value, 'Orders']}
+                        labelFormatter={(label) => `Status: ${label}`}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Status Legend */}
+                <div className="mt-4 space-y-2">
+                  {[
+                    { name: 'Delivered', value: orderStats.byStatus?.delivered || 5, color: '#10B981' },
+                    { name: 'Cancelled', value: orderStats.byStatus?.cancelled || 4, color: '#EF4444' },
+                    { name: 'Pending', value: orderStats.byStatus?.pending || 4, color: '#8B5CF6' },
+                    { name: 'Processing', value: orderStats.byStatus?.processing || 2, color: '#F59E0B' },
+                    { name: 'Shipped', value: orderStats.byStatus?.shipped || 1, color: '#3B82F6' }
+                  ].filter(item => item.value > 0).map((item, index) => {
+                    const total = Object.values(orderStats.byStatus).reduce((a, b) => a + b, 0) || 16;
+                    const percentage = ((item.value / total) * 100).toFixed(0);
+                    return (
+                      <div key={index} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: item.color }}
+                          ></div>
+                          <span className="text-gray-700 font-medium">{item.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900 font-semibold">{item.value}</span>
+                          <span className="text-gray-500 text-xs">({percentage}%)</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Product Performance Bar Chart - Real Data */}
+            <div className="bg-white rounded-xl border shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Top Products Performance</h3>
+                <a href="/admin/products" className="text-sm text-indigo-600 hover:underline">
+                  <span>View all products</span>
+                </a>
               </div>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={orderStats.monthly.length ? orderStats.monthly : [
-                    { name: 'Jan', orders: 12, revenue: 45000 },
-                    { name: 'Feb', orders: 19, revenue: 67000 },
-                    { name: 'Mar', orders: 15, revenue: 52000 },
-                    { name: 'Apr', orders: 25, revenue: 89000 },
-                    { name: 'May', orders: 22, revenue: 78000 },
-                    { name: 'Jun', orders: 30, revenue: 120000 }
-                  ]}>
-                    <defs>
-                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#6B7280"/>
-                    <YAxis tick={{ fontSize: 12 }} stroke="#6B7280"/>
-                    <Tooltip 
-                      formatter={(value, name) => [
-                        name === 'revenue' ? `₹${value.toLocaleString()}` : value,
-                        name === 'revenue' ? 'Revenue' : 'Orders'
-                      ]}
-                      labelStyle={{ color: '#374151' }}
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#3B82F6"
-                      strokeWidth={2}
-                      fill="url(#revenueGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {orderStats.productStats.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={orderStats.productStats}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 11 }}
+                        stroke="#6B7280"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#6B7280" />
+                      <Tooltip
+                        formatter={(value, name) => {
+                          if (name === 'revenue') return [`₹${value.toLocaleString()}`, 'Revenue'];
+                          if (name === 'quantity') return [value, 'Total Quantity'];
+                          return [value, 'Orders Count'];
+                        }}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="orders" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <FiPackage className="mx-auto text-4xl mb-2 text-gray-300" />
+                      <p>No product data available</p>
+                      <p className="text-sm">Orders with items will appear here</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Order Status Pie Chart */}
+            {/* Real-time Analytics Summary */}
             <div className="bg-white rounded-xl border shadow-sm p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Order Status</h3>
-                <div className="text-xs text-gray-500">
-                  <span>Distribution</span>
+                <h3 className="font-semibold text-gray-900">Live Analytics Summary</h3>
+                <div className="text-xs text-gray-500 inline-flex items-center gap-2">
+                  <FiActivity className="animate-pulse text-green-500" /> <span>Real-time data</span>
                 </div>
               </div>
-              
-              {/* Pie Chart */}
-              <div className="h-56">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: 'Delivered', value: orderStats.byStatus?.delivered || 5, color: '#10B981' },
-                        { name: 'Processing', value: orderStats.byStatus?.processing || 2, color: '#F59E0B' },
-                        { name: 'Shipped', value: orderStats.byStatus?.shipped || 1, color: '#3B82F6' },
-                        { name: 'Pending', value: orderStats.byStatus?.pending || 4, color: '#8B5CF6' },
-                        { name: 'Cancelled', value: orderStats.byStatus?.cancelled || 4, color: '#EF4444' }
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={65}
-                      innerRadius={25}
-                      dataKey="value"
-                      startAngle={90}
-                      endAngle={450}
-                    >
-                      {[
-                        { name: 'Delivered', value: orderStats.byStatus?.delivered || 5, color: '#10B981' },
-                        { name: 'Processing', value: orderStats.byStatus?.processing || 2, color: '#F59E0B' },
-                        { name: 'Shipped', value: orderStats.byStatus?.shipped || 1, color: '#3B82F6' },
-                        { name: 'Pending', value: orderStats.byStatus?.pending || 4, color: '#8B5CF6' },
-                        { name: 'Cancelled', value: orderStats.byStatus?.cancelled || 4, color: '#EF4444' }
-                      ].map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value, name) => [value, 'Orders']}
-                      labelFormatter={(label) => `Status: ${label}`}
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              
-              {/* Status Legend */}
-              <div className="mt-4 space-y-2">
-                {[
-                  { name: 'Delivered', value: orderStats.byStatus?.delivered || 5, color: '#10B981' },
-                  { name: 'Cancelled', value: orderStats.byStatus?.cancelled || 4, color: '#EF4444' },
-                  { name: 'Pending', value: orderStats.byStatus?.pending || 4, color: '#8B5CF6' },
-                  { name: 'Processing', value: orderStats.byStatus?.processing || 2, color: '#F59E0B' },
-                  { name: 'Shipped', value: orderStats.byStatus?.shipped || 1, color: '#3B82F6' }
-                ].filter(item => item.value > 0).map((item, index) => {
-                  const total = Object.values(orderStats.byStatus).reduce((a, b) => a + b, 0) || 16;
-                  const percentage = ((item.value / total) * 100).toFixed(0);
-                  return (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: item.color }}
-                        ></div>
-                        <span className="text-gray-700 font-medium">{item.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-900 font-semibold">{item.value}</span>
-                        <span className="text-gray-500 text-xs">({percentage}%)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Product Performance Bar Chart - Real Data */}
-          <div className="bg-white rounded-xl border shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Top Products Performance</h3>
-              <a href="/admin/products" className="text-sm text-indigo-600 hover:underline">
-                <span>View all products</span>
-              </a>
-            </div>
-            <div className="h-64">
-              {orderStats.productStats.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={orderStats.productStats}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fontSize: 11 }} 
-                      stroke="#6B7280"
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                    />
-                    <YAxis tick={{ fontSize: 12 }} stroke="#6B7280"/>
-                    <Tooltip 
-                      formatter={(value, name) => {
-                        if (name === 'revenue') return [`₹${value.toLocaleString()}`, 'Revenue'];
-                        if (name === 'quantity') return [value, 'Total Quantity'];
-                        return [value, 'Orders Count'];
-                      }}
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Bar dataKey="sales" fill="#3B82F6" radius={[4, 4, 0, 0]} name="orders" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <FiPackage className="mx-auto text-4xl mb-2 text-gray-300" />
-                    <p>No product data available</p>
-                    <p className="text-sm">Orders with items will appear here</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {orderStats.productStats.reduce((sum, p) => sum + p.quantity, 0)}
                   </div>
+                  <div className="text-sm text-gray-600">Items Sold</div>
                 </div>
-              )}
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    ₹{Math.round(orderStats.revenue / (orderStats.totalOrders || 1)).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-gray-600">Avg Order Value</div>
+                </div>
+                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {Object.keys(orderStats.byStatus).length}
+                  </div>
+                  <div className="text-sm text-gray-600">Status Types</div>
+                </div>
+                <div className="text-center p-3 bg-amber-50 rounded-lg">
+                  <div className="text-2xl font-bold text-amber-600">
+                    {orderStats.monthly.length}
+                  </div>
+                  <div className="text-sm text-gray-600">Active Months</div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Real-time Analytics Summary */}
-          <div className="bg-white rounded-xl border shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Live Analytics Summary</h3>
-              <div className="text-xs text-gray-500 inline-flex items-center gap-2">
-                <FiActivity className="animate-pulse text-green-500" /> <span>Real-time data</span>
+            {/* Recent orders table */}
+            <div className="bg-white rounded-xl border shadow-sm">
+              <div className="p-5 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">Recent Orders</h3>
+                <a href="/admin/orders" className="text-sm text-indigo-600 hover:underline">
+                  <span>View all</span>
+                </a>
               </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
-                  {orderStats.productStats.reduce((sum, p) => sum + p.quantity, 0)}
-                </div>
-                <div className="text-sm text-gray-600">Items Sold</div>
-              </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  ₹{Math.round(orderStats.revenue / (orderStats.totalOrders || 1)).toLocaleString()}
-                </div>
-                <div className="text-sm text-gray-600">Avg Order Value</div>
-              </div>
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {Object.keys(orderStats.byStatus).length}
-                </div>
-                <div className="text-sm text-gray-600">Status Types</div>
-              </div>
-              <div className="text-center p-3 bg-amber-50 rounded-lg">
-                <div className="text-2xl font-bold text-amber-600">
-                  {orderStats.monthly.length}
-                </div>
-                <div className="text-sm text-gray-600">Active Months</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent orders table */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-5 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Recent Orders</h3>
-              <a href="/admin/orders" className="text-sm text-indigo-600 hover:underline">
-                <span>View all</span>
-              </a>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-5 py-3 font-medium text-gray-600">Customer</th>
-                    <th className="text-left px-5 py-3 font-medium text-gray-600">Items</th>
-                    <th className="text-left px-5 py-3 font-medium text-gray-600">Total</th>
-                    <th className="text-left px-5 py-3 font-medium text-gray-600">Status</th>
-                    <th className="text-left px-5 py-3 font-medium text-gray-600">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.slice(0,8).map(o => (
-                    <tr key={o._id} className="border-t">
-                      <td className="px-5 py-3">
-                        <div className="font-medium text-gray-900">{o.userName}</div>
-                        <div className="text-gray-500 text-xs">{o.userEmail}</div>
-                      </td>
-                      <td className="px-5 py-3 text-gray-700">{o.items?.reduce((a,b)=>a+b.quantity,0)} items</td>
-                      <td className="px-5 py-3 font-medium text-gray-900">₹{o.total?.toLocaleString()}</td>
-                      <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[o.status]}`}>
-                          {o.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-gray-500 text-xs">{new Date(o.createdAt).toLocaleString()}</td>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-5 py-3 font-medium text-gray-600">Customer</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-600">Items</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-600">Total</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-600">Status</th>
+                      <th className="text-left px-5 py-3 font-medium text-gray-600">Date</th>
                     </tr>
-                  ))}
-                  {orders.length===0 && (
-                    <tr><td colSpan="5" className="px-5 py-8 text-center text-gray-500">No orders yet.</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {orders.slice(0, 8).map(o => (
+                      <tr key={o._id} className="border-t">
+                        <td className="px-5 py-3">
+                          <div className="font-medium text-gray-900">{o.userName}</div>
+                          <div className="text-gray-500 text-xs">{o.userEmail}</div>
+                        </td>
+                        <td className="px-5 py-3 text-gray-700">{o.items?.reduce((a, b) => a + b.quantity, 0)} items</td>
+                        <td className="px-5 py-3 font-medium text-gray-900">₹{o.total?.toLocaleString()}</td>
+                        <td className="px-5 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[o.status]}`}>
+                            {o.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-gray-500 text-xs">{new Date(o.createdAt).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {orders.length === 0 && (
+                      <tr><td colSpan="5" className="px-5 py-8 text-center text-gray-500">No orders yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* Manage products quick */}
-          <div className="bg-white rounded-xl border shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Quick Product Actions</h3>
-              <button onClick={openAddModal} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700">
-                <FiPlus/> <span>Add Product</span>
-              </button>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {products.slice(0,6).map(product => (
-                <div key={product.id} className="border rounded-xl p-3 hover:shadow-sm transition">
-                  <div className="flex items-center gap-3">
-                    <img src={product.src} alt={product.title} className="w-14 h-14 rounded object-cover border" />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-medium text-gray-900">{product.title}</div>
-                      <div className="text-sm text-gray-500">₹{product.price}</div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => openEditModal(product)} className="p-2 rounded-lg border hover:bg-gray-50" title="Edit"><FiEdit/></button>
-                      <button onClick={() => handleDeleteProduct(product.id)} className="p-2 rounded-lg border hover:bg-red-50 text-red-600" title="Delete"><FiTrash2/></button>
+            {/* Manage products quick */}
+            <div className="bg-white rounded-xl border shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">Quick Product Actions</h3>
+                <button onClick={openAddModal} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700">
+                  <FiPlus /> <span>Add Product</span>
+                </button>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {products.slice(0, 6).map(product => (
+                  <div key={product.id} className="border rounded-xl p-3 hover:shadow-sm transition">
+                    <div className="flex items-center gap-3">
+                      <img src={product.src} alt={product.title} className="w-14 h-14 rounded object-cover border" />
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate font-medium text-gray-900">{product.title}</div>
+                        <div className="text-sm text-gray-500">₹{product.price}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => openEditModal(product)} className="p-2 rounded-lg border hover:bg-gray-50" title="Edit"><FiEdit /></button>
+                        <button onClick={() => handleDeleteProduct(product.id)} className="p-2 rounded-lg border hover:bg-red-50 text-red-600" title="Delete"><FiTrash2 /></button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {products.length===0 && <div className="text-sm text-gray-500">No products. Use "Add Product" to create.</div>}
+                ))}
+                {products.length === 0 && <div className="text-sm text-gray-500">No products. Use "Add Product" to create.</div>}
+              </div>
             </div>
-          </div>
           </main>
         </div>
       </div>
 
       {/* Modals */}
-      <ProductModal 
+      <ProductModal
         show={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddProduct}
@@ -848,7 +840,7 @@ const AdminDashboard = () => {
         formData={formData}
         setFormData={setFormData}
       />
-      <ProductModal 
+      <ProductModal
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
         onSubmit={handleEditProduct}

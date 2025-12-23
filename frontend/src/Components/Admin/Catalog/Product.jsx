@@ -173,6 +173,7 @@ export default function Product({ categories, subCategories, products, setProduc
       price: parsedPrice,
       categoryId,
       subCategoryId,
+      subCategoryId,
       productType,
       imageDataUrl: imageDataUrl || '',
       createdAt: new Date().toISOString(),
@@ -205,6 +206,7 @@ export default function Product({ categories, subCategories, products, setProduc
           price: Number(p.price || 0),
           categoryId: String(p.categoryId || categoryId),
           subCategoryId: String(p.subCategoryId || subCategoryId),
+          subCategoryId: String(p.subCategoryId || subCategoryId),
           productType: p.productType || productType,
           imageDataUrl: p.src || imageDataUrl || '',
           createdAt: p.createdAt,
@@ -224,6 +226,7 @@ export default function Product({ categories, subCategories, products, setProduc
       name: p.name || '',
       price: String(p.price ?? ''),
       categoryId: p.categoryId || '',
+      subCategoryId: p.subCategoryId || '',
       subCategoryId: p.subCategoryId || '',
       productType: p.productType || 'aadhaar',
       imageDataUrl: p.imageDataUrl || '',
@@ -281,14 +284,14 @@ export default function Product({ categories, subCategories, products, setProduc
       prev.map((p) =>
         p.id === editProduct.id
           ? {
-              ...p,
-              name: cleanName,
-              price: parsedPrice,
-              categoryId: editForm.categoryId,
-              subCategoryId: editForm.subCategoryId,
-              productType: editForm.productType,
-              imageDataUrl: editForm.imageDataUrl || '',
-            }
+            ...p,
+            name: cleanName,
+            price: parsedPrice,
+            categoryId: editForm.categoryId,
+            subCategoryId: editForm.subCategoryId,
+            productType: editForm.productType,
+            imageDataUrl: editForm.imageDataUrl || '',
+          }
           : p,
       ),
     );
@@ -397,6 +400,8 @@ export default function Product({ categories, subCategories, products, setProduc
               )}
             </div>
 
+
+
             <div>
               <label className="block text-sm font-medium text-gray-700">Product Type (ID Requirement)</label>
               <select
@@ -408,6 +413,7 @@ export default function Product({ categories, subCategories, products, setProduc
                 <option value="aadhaar">Aadhaar</option>
                 <option value="pan">PAN</option>
                 <option value="both">Both (Aadhaar + PAN)</option>
+                <option value="none">None (No Form)</option>
               </select>
               <p className="mt-1 text-xs text-gray-500">Used during checkout to decide which identity form is mandatory.</p>
             </div>
@@ -546,6 +552,8 @@ export default function Product({ categories, subCategories, products, setProduc
             />
           </div>
 
+
+
           <div>
             <label className="block text-sm font-medium text-gray-700">Product Type</label>
             <select
@@ -557,6 +565,7 @@ export default function Product({ categories, subCategories, products, setProduc
               <option value="aadhaar">Aadhaar</option>
               <option value="pan">PAN</option>
               <option value="both">Both</option>
+              <option value="none">None</option>
             </select>
           </div>
 

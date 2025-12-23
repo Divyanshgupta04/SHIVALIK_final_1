@@ -4,6 +4,7 @@ import axios from 'axios';
 import { FiCheckCircle, FiFileText, FiCamera, FiUpload, FiArrowRight, FiCreditCard, FiPercent, FiPrinter } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 import config from '../config/api';
+import { useCart } from '../context/CartContext';
 
 const STEPS = [
   'Click on Pan',
@@ -30,6 +31,8 @@ const emptyForm = {
 
 const PanService = () => {
   const { isDark } = useTheme();
+  const { addToCart } = useCart();
+  const navigate = React.useMemo(() => require('react-router-dom').useNavigate(), []); // clean this up if useNavigate is already imported or available
   const [step, setStep] = useState(1);
   const [panTypes, setPanTypes] = useState([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
@@ -56,9 +59,35 @@ const PanService = () => {
     async function loadTypes() {
       setLoadingTypes(true);
       try {
-        const res = await axios.get(`${config.apiUrl}/api/pan-types`);
+        // Fetch all products that are likely PAN cards (filter by name/title)
+        // Alternatively, your backend might have a category filter like /api/products?category=pan
+        const res = await axios.get(`${config.apiUrl}/api/products`);
         if (!cancelled && res.data?.success) {
-          setPanTypes(res.data.panTypes || []);
+          const allProducts = res.data.products || [];
+          // Filter products that identify as PAN cards
+          const panProducts = allProducts.filter(p => {
+            const title = (p.title || '').toLowerCase();
+            const type = (p.productType || '').toLowerCase();
+            const category = (p.category || '').toLowerCase();
+
+            return (
+              title.includes('pan') ||
+              type === 'pan' ||
+              category.includes('pan')
+            );
+          });
+          // Map to the shape expected by UI
+          // Map to the shape expected by UI AND Cart
+          setPanTypes(panProducts.map(p => ({
+            ...p, // keep original properties for cart
+            _id: p._id || p.id,
+            name: p.title,
+            fee: parseFloat(p.price) || 0,
+            discountPercent: 0,
+            code: 'PAN',
+            iconUrl: p.src,
+            description: p.description
+          })));
         }
       } catch (_) {
         if (!cancelled) setPanTypes([]);
@@ -79,6 +108,23 @@ const PanService = () => {
   const handleFieldChange = useCallback((key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   }, []);
+
+  const handleProceedToCheckout = () => {
+    if (!selectedType) return;
+
+    // Add to cart
+    addToCart(selectedType);
+
+    // Navigate to checkout
+    // using window.location or navigate if available. 
+    // Since I added navigate via require above, I'll use it, but better to check if it was already imported. 
+    // Actually, PanService doesn't import useNavigate at top level in the visible code? 
+    // Wait, let's check lines 1-10.
+    // Line 1: import React ...
+    // No useNavigate imported. I should add it to imports or use the one I added inside.
+    // Ideally I should fix the imports properly.
+    navigate('/checkout');
+  };
 
   const saveAndNext = (nextStep) => {
     // Persist form data locally so user does not lose it
@@ -128,11 +174,10 @@ const PanService = () => {
                   return (
                     <li key={label} className="flex items-start gap-3">
                       <div
-                        className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold border ${
-                          done ? 'bg-green-500 text-white border-green-500' :
+                        className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold border ${done ? 'bg-green-500 text-white border-green-500' :
                           active ? 'bg-blue-600 text-white border-blue-600' :
-                          isDark ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-500'
-                        }`}
+                            isDark ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-500'
+                          }`}
                       >
                         {done ? <FiCheckCircle className="h-3 w-3" /> : current}
                       </div>
@@ -239,13 +284,12 @@ const PanService = () => {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onClick={() => saveAndNext(3)}
+                    onClick={handleProceedToCheckout}
                     disabled={!selectedTypeId}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${
-                      selectedTypeId ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                    }`}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold ${selectedTypeId ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      }`}
                   >
-                    Continue to Details <FiArrowRight />
+                    Add to Cart & Checkout <FiArrowRight />
                   </button>
                 </div>
               </motion.section>

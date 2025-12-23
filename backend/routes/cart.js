@@ -70,6 +70,7 @@ router.post('/add', requireAuth, async (req, res) => {
         description: product.description,
         price: product.price,
         src: product.src,
+        productType: product.productType, // Persist the type (aadhaar/pan/both)
         quantity: quantity
       });
     }
@@ -217,7 +218,7 @@ router.post('/sync', requireAuth, async (req, res) => {
     // Merge local cart with server cart
     for (const localItem of localCart) {
       const existingItemIndex = user.cart.findIndex(item => item.productId === localItem.productId);
-      
+
       if (existingItemIndex >= 0) {
         // Add quantities if item exists
         user.cart[existingItemIndex].quantity += localItem.quantity;
