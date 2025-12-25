@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { FiArrowLeft } from "react-icons/fi";
-
 export default function UniversalIDForm({ initialValue, onBack, onSubmit, disabled }) {
   const [form, setForm] = useState({
     fullName: "",
