@@ -5,7 +5,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
-require('dotenv').config();
+require('dotenv').config(); // Load environment variables FIRST
+const passport = require('./config/passport');
 const { verifyEmailTransport } = require('./utils/email');
 
 const app = express();
@@ -36,7 +37,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Session configuration
 const isProduction = process.env.NODE_ENV === 'production';
@@ -68,6 +70,10 @@ if (isProduction) {
 
 app.use(session(sessionConfig));
 
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 // MongoDB connection
 const connectDB = async () => {
   try {
@@ -98,10 +104,11 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', require('./routes/auth')); // Admin Auth (Login/Register)
+app.use('/api/auth', require('./routes/googleAuth')); // Google OAuth (User Auth)
 app.use('/api/products', require('./routes/products'));
 app.use('/api/admin', require('./routes/admin'));
-app.use('/api/user-auth', require('./routes/userAuth'));
+app.use('/api/user-auth', require('./routes/userAuth')); // Deprecated OTP routes
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/payment', require('./routes/payment'));
 app.use('/api/stats', require('./routes/stats'));
@@ -130,3 +137,5 @@ server.listen(PORT, () => {
 });
 
 module.exports = { app, io };
+// Force Restart
+// Cleanup done

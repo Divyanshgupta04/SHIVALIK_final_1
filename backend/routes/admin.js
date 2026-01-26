@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const PanType = require('../models/PanType');
 const auth = require('../middleware/auth');
+const emailService = require('../utils/email');
 
 const router = express.Router();
 
@@ -12,12 +13,22 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
     if (existingProduct) {
       return res.status(400).json({ message: 'Product with this ID already exists' });
+    }
+
+    // If subCategoryId is provided, fetch the subcategory to get its categoryId
+    let finalCategoryId = categoryId;
+    if (subCategoryId && !categoryId) {
+      const SubCategory = require('../models/SubCategory');
+      const subcategory = await SubCategory.findById(subCategoryId);
+      if (subcategory) {
+        finalCategoryId = subcategory.categoryId;
+      }
     }
 
     const product = new Product({
@@ -28,10 +39,11 @@ router.post('/products', auth, async (req, res) => {
       src,
       images: images || [],
       category,
-      categoryId,
-      subCategoryId,
+      categoryId: finalCategoryId,
+      subCategoryId: subCategoryId || undefined,
       productType: productType || 'both',
-      hasForm: !!hasForm
+      hasForm: !!hasForm,
+      isInsurance: !!isInsurance
     });
 
     await product.save();
@@ -55,15 +67,27 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm } = req.body;
-    
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance } = req.body;
+
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
     if (typeof categoryId !== 'undefined') update.categoryId = categoryId;
-    if (typeof subCategoryId !== 'undefined') update.subCategoryId = subCategoryId;
+    if (typeof subCategoryId !== 'undefined') {
+      update.subCategoryId = subCategoryId || undefined;
+
+      // If subCategoryId is provided and categoryId is not, fetch categoryId from subcategory
+      if (subCategoryId && !categoryId) {
+        const SubCategory = require('../models/SubCategory');
+        const subcategory = await SubCategory.findById(subCategoryId);
+        if (subcategory) {
+          update.categoryId = subcategory.categoryId;
+        }
+      }
+    }
     if (typeof productType !== 'undefined') update.productType = productType;
     if (typeof images !== 'undefined') update.images = images;
     if (typeof hasForm !== 'undefined') update.hasForm = !!hasForm;
+    if (typeof isInsurance !== 'undefined') update.isInsurance = !!isInsurance;
 
     const product = await Product.findOneAndUpdate(
       { id: req.params.id },
@@ -178,7 +202,7 @@ router.get('/dashboard', auth, async (req, res) => {
   try {
     const totalProducts = await Product.countDocuments();
     const recentProducts = await Product.find().sort({ createdAt: -1 }).limit(5);
-    
+
     const totalUsers = await User.countDocuments();
     const verifiedUsers = await User.countDocuments({ isVerified: true });
     const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5).select('name email isVerified createdAt lastLogin');
@@ -258,18 +282,25 @@ router.get('/orders', auth, async (req, res) => {
 router.get('/orders/:id', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('userId', 'name email');
+      .populate('userId', 'username email')
+      .populate({
+        path: 'identityFormId',
+        select: '+aadhaarNumber +panNumber +aadhaarPhoto +panPhoto fullName dob mobile fatherName formType'
+      });
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    res.json({
-      success: true,
-      order
-    });
+    // Format response with identity form data
+    const response = {
+      ...order.toObject(),
+      identityForm: order.identityFormId || null
+    };
+
+    res.json({ success: true, order: response });
   } catch (error) {
-    console.error('Get admin order details error:', error);
+    console.error('Get order error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -408,6 +439,65 @@ router.delete('/pan-types/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Delete PAN type error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/admin/announcements/send
+// @desc    Send bulk announcement to users
+// @access  Private (Admin only)
+router.post('/announcements/send', auth, async (req, res) => {
+  try {
+    const { subject, message, sendTo = 'all' } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ message: 'Subject and message are required' });
+    }
+
+    // Determine target users
+    let query = {};
+    if (sendTo === 'verified') {
+      query = { isVerified: true };
+    }
+    // 'all' uses empty query {}
+
+    const users = await User.find(query).select('email name');
+
+    if (users.length === 0) {
+      return res.status(400).json({ message: 'No users found to send message to' });
+    }
+
+    console.log(`Sending announcement to ${users.length} users`);
+
+    // Send emails in background (or simpler loop for now)
+    // For production with thousands of users, use a queue (Bull/RabbitMQ)
+    let successCount = 0;
+    let failCount = 0;
+
+    // Send in parallel batches of 5 to avoid overwhelming SMTP
+    const batchSize = 5;
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, i + batchSize);
+      await Promise.all(batch.map(async (user) => {
+        try {
+          const result = await emailService.sendAnnouncementEmail(user.email, user.name, subject, message);
+          if (result.success) successCount++;
+          else failCount++;
+        } catch (err) {
+          console.error(`Failed to send to ${user.email}:`, err);
+          failCount++;
+        }
+      }));
+    }
+
+    res.json({
+      success: true,
+      message: `Announcement processing complete. Sent: ${successCount}, Failed: ${failCount}`,
+      stats: { successCount, failCount, total: users.length }
+    });
+
+  } catch (error) {
+    console.error('Announcement send error:', error);
+    res.status(500).json({ message: 'Server error sending announcements' });
   }
 });
 

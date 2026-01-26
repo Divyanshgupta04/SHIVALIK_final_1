@@ -21,11 +21,13 @@ import AdminDashboard from './Components/Admin/AdminDashboard';
 import AdminProducts from './Components/Admin/AdminProducts';
 import AdminUsers from './Components/Admin/AdminUsers';
 import AdminOrders from './Components/Admin/AdminOrders';
-import AdminCategories from './Components/Admin/AdminCategories';
+
 import AdminCatalog from './Components/Admin/Catalog/AdminCatalog';
+import AdminAnnouncements from './Components/Admin/AdminAnnouncements';
 
 import SignIn from './Components/UserAuth/SignIn';
 import SignUp from './Components/UserAuth/SignUp';
+import AuthSuccess from './Components/UserAuth/AuthSuccess';
 import ProtectedRoute from './Components/UserAuth/ProtectedRoute';
 import Address from './Components/Checkout/Address';
 import Checkout from './Components/Checkout/Checkout';
@@ -36,6 +38,8 @@ import Category from './Components/Category';
 import ProductDetail from './Components/ProductDetail';
 
 
+import SEO from './Components/SEO';
+
 function App() {
   const { theme } = useTheme();
   const { isScroll } = useContext(ProductsData);
@@ -44,24 +48,31 @@ function App() {
 
   return (
     <StatsProvider>
+      <SEO
+        title="Home"
+        description="Shivalik Service Hub - Your trusted partner for PAN cards, digital services, and online solutions in India. Fast, reliable, and convenient."
+        keywords="shivalik service hub, pan card apply online, digital services india, online service center, jammu kashmir services"
+      />
       <div className={`min-h-screen w-full flex flex-col m-0 p-0 transition-colors duration-300 ${theme === 'dark'
-          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white'
-          : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white'
+        : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900'
         }`}>
         <Routes>
           {/* Admin Routes (without navbar and footer) */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<AdminProducts />} />
-          <Route path="/admin/categories" element={<AdminCategories />} />
+
           <Route path="/admin/catalog" element={<AdminCatalog />} />
 
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
+          <Route path="/admin/announcements" element={<AdminAnnouncements />} />
 
           {/* User Auth Routes (without navbar and footer) */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/auth/success" element={<AuthSuccess />} />
 
           {/* Regular Routes (with navbar and footer) */}
           <Route path="/*" element={
@@ -72,8 +83,8 @@ function App() {
               {/* Spacer to prevent content from going under the fixed navbar */}
               <div
                 className={`block w-full m-0 p-0 ${(isHomePage && !isScroll)
-                    ? 'h-[160px]'
-                    : 'h-[90px]'
+                  ? 'h-[160px]'
+                  : 'h-[90px]'
                   }`}
               ></div>
 

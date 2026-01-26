@@ -28,9 +28,11 @@ const IdentityFormSchema = new mongoose.Schema(
 
     // Aadhaar fields
     aadhaarNumber: { type: String, trim: true, select: false },
+    aadhaarPhoto: { type: String, select: false }, // base64 encoded image
 
     // PAN fields
     panNumber: { type: String, trim: true, uppercase: true, select: false },
+    panPhoto: { type: String, select: false }, // base64 encoded image
     fatherName: { type: String, trim: true },
 
     // Optional snapshot for later processing / audit

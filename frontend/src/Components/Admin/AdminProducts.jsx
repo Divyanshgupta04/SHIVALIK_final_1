@@ -6,9 +6,20 @@ import axios from 'axios'
 import { FiPlus, FiEdit, FiTrash2, FiLogOut, FiX } from 'react-icons/fi'
 import config from '../../config/api'
 
-const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData, setFormData, categories = [], newCategoryName, setNewCategoryName, onAddCategory, addingCategory = false }) => {
+const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData, setFormData, categories = [], subcategories = [], onCategoryChange, newCategoryName, setNewCategoryName, onAddCategory, addingCategory = false, loadingSubcategories = false }) => {
   if (!show) return null
   const handleChange = useCallback((k, v) => setFormData(prev => ({ ...prev, [k]: v })), [setFormData])
+
+  const handleCategoryChange = (categorySlug) => {
+    handleChange('category', categorySlug)
+    handleChange('subCategoryId', '') // Clear subcategory when category changes
+    if (onCategoryChange) {
+      const selectedCategory = categories.find(c => c.slug === categorySlug)
+      if (selectedCategory?._id) {
+        onCategoryChange(selectedCategory._id)
+      }
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -47,7 +58,7 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <select value={formData.category || ''} onChange={e => handleChange('category', e.target.value)} className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white">
+            <select value={formData.category || ''} onChange={e => handleCategoryChange(e.target.value)} className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white">
               <option value="">Select category</option>
               {categories.map(c => (
                 <option key={c.slug} value={c.slug}>{c.name}</option>
@@ -61,6 +72,47 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
               </button>
             </div>
           </div>
+          {formData.category && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+              {loadingSubcategories ? (
+                <div className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-500 text-sm">
+                  Loading subcategories...
+                </div>
+              ) : subcategories.length > 0 ? (
+                <select
+                  value={formData.subCategoryId || ''}
+                  onChange={e => handleChange('subCategoryId', e.target.value)}
+                  className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">Select subcategory (optional)</option>
+                  {subcategories.map(sc => (
+                    <option key={sc._id} value={sc._id}>{sc.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="w-full p-2 border border-gray-300 rounded bg-gray-50 text-gray-500 text-sm">
+                  No subcategories available for this category
+                </div>
+              )}
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Identity Verification Required</label>
+            <select
+              value={formData.productType || 'none'}
+              onChange={e => handleChange('productType', e.target.value)}
+              className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="none">None (No documents required)</option>
+              <option value="aadhaar">Aadhaar Required</option>
+              <option value="pan">PAN Required</option>
+              <option value="both">Both Aadhaar & PAN Required</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Selected documents will be required during checkout
+            </p>
+          </div>
           <div className="pt-2">
             <label className="inline-flex items-center gap-2">
               <input
@@ -70,6 +122,17 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700">Enable form for this product</span>
+            </label>
+          </div>
+          <div className="pt-1">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!formData.isInsurance}
+                onChange={e => handleChange('isInsurance', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Link to insurance page (External Link)</span>
             </label>
           </div>
           <div className="flex gap-3 pt-2">
@@ -92,15 +155,17 @@ const AdminProducts = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [formData, setFormData] = useState({ id: '', title: '', description: '', price: '', src: '', category: '', hasForm: false })
+  const [formData, setFormData] = useState({ id: '', title: '', description: '', price: '', src: '', category: '', subCategoryId: '', productType: 'none', hasForm: false, isInsurance: false })
   const [categories, setCategories] = useState([])
+  const [subcategories, setSubcategories] = useState([])
+  const [loadingSubcategories, setLoadingSubcategories] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [addingCategory, setAddingCategory] = useState(false)
   const navigate = useNavigate()
 
-  useEffect(() => { 
-    checkAuth(); 
-    fetchProducts(); 
+  useEffect(() => {
+    checkAuth();
+    fetchProducts();
     fetchCategories();
   }, [])
 
@@ -123,6 +188,25 @@ const AdminProducts = () => {
     }
   }
 
+  const fetchSubcategories = async (categoryId) => {
+    if (!categoryId) {
+      setSubcategories([])
+      return
+    }
+    try {
+      setLoadingSubcategories(true)
+      const res = await axios.get(`${config.apiUrl}/api/subcategories?categoryId=${categoryId}`)
+      if (res.data.success) {
+        setSubcategories(res.data.subCategories || [])
+      }
+    } catch (e) {
+      console.error('Failed to fetch subcategories:', e)
+      setSubcategories([])
+    } finally {
+      setLoadingSubcategories(false)
+    }
+  }
+
   const fetchProducts = async () => {
     try {
       const res = await axios.get(`${config.apiUrl}/api/admin/products`, getAuthHeaders())
@@ -142,13 +226,24 @@ const AdminProducts = () => {
   const openAdd = () => {
     const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0
     const defaultCategory = categories[0]?.slug || ''
-    setFormData({ id: maxId + 1, title: '', description: '', price: '', src: '', category: defaultCategory, hasForm: false })
+    setFormData({ id: maxId + 1, title: '', description: '', price: '', src: '', category: defaultCategory, subCategoryId: '', productType: 'none', hasForm: false, isInsurance: false })
+    setSubcategories([])
+    // Fetch subcategories for default category if it exists
+    if (categories[0]?._id) {
+      fetchSubcategories(categories[0]._id)
+    }
     setShowAddModal(true)
   }
-  const openEdit = (p) => { 
-    setSelectedProduct(p); 
-    setFormData({ id: p.id, title: p.title, description: p.description, price: p.price, src: p.src, category: p.category || '', hasForm: !!p.hasForm }); 
-    setShowEditModal(true) 
+  const openEdit = (p) => {
+    setSelectedProduct(p);
+    setFormData({ id: p.id, title: p.title, description: p.description, price: p.price, src: p.src, category: p.category || '', subCategoryId: p.subCategoryId || '', productType: p.productType || 'none', hasForm: !!p.hasForm, isInsurance: !!p.isInsurance });
+    // Fetch subcategories for the product's category
+    if (p.categoryId) {
+      fetchSubcategories(p.categoryId)
+    } else {
+      setSubcategories([])
+    }
+    setShowEditModal(true)
   }
 
   const addCategory = async () => {
@@ -254,8 +349,8 @@ const AdminProducts = () => {
         </div>
       </div>
 
-      <ProductModal show={showAddModal} onClose={() => setShowAddModal(false)} onSubmit={addProduct} title="Add New Product" formData={formData} setFormData={setFormData} categories={categories} newCategoryName={newCategoryName} setNewCategoryName={setNewCategoryName} onAddCategory={addCategory} addingCategory={addingCategory} />
-      <ProductModal show={showEditModal} onClose={() => { setShowEditModal(false); setSelectedProduct(null) }} onSubmit={editProduct} title="Edit Product" isEdit formData={formData} setFormData={setFormData} categories={categories} newCategoryName={newCategoryName} setNewCategoryName={setNewCategoryName} onAddCategory={addCategory} addingCategory={addingCategory} />
+      <ProductModal show={showAddModal} onClose={() => setShowAddModal(false)} onSubmit={addProduct} title="Add New Product" formData={formData} setFormData={setFormData} categories={categories} subcategories={subcategories} onCategoryChange={fetchSubcategories} loadingSubcategories={loadingSubcategories} newCategoryName={newCategoryName} setNewCategoryName={setNewCategoryName} onAddCategory={addCategory} addingCategory={addingCategory} />
+      <ProductModal show={showEditModal} onClose={() => { setShowEditModal(false); setSelectedProduct(null) }} onSubmit={editProduct} title="Edit Product" isEdit formData={formData} setFormData={setFormData} categories={categories} subcategories={subcategories} onCategoryChange={fetchSubcategories} loadingSubcategories={loadingSubcategories} newCategoryName={newCategoryName} setNewCategoryName={setNewCategoryName} onAddCategory={addCategory} addingCategory={addingCategory} />
     </div>
   )
 }

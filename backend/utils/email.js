@@ -9,15 +9,16 @@ const createTransporter = () => {
     SMTP_SECURE,
     EMAIL_USER,
     EMAIL_PASS,
+    SMTP_USER, // NEW: Specific for SMTP Auth
   } = process.env;
 
-  if (SMTP_HOST && EMAIL_USER && EMAIL_PASS) {
+  if (SMTP_HOST && (SMTP_USER || EMAIL_USER) && EMAIL_PASS) {
     return nodemailer.createTransport({
       host: SMTP_HOST,
       port: SMTP_PORT ? Number(SMTP_PORT) : 465,
-      secure: SMTP_SECURE ? SMTP_SECURE === 'true' : true,
+      secure: SMTP_SECURE ? SMTP_SECURE === 'true' : false, // Default to false for 587
       auth: {
-        user: EMAIL_USER,
+        user: SMTP_USER || EMAIL_USER, // Prefer SMTP_USER for auth
         pass: EMAIL_PASS,
       },
     });
@@ -33,6 +34,14 @@ const createTransporter = () => {
   });
 };
 
+// Helper to get sender address
+const getSender = () => {
+  return {
+    name: 'Shivalik Service Hub',
+    address: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@shivalik.com'
+  };
+};
+
 // Send OTP email
 const sendOTPEmail = async (email, name, otp, type = 'registration') => {
   try {
@@ -43,15 +52,12 @@ const sendOTPEmail = async (email, name, otp, type = 'registration') => {
     }
 
     const transporter = createTransporter();
-    
+
     const emailType = type === 'registration' ? 'Account Registration' : 'Login Verification';
     const action = type === 'registration' ? 'complete your registration' : 'log in to your account';
-    
+
     const mailOptions = {
-      from: {
-        name: 'Shivalik Service Hub',
-        address: process.env.EMAIL_USER || 'your-email@gmail.com'
-      },
+      from: getSender(),
       to: email,
       subject: `${emailType} - OTP Verification`,
       html: `
@@ -99,7 +105,7 @@ const sendOTPEmail = async (email, name, otp, type = 'registration') => {
     const result = await transporter.sendMail(mailOptions);
     console.log('OTP email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending OTP email:', error);
     return { success: false, error: error.message };
@@ -110,12 +116,9 @@ const sendOTPEmail = async (email, name, otp, type = 'registration') => {
 const sendWelcomeEmail = async (email, name) => {
   try {
     const transporter = createTransporter();
-    
+
     const mailOptions = {
-      from: {
-        name: 'Shivalik Service Hub',
-        address: process.env.EMAIL_USER || 'your-email@gmail.com'
-      },
+      from: getSender(),
       to: email,
       subject: 'Welcome to Shivalik Service Hub! 🎉',
       html: `
@@ -166,7 +169,7 @@ const sendWelcomeEmail = async (email, name) => {
     const result = await transporter.sendMail(mailOptions);
     console.log('Welcome email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending welcome email:', error);
     return { success: false, error: error.message };
@@ -200,7 +203,7 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
     }
 
     const transporter = createTransporter();
-    
+
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${item.title}</td>
@@ -208,76 +211,93 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
         <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${item.price}</td>
       </tr>
     `).join('');
-    
+
     const mailOptions = {
-      from: {
-        name: 'Shivalik Service Hub',
-        address: process.env.EMAIL_USER || 'your-email@gmail.com'
-      },
+      from: getSender(),
       to: email,
       subject: `Order Confirmed - #${order._id.toString().slice(-6)} 🎉`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; margin: 0;">Order Confirmed!</h1>
-            <p style="color: #6b7280; margin: 5px 0;">Thank you for your purchase</p>
-          </div>
-          
-          <div style="background-color: #f9fafb; padding: 30px; border-radius: 8px; border-left: 4px solid #10b981;">
-            <h2 style="color: #1f2937; margin-top: 0;">Hi ${name}!</h2>
-            <p style="color: #4b5563; line-height: 1.6;">
-              Your order has been successfully placed and is being processed. Here are the details:
-            </p>
-            
-            <div style="background-color: white; padding: 20px; border-radius: 6px; margin: 20px 0;">
-              <h3 style="color: #2563eb; margin-top: 0;">Order Details</h3>
-              <p><strong>Order ID:</strong> #${order._id.toString().slice(-6)}</p>
-              <p><strong>Order Date:</strong> ${new Date(order.orderDate).toLocaleDateString()}</p>
-              <p><strong>Estimated Delivery:</strong> ${new Date(order.estimatedDelivery).toLocaleDateString()}</p>
-              <p><strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</p>
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; background-color: #ffffff;">
+          <!-- Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #2563eb;">
+            <div>
+              <h1 style="color: #2563eb; margin: 0; font-size: 28px; text-transform: uppercase;">Tax Invoice</h1>
+              <p style="color: #6b7280; margin: 5px 0;">Shivalik Service Hub</p>
             </div>
-            
-            <div style="background-color: white; padding: 20px; border-radius: 6px; margin: 20px 0;">
-              <h3 style="color: #2563eb; margin-top: 0;">Items Ordered</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background-color: #f3f4f6;">
-                    <th style="padding: 10px; text-align: left;">Item</th>
-                    <th style="padding: 10px; text-align: center;">Qty</th>
-                    <th style="padding: 10px; text-align: right;">Price</th>
+            <div style="text-align: right;">
+              <p style="margin: 0; font-weight: bold;">Order #: ${order._id.toString().slice(-6)}</p>
+              <p style="margin: 3px 0; color: #6b7280;">Date: ${new Date(order.orderDate).toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          <!-- Billing Info -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+            <div style="flex: 1;">
+              <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 14px; text-transform: uppercase;">Billed To:</h3>
+              <p style="margin: 3px 0; font-weight: bold;">${order.shippingAddress.fullName}</p>
+              <p style="margin: 3px 0;">${order.shippingAddress.line1}</p>
+              ${order.shippingAddress.line2 ? `<p style="margin: 3px 0;">${order.shippingAddress.line2}</p>` : ''}
+              <p style="margin: 3px 0;">${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.postalCode}</p>
+              <p style="margin: 3px 0;">${order.shippingAddress.country}</p>
+              <p style="margin: 3px 0;">Phone: ${order.shippingAddress.phone}</p>
+            </div>
+            <div style="flex: 1; text-align: right;">
+              <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 14px; text-transform: uppercase;">Sold By:</h3>
+              <p style="margin: 3px 0; font-weight: bold;">Shivalik Service Hub</p>
+              <p style="margin: 3px 0;">Digital Service Center</p>
+              <p style="margin: 3px 0;">Support: support@shivalik.com</p>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <div style="background-color: #ffffff; margin-bottom: 30px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background-color: #f3f4f6;">
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb; color: #4b5563;">Description</th>
+                  <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb; color: #4b5563;">Quantity</th>
+                  <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; color: #4b5563;">Unit Price</th>
+                  <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb; color: #4b5563;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${order.items.map(item => `
+                  <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+                      <div style="font-weight: bold;">${item.title}</div>
+                      <div style="font-size: 12px; color: #6b7280;">Hsn/Sac: 9984</div>
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${item.price}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                </tbody>
-              </table>
-              <div style="text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid #2563eb;">
-                <strong style="font-size: 18px; color: #1f2937;">Total: ₹${order.total}</strong>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Totals -->
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+            <div style="width: 300px;">
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f3f4f6;">
+                <span style="color: #6b7280;">Subtotal:</span>
+                <span>₹${order.subtotal || order.total}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f3f4f6;">
+                <span style="color: #6b7280;">Tax:</span>
+                <span>₹0.00</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #2563eb; margin-top: 5px;">
+                <span style="font-weight: bold; color: #1f2937;">Total:</span>
+                <span style="font-weight: bold; color: #2563eb; font-size: 18px;">₹${order.total}</span>
               </div>
             </div>
-            
-            <div style="background-color: white; padding: 20px; border-radius: 6px; margin: 20px 0;">
-              <h3 style="color: #2563eb; margin-top: 0;">Shipping Address</h3>
-              <p style="margin: 5px 0;"><strong>${order.shippingAddress.fullName}</strong></p>
-              <p style="margin: 5px 0;">${order.shippingAddress.phone}</p>
-              <p style="margin: 5px 0;">${order.shippingAddress.line1}</p>
-              ${order.shippingAddress.line2 ? `<p style="margin: 5px 0;">${order.shippingAddress.line2}</p>` : ''}
-              <p style="margin: 5px 0;">${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}</p>
-              <p style="margin: 5px 0;">${order.shippingAddress.country}</p>
-            </div>
-            
-            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-              We'll send you updates about your order status. If you have any questions, feel free to contact our support team.
-            </p>
           </div>
-          
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              Thank you for shopping with Shivalik Service Hub!
-            </p>
-            <p style="color: #9ca3af; font-size: 12px; margin: 5px 0 0 0;">
-              © 2024 Shivalik Service Hub. All rights reserved.
-            </p>
+
+          <!-- Footer -->
+          <div style="text-align: center; color: #9ca3af; font-size: 12px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 5px 0;">Thank you for your business!</p>
+            <p style="margin: 5px 0;">This is a computer generated invoice and requires no signature.</p>
           </div>
         </div>
       `
@@ -286,7 +306,7 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
     const result = await transporter.sendMail(mailOptions);
     console.log('Order confirmation email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending order confirmation email:', error);
     return { success: false, error: error.message };
@@ -297,7 +317,7 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
 const sendAdminOrderNotification = async (order) => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-    
+
     if (!adminEmail) {
       console.log('No admin email configured, skipping admin notification');
       return { success: true, skipped: true };
@@ -310,7 +330,7 @@ const sendAdminOrderNotification = async (order) => {
     }
 
     const transporter = createTransporter();
-    
+
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${item.title}</td>
@@ -318,12 +338,9 @@ const sendAdminOrderNotification = async (order) => {
         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">₹${item.price}</td>
       </tr>
     `).join('');
-    
+
     const mailOptions = {
-      from: {
-        name: 'Shivalik Service Hub',
-        address: process.env.EMAIL_USER || 'your-email@gmail.com'
-      },
+      from: getSender(),
       to: adminEmail,
       subject: `🛒 New Order Received - #${order._id.toString().slice(-6)}`,
       html: `
@@ -388,9 +405,63 @@ const sendAdminOrderNotification = async (order) => {
     const result = await transporter.sendMail(mailOptions);
     console.log('Admin order notification email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
-    
+
   } catch (error) {
     console.error('Error sending admin order notification email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send announcement email to user
+const sendAnnouncementEmail = async (email, name, subject, message) => {
+  try {
+    // Development fallback
+    if (process.env.EMAIL_DEV_MODE === 'true') {
+      console.log(`[DEV_MODE] Announcement to ${email}: ${subject}`);
+      return { success: true, dev: true };
+    }
+
+    const transporter = createTransporter();
+
+    // Convert newlines to breaks if plain text
+    const formattedMessage = message.replace(/\n/g, '<br/>');
+
+    const mailOptions = {
+      from: getSender(),
+      to: email,
+      subject: subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563eb; margin: 0;">📢 New Announcement</h1>
+            <p style="color: #6b7280; margin: 5px 0;">From Shivalik Service Hub</p>
+          </div>
+          
+          <div style="background-color: #f9fafb; padding: 30px; border-radius: 8px; border-left: 4px solid #2563eb;">
+            <h2 style="color: #1f2937; margin-top: 0;">Hello ${name},</h2>
+            
+            <div style="color: #374151; line-height: 1.6; font-size: 16px; margin: 20px 0;">
+              ${formattedMessage}
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+              You received this email because you are a registered user of Shivalik Service Hub.
+            </p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 5px 0 0 0;">
+              © 2024 Shivalik Service Hub. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: result.messageId };
+
+  } catch (error) {
+    console.error('Error sending announcement email:', error);
     return { success: false, error: error.message };
   }
 };
@@ -400,5 +471,6 @@ module.exports = {
   sendWelcomeEmail,
   sendOrderConfirmationEmail,
   sendAdminOrderNotification,
+  sendAnnouncementEmail,
   verifyEmailTransport
 };

@@ -20,9 +20,6 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authStep, setAuthStep] = useState('form'); // 'form' | 'otp'
-  const [tempUserId, setTempUserId] = useState(null);
-  const [authType, setAuthType] = useState(null); // 'login' | 'register'
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -31,7 +28,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const response = await axios.get('/api/user-auth/me');
+      const response = await axios.get('/api/auth/me');
       if (response.data.success) {
         setUser(response.data.user);
       }
@@ -43,104 +40,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Passwordless: Request OTP (name + email)
-  const requestOtp = async (data) => {
-    try {
-      const response = await axios.post('/api/user-auth/request-otp', data);
-      if (response.data.success) {
-        setTempUserId(response.data.userId);
-        setAuthType('login');
-        setAuthStep('otp');
-        toast.success(response.data.message);
-        return { success: true };
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to request OTP';
-      toast.error(message);
-      return { success: false, message };
-    }
+  // Google OAuth login - redirect to backend OAuth flow
+  const loginWithGoogle = () => {
+    window.location.href = `${config.apiUrl}/api/auth/google`;
   };
 
-  // Passwordless: Verify OTP
-  const verifyOtp = async (otp) => {
+  // Handle OAuth callback success
+  const handleAuthSuccess = async () => {
     try {
-      const response = await axios.post('/api/user-auth/verify-otp', {
-        userId: tempUserId,
-        otp
-      });
+      const response = await axios.get('/api/auth/me');
       if (response.data.success) {
         setUser(response.data.user);
-        setAuthStep('form');
-        setTempUserId(null);
-        setAuthType(null);
-        toast.success(response.data.message);
+        toast.success('Welcome back!');
         return { success: true };
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Verification failed';
-      toast.error(message);
-      return { success: false, message };
-    }
-  };
-
-  // Deprecated legacy login (kept for compatibility)
-  const login = async (credentials) => {
-    try {
-      const response = await axios.post('/api/user-auth/login', credentials);
-      if (response.data.success) {
-        setTempUserId(response.data.userId);
-        setAuthType('login');
-        setAuthStep('otp');
-        toast.success(response.data.message);
-        return { success: true };
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
-      toast.error(message);
-      return { success: false, message };
-    }
-  };
-
-  // Deprecated legacy verify login (kept for compatibility)
-  const verifyLogin = async (otp) => {
-    try {
-      const response = await axios.post('/api/user-auth/verify-login', {
-        userId: tempUserId,
-        otp
-      });
-      if (response.data.success) {
-        setUser(response.data.user);
-        setAuthStep('form');
-        setTempUserId(null);
-        setAuthType(null);
-        toast.success(response.data.message);
-        return { success: true };
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Verification failed';
-      toast.error(message);
-      return { success: false, message };
-    }
-  };
-
-  // Resend OTP
-  const resendOTP = async () => {
-    if (!tempUserId) {
-      toast.error('No active verification session');
-      return { success: false };
-    }
-
-    try {
-      const response = await axios.post('/api/user-auth/resend-otp', {
-        userId: tempUserId,
-        type: 'login'
-      });
-      if (response.data.success) {
-        toast.success(response.data.message);
-        return { success: true };
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to resend OTP';
+      const message = error.response?.data?.message || 'Authentication failed';
       toast.error(message);
       return { success: false, message };
     }
@@ -149,43 +64,22 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = async () => {
     try {
-      await axios.post('/api/user-auth/logout');
+      await axios.post('/api/auth/logout');
       setUser(null);
-      setAuthStep('form');
-      setTempUserId(null);
-      setAuthType(null);
       toast.success('Logged out successfully');
     } catch (error) {
       // Even if logout fails on server, clear local state
       setUser(null);
-      setAuthStep('form');
-      setTempUserId(null);
-      setAuthType(null);
       console.error('Logout error:', error);
     }
-  };
-
-  // Reset auth state (for canceling OTP step)
-  const resetAuth = () => {
-    setAuthStep('form');
-    setTempUserId(null);
-    setAuthType(null);
   };
 
   const value = {
     user,
     loading,
-    authStep,
-    authType,
-    // New passwordless flow
-    requestOtp,
-    verifyOtp,
-    resendOTP,
-    // Legacy (still exported just in case)
-    login,
-    verifyLogin,
+    loginWithGoogle,
+    handleAuthSuccess,
     logout,
-    resetAuth,
     checkAuth
   };
 

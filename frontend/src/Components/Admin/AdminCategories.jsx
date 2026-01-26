@@ -27,35 +27,35 @@ const CategoryModal = ({ show, onClose, onSubmit, title, isEdit = false, formDat
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-gray-700 font-medium mb-1">Category Name</label>
-            <input 
-              type="text" 
-              value={formData.name} 
-              onChange={e => handleChange('name', e.target.value)} 
-              className="w-full text-gray-900 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500" 
+            <input
+              type="text"
+              value={formData.name}
+              onChange={e => handleChange('name', e.target.value)}
+              className="w-full text-gray-900 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. Insurance"
-              required 
+              required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL-friendly)</label>
-            <input 
-              type="text" 
-              value={formData.slug} 
-              onChange={e => handleChange('slug', e.target.value.toLowerCase().replace(/\s+/g, '-'))} 
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={e => handleChange('slug', e.target.value.toLowerCase().replace(/\s+/g, '-'))}
               disabled={isEdit}
-              className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. insurance"
-              required 
+              required
             />
             <p className="text-xs text-gray-500 mt-1">Auto-generated from name, or customize it</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-            <input 
-              type="url" 
-              value={formData.imageUrl} 
-              onChange={e => handleChange('imageUrl', e.target.value)} 
-              className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" 
+            <input
+              type="url"
+              value={formData.imageUrl}
+              onChange={e => handleChange('imageUrl', e.target.value)}
+              className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               placeholder="https://example.com/image.jpg"
             />
             {formData.imageUrl && (
@@ -81,28 +81,19 @@ const CategoryModal = ({ show, onClose, onSubmit, title, isEdit = false, formDat
 const AdminCategories = () => {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAddModal, setShowAddModal] = useState(false)
+
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [formData, setFormData] = useState({ name: '', slug: '', imageUrl: '' })
   const navigate = useNavigate()
 
-  useEffect(() => { 
-    checkAuth(); 
-    fetchCategories(); 
+  useEffect(() => {
+    checkAuth();
+    fetchCategories();
   }, [])
 
   // Auto-generate slug from name
-  useEffect(() => {
-    if (formData.name && !showEditModal) {
-      const autoSlug = formData.name.toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-      setFormData(prev => ({ ...prev, slug: autoSlug }))
-    }
-  }, [formData.name, showEditModal])
+
 
   const checkAuth = () => {
     const token = localStorage.getItem('adminToken')
@@ -120,8 +111,8 @@ const AdminCategories = () => {
       if (res.data.success) setCategories(res.data.categories)
     } catch (e) {
       toast.error('Failed to load categories')
-    } finally { 
-      setLoading(false) 
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -132,43 +123,28 @@ const AdminCategories = () => {
     toast.success('Logged out successfully')
   }
 
-  const openAdd = () => {
-    setFormData({ name: '', slug: '', imageUrl: '' })
-    setShowAddModal(true)
+
+
+  const openEdit = (cat) => {
+    setSelectedCategory(cat);
+    setFormData({ name: cat.name, slug: cat.slug, imageUrl: cat.imageUrl || '' });
+    setShowEditModal(true)
   }
 
-  const openEdit = (cat) => { 
-    setSelectedCategory(cat); 
-    setFormData({ name: cat.name, slug: cat.slug, imageUrl: cat.imageUrl || '' }); 
-    setShowEditModal(true) 
-  }
 
-  const addCategory = async (e) => {
-    e.preventDefault()
-    try {
-      const res = await axios.post(`${config.apiUrl}/api/categories`, formData, getAuthHeaders())
-      if (res.data.success) { 
-        toast.success('Category added'); 
-        setShowAddModal(false); 
-        fetchCategories() 
-      }
-    } catch (e) { 
-      toast.error(e.response?.data?.message || 'Failed to add category') 
-    }
-  }
 
   const editCategory = async (e) => {
     e.preventDefault()
     try {
       const res = await axios.put(`${config.apiUrl}/api/categories/${selectedCategory.slug}`, formData, getAuthHeaders())
-      if (res.data.success) { 
-        toast.success('Category updated'); 
-        setShowEditModal(false); 
-        setSelectedCategory(null); 
-        fetchCategories() 
+      if (res.data.success) {
+        toast.success('Category updated');
+        setShowEditModal(false);
+        setSelectedCategory(null);
+        fetchCategories()
       }
-    } catch (e) { 
-      toast.error(e.response?.data?.message || 'Failed to update category') 
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to update category')
     }
   }
 
@@ -176,12 +152,12 @@ const AdminCategories = () => {
     if (!window.confirm('Delete this category? Products with this category will not be deleted.')) return
     try {
       const res = await axios.delete(`${config.apiUrl}/api/categories/${slug}`, getAuthHeaders())
-      if (res.data.success) { 
-        toast.success('Category deleted'); 
-        fetchCategories() 
+      if (res.data.success) {
+        toast.success('Category deleted');
+        fetchCategories()
       }
-    } catch (e) { 
-      toast.error('Failed to delete category') 
+    } catch (e) {
+      toast.error('Failed to delete category')
     }
   }
 
@@ -212,17 +188,12 @@ const AdminCategories = () => {
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">Categories Management</h2>
-            <button 
-              onClick={openAdd} 
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              <FiPlus /><span>Add Category</span>
-            </button>
+
           </div>
 
           {categories.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
-              <p>No categories found. Click "Seed Defaults" to add initial categories or "Add Category" to create one.</p>
+              <p>No categories found. Please use <b>Catalog Manager</b> to create new categories.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
@@ -248,14 +219,14 @@ const AdminCategories = () => {
                     </div>
                   </div>
                   <div className="flex gap-2 mt-4">
-                    <button 
-                      onClick={() => openEdit(cat)} 
+                    <button
+                      onClick={() => openEdit(cat)}
                       className="flex-1 flex items-center justify-center gap-1 text-blue-600 hover:text-blue-900 border border-blue-300 hover:bg-blue-50 p-2 rounded text-sm"
                     >
                       <FiEdit /><span>Edit</span>
                     </button>
-                    <button 
-                      onClick={() => deleteCategory(cat.slug)} 
+                    <button
+                      onClick={() => deleteCategory(cat.slug)}
                       className="flex-1 flex items-center justify-center gap-1 text-red-600 hover:text-red-900 border border-red-300 hover:bg-red-50 p-2 rounded text-sm"
                     >
                       <FiTrash2 /><span>Delete</span>
@@ -268,22 +239,15 @@ const AdminCategories = () => {
         </div>
       </div>
 
-      <CategoryModal 
-        show={showAddModal} 
-        onClose={() => setShowAddModal(false)} 
-        onSubmit={addCategory} 
-        title="Add New Category" 
-        formData={formData} 
-        setFormData={setFormData} 
-      />
-      <CategoryModal 
-        show={showEditModal} 
-        onClose={() => { setShowEditModal(false); setSelectedCategory(null) }} 
-        onSubmit={editCategory} 
-        title="Edit Category" 
-        isEdit 
-        formData={formData} 
-        setFormData={setFormData} 
+
+      <CategoryModal
+        show={showEditModal}
+        onClose={() => { setShowEditModal(false); setSelectedCategory(null) }}
+        onSubmit={editCategory}
+        title="Edit Category"
+        isEdit
+        formData={formData}
+        setFormData={setFormData}
       />
     </div>
   )

@@ -13,7 +13,7 @@ function ProductDetail() {
   const location = useLocation();
   const { isDark } = useTheme();
   const { product: allProducts, addCart, HandleClickAdd } = useContext(ProductsData);
-  
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mainImage, setMainImage] = useState('');
@@ -104,6 +104,13 @@ function ProductDetail() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!product) return;
+    if (!isLibraryBook) {
+      navigate('/checkout', { state: { buyNowItem: product } });
+    }
+  };
+
 
   if (loading) {
     return (
@@ -148,17 +155,17 @@ function ProductDetail() {
       {/* Product Details */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          
+
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className={`aspect-square rounded-2xl overflow-hidden ${isDark ? 'bg-gray-900' : 'bg-white'}`}
             >
-              <img 
-                src={mainImage} 
+              <img
+                src={mainImage}
                 alt={product.title}
                 className="w-full h-full object-cover"
               />
@@ -171,11 +178,10 @@ function ProductDetail() {
                   <motion.button
                     key={idx}
                     onClick={() => setMainImage(img)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                      mainImage === img 
-                        ? isDark ? 'border-red-500' : 'border-red-600'
-                        : isDark ? 'border-gray-800 hover:border-gray-700' : 'border-gray-200 hover:border-gray-300'
-                    } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${mainImage === img
+                      ? isDark ? 'border-red-500' : 'border-red-600'
+                      : isDark ? 'border-gray-800 hover:border-gray-700' : 'border-gray-200 hover:border-gray-300'
+                      } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -190,9 +196,8 @@ function ProductDetail() {
           <div className="space-y-6">
             {/* Category Tag */}
             {product.category && (
-              <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
-                isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
-              }`}>
+              <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'
+                }`}>
                 {product.category}
               </span>
             )}
@@ -234,35 +239,51 @@ function ProductDetail() {
 
             {/* Action Buttons */}
             <div className="flex gap-4 pt-6">
-              <button
-                onClick={handleAddToCart}
-                disabled={isInCart}
-                className={`flex-1 py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-all ${
-                  isInCart
+              {!product.isInsurance && (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isInCart}
+                  className={`flex-1 py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-all ${isInCart
                     ? isDark
                       ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                     : 'bg-red-600 hover:bg-red-700 text-white'
-                }`}
-              >
-                <FiShoppingCart />
-                {isInCart ? 'Already in Cart' : 'Add to Cart'}
-              </button>
+                    }`}
+                >
+                  <FiShoppingCart />
+                  {isInCart ? 'Already in Cart' : 'Add to Cart'}
+                </button>
+              )}
+
               <button
-                className={`p-4 rounded-lg border transition-all ${
-                  isDark 
-                    ? 'border-gray-700 hover:border-red-600 hover:bg-gray-900' 
-                    : 'border-gray-300 hover:border-red-600 hover:bg-gray-50'
-                }`}
+                onClick={() => {
+                  if (product.isInsurance) {
+                    window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+                  } else {
+                    handleBuyNow();
+                  }
+                }}
+                className={`flex-1 py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-all ${isDark
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+              >
+                {product.isInsurance ? 'Apply Now' : 'Buy Now'}
+              </button>
+
+              <button
+                className={`p-4 rounded-lg border transition-all ${isDark
+                  ? 'border-gray-700 hover:border-red-600 hover:bg-gray-900'
+                  : 'border-gray-300 hover:border-red-600 hover:bg-gray-50'
+                  }`}
               >
                 <FiHeart className="text-xl" />
               </button>
               <button
-                className={`p-4 rounded-lg border transition-all ${
-                  isDark 
-                    ? 'border-gray-700 hover:border-red-600 hover:bg-gray-900' 
-                    : 'border-gray-300 hover:border-red-600 hover:bg-gray-50'
-                }`}
+                className={`p-4 rounded-lg border transition-all ${isDark
+                  ? 'border-gray-700 hover:border-red-600 hover:bg-gray-900'
+                  : 'border-gray-300 hover:border-red-600 hover:bg-gray-50'
+                  }`}
               >
                 <FiShare2 className="text-xl" />
               </button>
@@ -281,11 +302,10 @@ function ProductDetail() {
                 <Link
                   key={item.id}
                   to={`/product/${item.id}`}
-                  className={`group rounded-lg overflow-hidden transition-all ${
-                    isDark 
-                      ? 'bg-gray-900 hover:bg-gray-800' 
-                      : 'bg-white hover:shadow-lg'
-                  }`}
+                  className={`group rounded-lg overflow-hidden transition-all ${isDark
+                    ? 'bg-gray-900 hover:bg-gray-800'
+                    : 'bg-white hover:shadow-lg'
+                    }`}
                 >
                   <div className="aspect-square overflow-hidden">
                     <img

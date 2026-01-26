@@ -123,7 +123,7 @@ export function Context({ children }) {
     categoriesById: catalogCategoriesById,
     subCategoriesById: catalogSubCategoriesById,
   } = useCatalog();
-  
+
   const [product, setProduct] = useState(fallbackProducts);
   const [addCart, setAddCart] = useState([]); // Keep for backward compatibility
   const [isScroll, setIsScroll] = useState(false);
@@ -136,7 +136,7 @@ export function Context({ children }) {
   const { scrollY } = useScroll();
 
   // Logo animation values (aligned with Navbar logo behavior)
-    const logoSize = useTransform(
+  const logoSize = useTransform(
     scrollY,
     [0, 200],
     isDesktop ? ["9vw", "5vw"] : ["20vw", "12vw"]
@@ -182,8 +182,8 @@ export function Context({ children }) {
     });
 
     socket.on('productUpdated', (updatedProduct) => {
-      setProduct(prevProducts => 
-        prevProducts.map(p => 
+      setProduct(prevProducts =>
+        prevProducts.map(p =>
           p.id === updatedProduct.id ? updatedProduct : p
         )
       );
@@ -191,7 +191,7 @@ export function Context({ children }) {
     });
 
     socket.on('productDeleted', (deletedProductData) => {
-      setProduct(prevProducts => 
+      setProduct(prevProducts =>
         prevProducts.filter(p => p.id !== parseInt(deletedProductData.id))
       );
       toast.success('Product removed');
@@ -264,7 +264,7 @@ export function Context({ children }) {
 
         // Store as a slug so routing and filtering work (e.g. "Aadhaar Services" -> "aadhaar-services").
         category: slugifyName(category?.name || ''),
-        productType: p.productType || 'both',
+        productType: p.productType || '',
       };
     });
   }, [catalogProducts, catalogCategoriesById, catalogSubCategoriesById]);
