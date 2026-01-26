@@ -8,7 +8,7 @@ import {
   FiPlus, FiEdit, FiTrash2, FiLogOut, FiBarChart, FiUsers, FiShoppingCart,
   FiDollarSign, FiTrendingUp, FiPackage, FiEye, FiStar, FiActivity,
   FiHome, FiSettings, FiHelpCircle, FiMenu, FiX, FiArrowUp, FiArrowDown,
-  FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid, FiBook, FiCreditCard
+  FiRefreshCw, FiCalendar, FiClock, FiMapPin, FiGrid, FiBook, FiCreditCard, FiMessageSquare
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -456,9 +456,7 @@ const AdminDashboard = () => {
                 <a href="/admin/products" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiPackage /> <span>Products</span>
                 </a>
-                <a href="/admin/categories" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
-                  <FiGrid /> <span>Categories</span>
-                </a>
+
                 <a href="/admin/catalog" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiGrid /> <span>Catalog Manager</span>
                 </a>
@@ -468,6 +466,9 @@ const AdminDashboard = () => {
                 </a>
                 <a href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiUsers /> <span>Users</span>
+                </a>
+                <a href="/admin/announcements" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
+                  <FiMessageSquare /> <span>Announcements</span>
                 </a>
                 <a href="#" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiSettings /> <span>Settings</span>

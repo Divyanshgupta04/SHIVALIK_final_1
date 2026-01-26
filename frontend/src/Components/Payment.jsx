@@ -16,14 +16,20 @@ function Payment() {
   const [orderProcessing, setOrderProcessing] = useState(false)
   const [userAddress, setUserAddress] = useState(null)
   const [addressLoading, setAddressLoading] = useState(true)
-  
+
+  const buyNowItem = location.state?.buyNowItem
+
+  // Derived state to handle either "Buy Now" item or normal Cart
+  const currentCart = buyNowItem ? [{ ...buyNowItem, quantity: 1 }] : cart
+
   // Redirect if cart is empty
   useEffect(() => {
-    if (!cart || cart.length === 0) {
+    // If neither global cart nor buyNowItem exists, redirect
+    if ((!cart || cart.length === 0) && !buyNowItem) {
       toast.error('Your cart is empty')
       navigate('/products')
     }
-  }, [cart, navigate])
+  }, [cart, buyNowItem, navigate])
 
   // Redirect if not logged in
   useEffect(() => {
@@ -66,7 +72,11 @@ function Payment() {
     }
   }, [location.state])
 
-  const subtotal = parseFloat(getCartTotal())
+  // Calculate totals based on currentCart (Buy Now or Global)
+  const subtotal = buyNowItem
+    ? Number(buyNowItem.price || 0)
+    : parseFloat(getCartTotal())
+
   const tax = subtotal * 0.18 // 18% GST
   const shipping = subtotal > 500 ? 0 : 50 // Free shipping above ₹500
   const total = subtotal + tax + shipping
@@ -93,7 +103,7 @@ function Payment() {
     }
 
     setLoading(true)
-    
+
     try {
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript()
@@ -116,11 +126,12 @@ function Payment() {
 
       // Prepare order data for verification
       const orderData = {
-        items: cart,
+        items: currentCart, // usage of new variable
         subtotal: subtotal,
         tax: tax,
         shipping: shipping,
-        total: total
+        total: total,
+        identityFormId: location.state?.idData?.identityFormId || null
       }
 
       const options = {
@@ -146,11 +157,11 @@ function Payment() {
               // Clear cart after successful payment
               await clearCart()
               // Redirect to order confirmation or account page
-              navigate('/account', { 
-                state: { 
-                  orderSuccess: true, 
-                  orderId: verifyResponse.data.orderId 
-                } 
+              navigate('/account', {
+                state: {
+                  orderSuccess: true,
+                  orderId: verifyResponse.data.orderId
+                }
               })
             } else {
               toast.error('Payment verification failed')
@@ -193,12 +204,12 @@ function Payment() {
     }
   }
 
-  if (!cart || cart.length === 0) {
+  if ((!cart || cart.length === 0) && !buyNowItem) {
     return (
       <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50'} flex items-center justify-center`}>
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
-          <button 
+          <button
             onClick={() => navigate('/products')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
           >
@@ -213,18 +224,18 @@ function Payment() {
     <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-gray-50'} py-8`}>
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-3xl font-bold mb-8 text-center">Payment</h1>
-        
+
         <div className="grid md:grid-cols-2 gap-8">
           {/* Order Summary */}
           <div className={`${isDark ? 'bg-gray-900' : 'bg-white'} rounded-lg p-6 shadow-lg h-fit`}>
             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-            
+
             <div className="space-y-4">
-              {cart.map((item) => (
+              {currentCart.map((item) => (
                 <div key={item.productId} className="flex items-center gap-4 pb-4 border-b border-gray-200">
-                  <img 
-                    src={item.src} 
-                    alt={item.title} 
+                  <img
+                    src={item.src}
+                    alt={item.title}
                     className="w-16 h-16 object-cover rounded"
                   />
                   <div className="flex-1">
@@ -237,7 +248,7 @@ function Payment() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mt-6 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
@@ -259,11 +270,11 @@ function Payment() {
               </div>
             </div>
           </div>
-          
+
           {/* Payment Section */}
           <div className={`${isDark ? 'bg-gray-900' : 'bg-white'} rounded-lg p-6 shadow-lg h-fit`}>
             <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
-            
+
             {addressLoading ? (
               <div className="mb-6">
                 <div className="animate-pulse bg-gray-300 h-4 w-32 mb-2 rounded"></div>
@@ -280,7 +291,7 @@ function Payment() {
                   <p>{userAddress.city}, {userAddress.state} {userAddress.postalCode}</p>
                   <p>{userAddress.country}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     navigate('/checkout/address')
                   }}
@@ -294,7 +305,7 @@ function Payment() {
                 <div className={`${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border p-4 rounded-lg mb-4`}>
                   <p className="text-red-800">Please add a shipping address before proceeding with payment.</p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     navigate('/checkout/address')
                   }}
@@ -304,7 +315,7 @@ function Payment() {
                 </button>
               </div>
             )}
-            
+
             <div className="space-y-4">
               <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
                 <div className="flex items-center gap-2 mb-2">
@@ -313,15 +324,14 @@ function Payment() {
                 </div>
                 <p className="text-sm text-gray-600">Pay securely using Credit Card, Debit Card, Net Banking, UPI, or Wallet</p>
               </div>
-              
+
               <button
                 onClick={handlePayment}
                 disabled={loading || orderProcessing || !userAddress || addressLoading}
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  loading || orderProcessing || !userAddress || addressLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${loading || orderProcessing || !userAddress || addressLoading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
               >
                 {orderProcessing ? (
                   'Processing Order...'
@@ -331,7 +341,7 @@ function Payment() {
                   `Pay ₹${total.toFixed(2)}`
                 )}
               </button>
-              
+
               <p className="text-xs text-gray-500 text-center mt-4">
                 By clicking "Pay", you agree to our terms and conditions. Your payment information is secured with 256-bit SSL encryption.
               </p>

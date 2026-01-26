@@ -10,10 +10,20 @@ const generateOTP = () => Math.floor(10000 + Math.random() * 90000).toString();
 
 // Middleware to check if user is authenticated
 const requireAuth = (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: 'Please log in to continue' });
+  // Check for Passport session (Google OAuth)
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    // Polyfill req.session.userId for legacy code compatibility
+    req.session = req.session || {};
+    req.session.userId = req.user._id || req.user.id;
+    return next();
   }
-  next();
+
+  // Check for legacy session
+  if (req.session && req.session.userId) {
+    return next();
+  }
+
+  return res.status(401).json({ message: 'Please log in to continue' });
 };
 
 // @route   POST /api/user-auth/register
@@ -50,7 +60,7 @@ router.post('/register', async (req, res) => {
 
     // Send OTP email
     const emailResult = await sendOTPEmail(email, name, otp, 'registration');
-    
+
     if (!emailResult.success) {
       // If email sending fails, delete the user
       await User.findByIdAndDelete(user._id);
@@ -91,7 +101,7 @@ router.post('/verify-register', async (req, res) => {
 
     // Clear expired OTP
     user.clearExpiredOTP();
-    
+
     // Verify OTP
     const otpResult = user.verifyOTP(otp);
     if (!otpResult.valid) {
@@ -156,7 +166,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!user.isVerified) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Please verify your account first',
         needsVerification: true,
         userId: user._id
@@ -169,7 +179,7 @@ router.post('/login', async (req, res) => {
 
     // Send OTP email
     const emailResult = await sendOTPEmail(user.email, user.name, otp, 'login');
-    
+
     if (!emailResult.success) {
       return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
     }
@@ -204,7 +214,7 @@ router.post('/verify-login', async (req, res) => {
 
     // Clear expired OTP
     user.clearExpiredOTP();
-    
+
     // Verify OTP
     const otpResult = user.verifyOTP(otp);
     if (!otpResult.valid) {
@@ -251,18 +261,18 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-  res.json({
-    success: true,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
-      lastLogin: user.lastLogin,
-      address: user.address || {}
-    }
-  });
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+        address: user.address || {}
+      }
+    });
 
   } catch (error) {
     console.error('Get user error:', error);
@@ -279,7 +289,7 @@ router.post('/logout', requireAuth, (req, res) => {
       console.error('Logout error:', err);
       return res.status(500).json({ message: 'Failed to logout' });
     }
-    
+
     res.clearCookie('connect.sid'); // Clear session cookie
     res.json({
       success: true,
@@ -311,7 +321,7 @@ router.post('/resend-otp', async (req, res) => {
 
     // Send OTP email
     const emailResult = await sendOTPEmail(user.email, user.name, otp, type);
-    
+
     if (!emailResult.success) {
       return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
     }

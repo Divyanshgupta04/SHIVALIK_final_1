@@ -9,10 +9,20 @@ const router = express.Router();
 
 // Middleware to check if user is authenticated
 const requireAuth = (req, res, next) => {
-  if (!req.session.userId) {
+    // Check for Passport session (Google OAuth)
+    if (req.isAuthenticated && req.isAuthenticated()) {
+        // Polyfill req.session.userId for legacy code compatibility
+        req.session = req.session || {};
+        req.session.userId = req.user._id || req.user.id;
+        return next();
+    }
+
+    // Check for legacy session
+    if (req.session && req.session.userId) {
+        return next();
+    }
+
     return res.status(401).json({ message: 'Please log in to continue' });
-  }
-  next();
 };
 
 // Initialize Razorpay instance function
@@ -26,6 +36,8 @@ const getRazorpayInstance = () => {
     });
 };
 
+const { log } = require('../utils/logger');
+
 // @route   POST /api/payment/create-order
 // @desc    Create Razorpay order
 // @access  Private
@@ -38,14 +50,10 @@ router.post('/create-order', requireAuth, async (req, res) => {
         }
 
         // Check if Razorpay credentials are configured
-        console.log('Checking Razorpay credentials...');
-        console.log('RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID ? 'Present' : 'Missing');
-        console.log('RAZORPAY_SECRET:', process.env.RAZORPAY_SECRET ? 'Present' : 'Missing');
-        
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET) {
             console.error('Razorpay credentials not configured');
-            return res.status(500).json({ 
-                message: 'Payment gateway not configured. Please contact support.' 
+            return res.status(500).json({
+                message: 'Payment gateway not configured. Please contact support.'
             });
         }
 
@@ -54,15 +62,15 @@ router.post('/create-order', requireAuth, async (req, res) => {
             currency: "INR",
             receipt: crypto.randomBytes(10).toString("hex"),
         };
-        
+
         const razorpayInstance = getRazorpayInstance();
         razorpayInstance.orders.create(options, (error, order) => {
             if (error) {
-                console.log('Razorpay order creation error:', error);
+                console.error('Razorpay order creation error:', error);
                 return res.status(500).json({ message: "Failed to create payment order" });
             }
-            
-            res.status(200).json({ 
+
+            res.status(200).json({
                 success: true,
                 data: order,
                 key_id: process.env.RAZORPAY_KEY_ID
@@ -79,11 +87,11 @@ router.post('/create-order', requireAuth, async (req, res) => {
 // @access  Private
 router.post('/verify-payment', requireAuth, async (req, res) => {
     try {
-        const { 
-            razorpay_order_id, 
-            razorpay_payment_id, 
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
             razorpay_signature,
-            orderData 
+            orderData
         } = req.body;
 
         // Verify required fields
@@ -124,6 +132,7 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
             userName: user.name,
             items: orderData.items,
             shippingAddress: user.address,
+            identityFormId: orderData.identityFormId, // Save identity form ID
             payment: {
                 razorpay_order_id,
                 razorpay_payment_id,
@@ -195,9 +204,9 @@ router.get('/orders', requireAuth, async (req, res) => {
 // @access  Private
 router.get('/orders/:id', requireAuth, async (req, res) => {
     try {
-        const order = await Order.findOne({ 
-            _id: req.params.id, 
-            userId: req.session.userId 
+        const order = await Order.findOne({
+            _id: req.params.id,
+            userId: req.session.userId
         });
 
         if (!order) {

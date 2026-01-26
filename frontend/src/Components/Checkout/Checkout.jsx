@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useCart } from '../../context/CartContext';
@@ -47,12 +47,16 @@ function getRequiredIdForm(cart) {
 
     // 2. Fallback: Check title/name for keywords case-insensitively
     const title = String(item.title || item.name || '').toLowerCase();
+    const category = String(item.categoryName || item.category || '').toLowerCase();
+    const subCategory = String(item.subCategoryName || '').toLowerCase();
 
-    if (title.includes('aadhaar') || title.includes('aadhar')) {
+    const textToCheck = `${title} ${category} ${subCategory}`;
+
+    if (textToCheck.includes('aadhaar') || textToCheck.includes('aadhar') || textToCheck.includes('adhar')) {
       hasAadhaar = true;
     }
 
-    if (title.includes('pan')) {
+    if (textToCheck.includes('pan')) {
       hasPan = true;
     }
   }
@@ -82,8 +86,28 @@ function StepPill({ active, done, children }) {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cart, getCartTotal } = useCart();
+  const location = useLocation();
+  const { cart: globalCart, getCartTotal } = useCart();
   const { isDark } = useTheme();
+
+  // Initialize with location state OR session storage to persist Buy Now item
+  const [buyNowItem, setBuyNowItem] = useState(() => {
+    if (location.state?.buyNowItem) return location.state.buyNowItem;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed.buyNowItem || null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  });
+
+  const cart = useMemo(() => {
+    return buyNowItem ? [{ ...buyNowItem, quantity: 1 }] : globalCart;
+  }, [buyNowItem, globalCart]);
 
   const requiredIdForm = useMemo(() => getRequiredIdForm(cart), [cart]);
 
@@ -103,6 +127,7 @@ export default function Checkout() {
       if (parsed?.idData) setIdData(parsed.idData);
       if (parsed?.deliveryData) setDeliveryData(parsed.deliveryData);
       if (parsed?.step) setStep(parsed.step);
+      // buyNowItem is already handled in initial state
     } catch {
       // ignore
     }
@@ -111,15 +136,35 @@ export default function Checkout() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ step, idData, deliveryData }));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        step,
+        idData,
+        deliveryData,
+        buyNowItem: buyNowItem // Persist this too!
+      }));
     } catch {
       // ignore
     }
-  }, [step, idData, deliveryData]);
+  }, [step, idData, deliveryData, buyNowItem]);
 
   // Prevent invalid step states when cart changes
   useEffect(() => {
+    // If we have a buyNowItem in storage but not in state/memo (e.g. reload), 
+    // we might want to recover it.
+    // However, the memo 'cart' currently only looks at location.state.buyNowItem.
+    // We should probably update the 'cart' memo to check simple sessionStorage/state too if we want robust reload support.
+
     if (!cart || cart.length === 0) {
+      // Check if we have it in session before giving up
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed?.buyNowItem) {
+        // Redirect to self with state to restore
+        // This causes a quick flicker but restores flow
+        // navigate('.', { state: { buyNowItem: parsed.buyNowItem }, replace: true });
+        return;
+      }
+
       toast.error('Your cart is empty');
       navigate('/products');
       return;
@@ -136,7 +181,17 @@ export default function Checkout() {
     }
   }, [cart, requiredIdForm, idData, step, navigate]);
 
-  const subtotal = Number(getCartTotal() || 0);
+  // Calculate total: override getCartTotal if using buyNowItem
+  const currentTotal = useMemo(() => {
+    if (buyNowItem) {
+      return Number(buyNowItem.price || 0);
+    }
+    // Fallback to checking session storage if location empty (for reload support logic above)
+    // But 'cart' logic handles the truth.
+    return Number(getCartTotal() || 0);
+  }, [buyNowItem, getCartTotal]);
+
+  const subtotal = currentTotal;
   const tax = Number((subtotal * 0.18).toFixed(2));
   const total = Number((subtotal + tax).toFixed(2));
 
@@ -231,7 +286,15 @@ export default function Checkout() {
     sessionStorage.removeItem(STORAGE_KEY);
 
     // Go to your existing payment route.
-    navigate('/pay', { state: { deliveryData, idData, requiredIdForm } });
+    // Pass buyNowItem so Payment.jsx knows what to pay for!
+    navigate('/pay', {
+      state: {
+        deliveryData,
+        idData,
+        requiredIdForm,
+        buyNowItem // PASSING THIS IS CRITICAL
+      }
+    });
   };
 
   const pageBg = isDark

@@ -35,9 +35,15 @@ const OrderSchema = new mongoose.Schema({
     required: true
   },
 
+  // Identity form reference (for admin to view uploaded documents)
+  identityFormId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'IdentityForm'
+  },
+
   // Order items
   items: [OrderItemSchema],
-  
+
   // Shipping address
   shippingAddress: {
     fullName: { type: String, required: true },
@@ -112,7 +118,7 @@ const OrderSchema = new mongoose.Schema({
 });
 
 // Calculate estimated delivery (7 days from order date)
-OrderSchema.pre('save', function(next) {
+OrderSchema.pre('save', function (next) {
   if (!this.estimatedDelivery) {
     this.estimatedDelivery = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
   }

@@ -2,11 +2,12 @@ import React, { useContext, useMemo } from 'react'
 import { ProductsData } from '../context/Context'
 import { useTheme } from '../context/ThemeContext'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 function Products() {
   const { product, HandleClickAdd, loading } = useContext(ProductsData)
   const { isDark } = useTheme()
+  const navigate = useNavigate()
 
   const newArrivals = useMemo(() => {
     if (!product?.length) return []
@@ -66,8 +67,22 @@ function Products() {
                             View Details
                           </Link>
                           <div className="flex gap-2">
-                            <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
-                            <Link to="/checkout" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                            {!item.isInsurance && (
+                              <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.isInsurance) {
+                                  window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+                                } else {
+                                  navigate('/checkout', { state: { buyNowItem: item } });
+                                }
+                              }}
+                              className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}
+                            >
+                              {item.isInsurance ? 'Apply Now' : 'Buy Now'}
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -84,7 +99,8 @@ function Products() {
                 {product.map((item, index) => (
                   <motion.div
                     key={item.id}
-                    className={`${isDark ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10' : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'} group rounded-2xl overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)]`}
+                    onClick={() => navigate(`/product/${item.id}`)}
+                    className={`${isDark ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10' : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'} group rounded-2xl overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)] cursor-pointer`}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.03 }}
@@ -103,13 +119,28 @@ function Products() {
                       <div className="flex flex-col gap-2">
                         <Link
                           to={`/product/${item.id}`}
+                          onClick={(e) => e.stopPropagation()}
                           className={`${isDark ? 'bg-gray-800 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} w-full inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}
                         >
                           View Details
                         </Link>
                         <div className="flex gap-2">
-                          <button onClick={() => HandleClickAdd(item.id)} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
-                          <Link to="/checkout" className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}>Buy Now</Link>
+                          {!item.isInsurance && (
+                            <button onClick={(e) => { e.stopPropagation(); HandleClickAdd(item.id); }} className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Add to Cart</button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (item.isInsurance) {
+                                window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+                              } else {
+                                navigate('/checkout', { state: { buyNowItem: item } });
+                              }
+                            }}
+                            className={`${isDark ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'} flex-1 inline-flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium`}
+                          >
+                            {item.isInsurance ? 'Apply Now' : 'Buy Now'}
+                          </button>
                         </div>
                       </div>
                     </div>

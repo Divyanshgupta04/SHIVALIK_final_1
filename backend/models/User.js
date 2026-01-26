@@ -25,6 +25,11 @@ const CartItemSchema = new mongoose.Schema({
 });
 
 const UserSchema = new mongoose.Schema({
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true // Allows null values while maintaining uniqueness
+  },
   name: {
     type: String,
     required: true,
@@ -39,7 +44,7 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: false // Optional for Google OAuth users
   },
   isVerified: {
     type: Boolean,
@@ -69,9 +74,10 @@ const UserSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving (only if password exists)
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  // Skip if password is not modified or doesn't exist (Google OAuth users)
+  if (!this.isModified('password') || !this.password) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);

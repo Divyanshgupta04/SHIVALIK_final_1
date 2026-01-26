@@ -62,6 +62,12 @@ const ProductSchema = new mongoose.Schema({
   hasForm: {
     type: Boolean,
     default: false
+  },
+
+  // Toggle to indicate if this is an insurance product (Link-out only)
+  isInsurance: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

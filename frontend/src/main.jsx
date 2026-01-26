@@ -8,23 +8,26 @@ import { CartProvider } from './context/CartContext.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { CatalogProvider } from './context/CatalogContext.jsx';
 import { BrowserRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-            <CatalogProvider>
-              <Context>
-                <App />
-                <Toaster />
-              </Context>
-            </CatalogProvider>
-          </CartProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              <CatalogProvider>
+                <Context>
+                  <App />
+                  <Toaster />
+                </Context>
+              </CatalogProvider>
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </HelmetProvider>
   </StrictMode>
 );

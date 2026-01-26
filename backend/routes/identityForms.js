@@ -5,10 +5,20 @@ const router = express.Router();
 
 // Middleware to check if user is authenticated (session-based)
 const requireAuth = (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: 'Please log in to continue' });
+  // Check for Passport session (Google OAuth)
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    // Polyfill req.session.userId for legacy code compatibility
+    req.session = req.session || {};
+    req.session.userId = req.user._id || req.user.id;
+    return next();
   }
-  next();
+
+  // Check for legacy session
+  if (req.session && req.session.userId) {
+    return next();
+  }
+
+  return res.status(401).json({ message: 'Please log in to continue' });
 };
 
 function cleanDigits(value = '', maxLen) {
@@ -32,7 +42,9 @@ router.post('/', requireAuth, async (req, res) => {
       mobile,
       consent,
       aadhaarNumber,
+      aadhaarPhoto,
       panNumber,
+      panPhoto,
       fatherName,
       cartSnapshot,
     } = req.body || {};
@@ -69,6 +81,10 @@ router.post('/', requireAuth, async (req, res) => {
       if (!payload.mobile || payload.mobile.length !== 10) {
         return res.status(400).json({ message: 'Valid mobile (10 digits) is required' });
       }
+      // Add aadhaar photo if provided
+      if (aadhaarPhoto) {
+        payload.aadhaarPhoto = aadhaarPhoto;
+      }
     }
 
     if (payload.formType === 'pan' || payload.formType === 'universal') {
@@ -80,6 +96,10 @@ router.post('/', requireAuth, async (req, res) => {
         return res.status(400).json({ message: 'fatherName is required' });
       }
       payload.panNumber = p;
+      // Add PAN photo if provided
+      if (panPhoto) {
+        payload.panPhoto = panPhoto;
+      }
     }
 
     const doc = new IdentityForm(payload);

@@ -6,10 +6,20 @@ const router = express.Router();
 
 // Middleware to check if user is authenticated
 const requireAuth = (req, res, next) => {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: 'Please log in to continue' });
+  // Check for Passport session (Google OAuth)
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    // Polyfill req.session.userId for legacy code compatibility
+    req.session = req.session || {};
+    req.session.userId = req.user._id || req.user.id;
+    return next();
   }
-  next();
+
+  // Check for legacy session
+  if (req.session && req.session.userId) {
+    return next();
+  }
+
+  return res.status(401).json({ message: 'Please log in to continue' });
 };
 
 // @route   GET /api/cart
