@@ -39,6 +39,8 @@ import ProductDetail from './Components/ProductDetail';
 
 
 import SEO from './Components/SEO';
+import TermsAndConditions from './Components/TermsAndConditions';
+import RefundPolicy from './Components/RefundPolicy';
 
 function App() {
   const { theme } = useTheme();
@@ -114,6 +116,8 @@ function App() {
                   <Route path='/cart-Detail' element={<ProtectedRoute><CartDetail /></ProtectedRoute>} />
                   <Route path='/about' element={<About />} />
                   <Route path='/contact' element={<Contact />} />
+                  <Route path='/terms' element={<TermsAndConditions />} />
+                  <Route path='/refund-policy' element={<RefundPolicy />} />
                   <Route path='/account' element={<ProtectedRoute><Account /></ProtectedRoute>} />
                   <Route path='/checkout' element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                   {/* Legacy route kept for compatibility with existing Payment page */}
