@@ -85,7 +85,7 @@ function TermsAndConditions() {
                         }`}
                 >
                     <FiFileText className="inline mr-2" />
-                    Last Updated: 27-01-2026 21:13:37
+                    Last Updated: 17-02-2026 02:43:25
                 </motion.div>
 
                 {/* Terms Sections */}
