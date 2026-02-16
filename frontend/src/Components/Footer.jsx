@@ -15,13 +15,12 @@ import w from "../assets/w.jpg";
 function Footer() {
   const { isDark } = useTheme();
   const { stats, loading } = useStats();
-  
+
   return (
-    <footer className={`rounded-lg py-10 px-6 md:px-16 transition-colors duration-300 ${
-      isDark 
-        ? 'bg-gray-900 text-gray-300' 
+    <footer className={`rounded-lg py-10 px-6 md:px-16 transition-colors duration-300 ${isDark
+        ? 'bg-gray-900 text-gray-300'
         : 'bg-gray-100 text-gray-700'
-    }`}>
+      }`}>
       {/* Animated Grid */}
       <motion.div
         className="max-w-7xl mx-auto grid grid-cols-2 gap-8 md:grid-cols-4"
@@ -32,9 +31,8 @@ function Footer() {
       >
         {/* Quick Links */}
         <motion.div whileHover={{ scale: 1.02 }}>
-          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>Quick Links</h1>
+          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'
+            }`}>Quick Links</h1>
           <ul className="space-y-2">
             {[
               { to: "/", label: "Home" },
@@ -43,6 +41,8 @@ function Footer() {
               { to: "/cart", label: "My Orders" },
               { to: "/account", label: "My Account" },
               { to: "/pay", label: "Payment Policy" },
+              { to: "/terms", label: "Terms & Conditions" },
+              { to: "/refund-policy", label: "Refund Policy" },
             ].map((link, index) => (
               <motion.li
                 key={index}
@@ -52,10 +52,9 @@ function Footer() {
                 <NavLink
                   to={link.to}
                   className={({ isActive }) =>
-                    `hover:underline transition ${
-                      isDark 
-                        ? `hover:text-white ${isActive ? "text-white font-medium" : ""}` 
-                        : `hover:text-gray-900 ${isActive ? "text-gray-900 font-medium" : ""}`
+                    `hover:underline transition ${isDark
+                      ? `hover:text-white ${isActive ? "text-white font-medium" : ""}`
+                      : `hover:text-gray-900 ${isActive ? "text-gray-900 font-medium" : ""}`
                     }`
                   }
                 >
@@ -68,9 +67,8 @@ function Footer() {
 
         {/* Contact */}
         <motion.div whileHover={{ scale: 1.02 }}>
-          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>Get In Touch</h1>
+          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'
+            }`}>Get In Touch</h1>
           <ul className="space-y-3 text-sm">
             <motion.li
               className="flex items-center gap-2"
@@ -102,9 +100,8 @@ function Footer() {
 
         {/* Payments */}
         <motion.div whileHover={{ scale: 1.02 }}>
-          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>We Accept</h1>
+          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'
+            }`}>We Accept</h1>
           <motion.div
             className="flex gap-3 items-center flex-wrap"
             initial={{ opacity: 0 }}
@@ -120,16 +117,14 @@ function Footer() {
 
         {/* Social */}
         <motion.div whileHover={{ scale: 1.02 }}>
-          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>Social</h1>
+          <h1 className={`text-lg font-semibold mb-4 transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'
+            }`}>Social</h1>
           <div className="flex flex-col gap-3">
             <motion.div whileHover={{ x: 6 }}>
               <Link
                 to="#facebook"
-                className={`flex items-center gap-2 transition ${
-                  isDark ? 'hover:text-white' : 'hover:text-gray-900'
-                }`}
+                className={`flex items-center gap-2 transition ${isDark ? 'hover:text-white' : 'hover:text-gray-900'
+                  }`}
               >
                 <FaFacebook className="text-blue-500" /> Facebook
               </Link>
@@ -137,9 +132,8 @@ function Footer() {
             <motion.div whileHover={{ x: 6 }}>
               <Link
                 to="#instagram"
-                className={`flex items-center gap-2 transition ${
-                  isDark ? 'hover:text-white' : 'hover:text-gray-900'
-                }`}
+                className={`flex items-center gap-2 transition ${isDark ? 'hover:text-white' : 'hover:text-gray-900'
+                  }`}
               >
                 <IoLogoInstagram className="text-pink-500" /> Instagram
               </Link>
@@ -150,11 +144,10 @@ function Footer() {
 
       {/* Bottom Bar */}
       <motion.div
-        className={`border-t mt-10 pt-5 text-sm transition-colors duration-300 ${
-          isDark 
-            ? 'border-gray-700 text-gray-400' 
+        className={`border-t mt-10 pt-5 text-sm transition-colors duration-300 ${isDark
+            ? 'border-gray-700 text-gray-400'
             : 'border-gray-300 text-gray-500'
-        }`}
+          }`}
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 1 }}
@@ -164,28 +157,26 @@ function Footer() {
           <div className="text-center sm:text-left">
             © {new Date().getFullYear()} SHIVALIK SERVICE HUB. All Rights Reserved.
           </div>
-          
+
           {/* Stats */}
           {!loading && (
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 text-xs"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: 1, duration: 0.6 }}
             >
-              <div 
-                className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-                  isDark ? 'bg-gray-800' : 'bg-gray-200'
-                }`}
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'
+                  }`}
                 title={`Total Users: ${stats.totalUsers.toLocaleString()}`}
               >
                 <HiUsers className="text-blue-500" />
                 <span>{stats.totalUsers.toLocaleString()}</span>
               </div>
-              <div 
-                className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-                  isDark ? 'bg-gray-800' : 'bg-gray-200'
-                }`}
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'
+                  }`}
                 title={`Total Views: ${stats.totalViews.toLocaleString()}`}
               >
                 <HiEye className="text-green-500" />
