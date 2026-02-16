@@ -73,7 +73,7 @@ function RefundPolicy() {
                         }`}
                 >
                     <FiFileText className="inline mr-2" />
-                    Last Updated: 27-01-2026 21:14:16
+                    Last Updated: 17-02-2026 02:42:28
                 </motion.div>
 
                 {/* Policy Sections */}
