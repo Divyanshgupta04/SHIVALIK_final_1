@@ -18,8 +18,8 @@ function Footer() {
 
   return (
     <footer className={`rounded-lg py-10 px-6 md:px-16 transition-colors duration-300 ${isDark
-        ? 'bg-gray-900 text-gray-300'
-        : 'bg-gray-100 text-gray-700'
+      ? 'bg-gray-900 text-gray-300'
+      : 'bg-gray-100 text-gray-700'
       }`}>
       {/* Animated Grid */}
       <motion.div
@@ -38,11 +38,11 @@ function Footer() {
               { to: "/", label: "Home" },
               { to: "/about", label: "About Us" },
               { to: "/contact", label: "Contact Us" },
-              { to: "/cart", label: "My Orders" },
-              { to: "/account", label: "My Account" },
-              { to: "/pay", label: "Payment Policy" },
               { to: "/terms", label: "Terms & Conditions" },
               { to: "/refund-policy", label: "Refund Policy" },
+              { to: "/privacy-policy", label: "Privacy Policy" },
+              { to: "/cart", label: "My Orders" },
+              { to: "/account", label: "My Account" },
             ].map((link, index) => (
               <motion.li
                 key={index}
@@ -145,8 +145,8 @@ function Footer() {
       {/* Bottom Bar */}
       <motion.div
         className={`border-t mt-10 pt-5 text-sm transition-colors duration-300 ${isDark
-            ? 'border-gray-700 text-gray-400'
-            : 'border-gray-300 text-gray-500'
+          ? 'border-gray-700 text-gray-400'
+          : 'border-gray-300 text-gray-500'
           }`}
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}

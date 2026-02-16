@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
-import { FiFileText, FiShield, FiAlertCircle, FiLock, FiPhone } from 'react-icons/fi'
+import { FiFileText, FiShield, FiAlertCircle, FiLock, FiPhone, FiGlobe } from 'react-icons/fi'
 import SEO from './SEO'
 
 function TermsAndConditions() {
@@ -13,86 +13,38 @@ function TermsAndConditions() {
         transition: { duration: 0.6 }
     }
 
-    const sections = [
+    const termsContent = [
         {
-            icon: <FiFileText className="text-2xl" />,
-            title: '1. Acceptance of Terms',
-            content: `By accessing and using the Shivalik Service Hub website and services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our website or services. We reserve the right to update or modify these terms at any time without prior notice. Your continued use of the website after any changes constitutes your acceptance of the new terms.`
+            title: "Agreement to Terms",
+            content: "These Terms and Conditions, along with privacy policy or other terms (“Terms”) constitute a binding agreement by and between SHIVALIK SERVICES HUB, ( “Website Owner” or “we” or “us” or “our”) and you (“you” or “your”) and relate to your use of our website, goods (as applicable) or services (as applicable) (collectively, “Services”)."
         },
         {
-            icon: <FiShield className="text-2xl" />,
-            title: '2. Services Description',
-            content: `Shivalik Service Hub provides a range of digital and offline services including but not limited to:
-• PAN Card Application & Processing Services (New PAN, Correction, Reprint, Minor PAN, etc.)
-• Digital products and services
-• Online ordering and delivery of various products
-• Document processing and facilitation services
-
-All services are subject to availability and may be modified or discontinued at our discretion. We act as a facilitator and service provider — government-related services (such as PAN card issuance) are ultimately processed by the respective government authorities.`
+            title: "Acceptance",
+            content: "By using our website and availing the Services, you agree that you have read and accepted these Terms (including the Privacy Policy). We reserve the right to modify these Terms at any time and without assigning any reason. It is your responsibility to periodically review these Terms to stay informed of updates."
         },
         {
-            icon: <FiAlertCircle className="text-2xl" />,
-            title: '3. User Accounts & Responsibilities',
-            content: `When you create an account on our platform, you are responsible for:
-• Providing accurate, current, and complete information during registration
-• Maintaining the confidentiality of your account credentials
-• All activities that occur under your account
-• Notifying us immediately of any unauthorized use of your account
-
-We reserve the right to suspend or terminate accounts that violate these terms, provide false information, or engage in fraudulent activity.`
+            title: "Terms of Use",
+            content: "The use of this website or availing of our Services is subject to the following terms of use:\n\n• To access and use the Services, you agree to provide true, accurate and complete information to us during and after registration, and you shall be responsible for all acts done through the use of your registered account.\n• Neither we nor any third parties provide any warranty or guarantee as to the accuracy, timeliness, performance, completeness or suitability of the information and materials offered on this website or through the Services, for any specific purpose. You acknowledge that such information and materials may contain inaccuracies or errors and we expressly exclude liability for any such inaccuracies or errors to the fullest extent permitted by law.\n• Your use of our Services and the website is solely at your own risk and discretion. You are required to independently assess and ensure that the Services meet your requirements.\n• The contents of the Website and the Services are proprietary to Us and you will not have any authority to claim any intellectual property rights, title, or interest in its contents.\n• You acknowledge that unauthorized use of the Website or the Services may lead to action against you as per these Terms or applicable laws.\n• You agree to pay us the charges associated with availing the Services.\n• You agree not to use the website and/ or Services for any purpose that is unlawful, illegal or forbidden by these Terms, or Indian or local laws that might apply to you.\n• You agree and acknowledge that website and the Services may contain links to other third party websites. On accessing these links, you will be governed by the terms of use, privacy policy and such other policies of such third party websites.\n• You understand that upon initiating a transaction for availing the Services you are entering into a legally binding and enforceable contract with the us for the Services."
         },
         {
-            icon: <FiFileText className="text-2xl" />,
-            title: '4. Ordering, Payment & Pricing',
-            content: `• All prices displayed on our website are in Indian Rupees (INR) and are inclusive of applicable taxes unless stated otherwise.
-• We reserve the right to change prices at any time without prior notice.
-• Payment must be made in full at the time of placing an order through the available payment methods (UPI, Credit/Debit Card, Net Banking, Wallet, etc.).
-• Once an order is placed and payment is confirmed, a confirmation will be sent to your registered email/mobile.
-• We are not responsible for any payment failures due to issues with your bank, payment gateway, or internet connectivity.
-• Orders are subject to acceptance and availability. We may cancel any order at our discretion and issue a full refund in such cases.`
+            title: "Refunds & Claims",
+            content: "You shall be entitled to claim a refund of the payment made by you in case we are not able to provide the Service. The timelines for such return and refund will be according to the specific Service you have availed or within the time period provided in our policies (as applicable). In case you do not raise a refund claim within the stipulated time, than this would make you ineligible for a refund."
         },
         {
-            icon: <FiShield className="text-2xl" />,
-            title: '5. PAN Card Services — Special Terms',
-            content: `• PAN card services offered through Shivalik Service Hub are facilitation services. We assist you in submitting your application to the relevant government authority (NSDL/UTIITSL).
-• We are not responsible for the approval, rejection, or processing time of PAN applications by government authorities.
-• It is your responsibility to provide accurate and valid documents. Any rejection due to incorrect or fraudulent documents is solely your responsibility.
-• Service fees paid for PAN card processing are non-refundable once the application has been submitted to the government portal.
-• Estimated delivery timelines are approximate and depend on the government authority's processing schedule.`
+            title: "Force Majeure",
+            content: "Notwithstanding anything contained in these Terms, the parties shall not be liable for any failure to perform an obligation under these Terms if performance is prevented or delayed by a force majeure event."
         },
         {
-            icon: <FiLock className="text-2xl" />,
-            title: '6. Intellectual Property',
-            content: `All content on this website — including text, graphics, logos, images, audio, video, software, and design — is the property of Shivalik Service Hub and is protected by Indian and international copyright, trademark, and intellectual property laws. You may not reproduce, distribute, modify, or create derivative works from any content on this website without our prior written consent.`
+            title: "Governing Law",
+            content: "These Terms and any dispute or claim relating to it, or its enforceability, shall be governed by and construed in accordance with the laws of India."
         },
         {
-            icon: <FiAlertCircle className="text-2xl" />,
-            title: '7. Limitation of Liability',
-            content: `To the maximum extent permitted by applicable law:
-• Shivalik Service Hub shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our services.
-• We do not guarantee uninterrupted or error-free operation of the website.
-• Our total liability for any claim arising from these terms or use of services shall not exceed the amount paid by you for the specific service in question.
-• We are not responsible for delays or failures caused by circumstances beyond our control, including natural disasters, government actions, internet outages, or third-party service failures.`
+            title: "Jurisdiction",
+            content: "All disputes arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the courts in Khajmola, Jammu and Kashmir"
         },
         {
-            icon: <FiLock className="text-2xl" />,
-            title: '8. Privacy & Data Protection',
-            content: `We are committed to protecting your personal information. By using our services, you consent to the collection, storage, and processing of your personal data as described in our Privacy Policy. We use your data solely for providing and improving our services, processing orders, and communicating with you. We do not sell your personal information to third parties. For detailed information on how we handle your data, please refer to our Privacy Policy.`
-        },
-        {
-            icon: <FiFileText className="text-2xl" />,
-            title: '9. Governing Law & Dispute Resolution',
-            content: `These Terms and Conditions are governed by and construed in accordance with the laws of India. Any disputes arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts in Rajouri, Jammu & Kashmir, India. We encourage you to contact us first to resolve any disputes amicably before pursuing legal action.`
-        },
-        {
-            icon: <FiPhone className="text-2xl" />,
-            title: '10. Contact Us',
-            content: `If you have any questions, concerns, or feedback regarding these Terms and Conditions, please contact us:
-
-📍 Address: Main Bazar, Rajouri, Jammu & Kashmir – 185131
-📞 Phone: 7889588384
-📧 Email: sshubjk@gmail.com
-🕗 Business Hours: 8:00 AM – 9:00 PM`
+            title: "Contact Information",
+            content: "All concerns or communications relating to these Terms must be communicated to us using the contact information provided on this website."
         }
     ]
 
@@ -120,7 +72,7 @@ We reserve the right to suspend or terminate accounts that violate these terms, 
                         }`}></div>
                     <p className={`mt-6 text-lg max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'
                         }`}>
-                        Please read these terms carefully before using our services. By using our website, you agree to comply with and be bound by the following terms.
+                        Please read these terms carefully. These terms constitute a binding agreement between you and SHIVALIK SERVICES HUB.
                     </p>
                 </motion.div>
 
@@ -133,12 +85,12 @@ We reserve the right to suspend or terminate accounts that violate these terms, 
                         }`}
                 >
                     <FiFileText className="inline mr-2" />
-                    Last Updated: February 16, 2026
+                    Last Updated: 27-01-2026 21:13:37
                 </motion.div>
 
                 {/* Terms Sections */}
                 <div className="max-w-4xl mx-auto space-y-6">
-                    {sections.map((section, idx) => (
+                    {termsContent.map((section, idx) => (
                         <motion.div
                             key={idx}
                             initial={{ opacity: 0, y: 20 }}
@@ -153,7 +105,7 @@ We reserve the right to suspend or terminate accounts that violate these terms, 
                             <div className="flex items-center gap-3 mb-4">
                                 <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                                     }`}>
-                                    {section.icon}
+                                    {idx % 2 === 0 ? <FiShield /> : <FiLock />}
                                 </div>
                                 <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'
                                     }`}>
@@ -181,15 +133,11 @@ We reserve the right to suspend or terminate accounts that violate these terms, 
                 >
                     <p className={`text-lg font-medium mb-2 ${isDark ? 'text-gray-200' : 'text-gray-800'
                         }`}>
-                        Thank you for choosing Shivalik Service Hub!
+                        Thank you for using Shivalik!
                     </p>
                     <p className={`text-base ${isDark ? 'text-gray-300' : 'text-gray-700'
                         }`}>
-                        By using our services, you confirm that you have read and agree to these Terms and Conditions. If you have any questions, feel free to reach out to us anytime.
-                    </p>
-                    <p className={`mt-4 font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'
-                        }`}>
-                        📞 We're just a call away: 7889588384
+                        By using our services, you confirm that you have read and agree to these Terms and Conditions.
                     </p>
                 </motion.div>
             </div>

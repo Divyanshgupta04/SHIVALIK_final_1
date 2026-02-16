@@ -113,13 +113,13 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
     const timer = setTimeout(() => {
       const query = searchQuery.toLowerCase();
 
-      const filteredProducts = (allProducts || []).filter(product => 
+      const filteredProducts = (allProducts || []).filter(product =>
         product.title?.toLowerCase().includes(query) ||
         product.description?.toLowerCase().includes(query) ||
         product.category?.toLowerCase().includes(query)
       );
 
-      const filteredBooks = (libraryBooks || []).filter(book => 
+      const filteredBooks = (libraryBooks || []).filter(book =>
         book.title?.toLowerCase().includes(query)
       );
 
@@ -148,9 +148,8 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
   return (
     <AnimatePresence>
       <motion.div
-        className={`fixed inset-0 z-[9998] flex flex-col font-poppins ${
-          isDark ? "bg-black text-white" : "bg-white text-gray-900"
-        }`}
+        className={`fixed inset-0 z-[9998] flex flex-col font-poppins ${isDark ? "bg-black text-white" : "bg-white text-gray-900"
+          }`}
         initial="hidden"
         animate="visible"
         exit="exit"
@@ -158,9 +157,8 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
       >
         {/* Search Header */}
         <div
-          className={`flex items-center w-full border-b px-6 py-6 ${
-            isDark ? "border-gray-700" : "border-gray-200"
-          }`}
+          className={`flex items-center w-full border-b px-6 py-6 ${isDark ? "border-gray-700" : "border-gray-200"
+            }`}
         >
           <div className="flex-1 flex items-center gap-3">
             <IoIosSearch className={`text-2xl ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -169,19 +167,17 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
               placeholder="Search for products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`flex-1 px-4 py-3 text-xl focus:outline-none bg-transparent ${
-                isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
-              }`}
+              className={`flex-1 px-4 py-3 text-xl focus:outline-none bg-transparent ${isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
+                }`}
               autoFocus
             />
           </div>
           <button
             onClick={handleClose}
-            className={`ml-6 px-6 py-2 font-medium rounded-lg transition-colors ${
-              isDark
+            className={`ml-6 px-6 py-2 font-medium rounded-lg transition-colors ${isDark
                 ? "text-red-400 hover:bg-red-600 hover:text-white"
                 : "text-red-600 hover:bg-red-50"
-            }`}
+              }`}
           >
             Close
           </button>
@@ -222,11 +218,10 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
                         key={cat.slug}
                         to={`/category/${cat.slug}`}
                         onClick={handleClose}
-                        className={`group rounded-lg overflow-hidden transition-all ${
-                          isDark 
-                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
+                        className={`group rounded-lg overflow-hidden transition-all ${isDark
+                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
                             : 'bg-white hover:shadow-lg border border-gray-200'
-                        }`}
+                          }`}
                       >
                         <div className="aspect-square overflow-hidden">
                           {cat.imageUrl ? (
@@ -236,22 +231,19 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             />
                           ) : (
-                            <div className={`w-full h-full flex items-center justify-center text-sm ${
-                              isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
-                            }`}>
+                            <div className={`w-full h-full flex items-center justify-center text-sm ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+                              }`}>
                               {cat.name}
                             </div>
                           )}
                         </div>
                         <div className="p-4">
-                          <h3 className={`font-medium mb-1 line-clamp-1 ${
-                            isDark ? 'text-white' : 'text-gray-900'
-                          }`}>
+                          <h3 className={`font-medium mb-1 line-clamp-1 ${isDark ? 'text-white' : 'text-gray-900'
+                            }`}>
                             {cat.name}
                           </h3>
-                          <p className={`text-xs ${
-                            isDark ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
                             /category/{cat.slug}
                           </p>
                         </div>
@@ -273,11 +265,10 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
                         key={product.id}
                         to={`/product/${product.id}`}
                         onClick={handleClose}
-                        className={`group rounded-lg overflow-hidden transition-all ${
-                          isDark 
-                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
+                        className={`group rounded-lg overflow-hidden transition-all ${isDark
+                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
                             : 'bg-white hover:shadow-lg border border-gray-200'
-                        }`}
+                          }`}
                       >
                         <div className="aspect-square overflow-hidden">
                           <img
@@ -287,26 +278,22 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
                           />
                         </div>
                         <div className="p-4">
-                          <h3 className={`font-medium mb-1 line-clamp-1 ${
-                            isDark ? 'text-white' : 'text-gray-900'
-                          }`}>
+                          <h3 className={`font-medium mb-1 line-clamp-1 ${isDark ? 'text-white' : 'text-gray-900'
+                            }`}>
                             {product.title}
                           </h3>
-                          <p className={`text-sm mb-2 line-clamp-2 ${
-                            isDark ? 'text-gray-400' : 'text-gray-600'
-                          }`}>
+                          <p className={`text-sm mb-2 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
                             {product.description}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className={`font-semibold ${
-                              isDark ? 'text-red-400' : 'text-red-600'
-                            }`}>
+                            <span className={`font-semibold ${isDark ? 'text-red-400' : 'text-red-600'
+                              }`}>
                               ₹{product.price}
                             </span>
                             {product.category && (
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
-                              }`}>
+                              <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+                                }`}>
                                 {product.category}
                               </span>
                             )}
@@ -330,11 +317,10 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
                         key={book.id}
                         to={book.category?.slug ? `/library/${book.category.slug}` : '/library'}
                         onClick={handleClose}
-                        className={`group rounded-lg overflow-hidden transition-all ${
-                          isDark 
-                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700' 
+                        className={`group rounded-lg overflow-hidden transition-all ${isDark
+                            ? 'bg-gray-900 hover:bg-gray-800 border border-gray-700'
                             : 'bg-white hover:shadow-lg border border-gray-200'
-                        }`}
+                          }`}
                       >
                         <div className="aspect-square overflow-hidden">
                           <img
@@ -344,33 +330,28 @@ const SearchOverlay = ({ isOpen, onClose, isDark, overlayVariants }) => {
                           />
                         </div>
                         <div className="p-4">
-                          <h3 className={`font-medium mb-1 line-clamp-1 ${
-                            isDark ? 'text-white' : 'text-gray-900'
-                          }`}>
+                          <h3 className={`font-medium mb-1 line-clamp-1 ${isDark ? 'text-white' : 'text-gray-900'
+                            }`}>
                             {book.title}
                           </h3>
                           {book.author && (
-                            <p className={`text-xs mb-1 ${
-                              isDark ? 'text-gray-400' : 'text-gray-500'
-                            }`}>
+                            <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'
+                              }`}>
                               by {book.author}
                             </p>
                           )}
-                          <p className={`text-sm mb-2 line-clamp-2 ${
-                            isDark ? 'text-gray-400' : 'text-gray-600'
-                          }`}>
+                          <p className={`text-sm mb-2 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
                             {book.description}
                           </p>
                           <div className="flex items-center justify-between">
-                            <span className={`font-semibold ${
-                              isDark ? 'text-red-400' : 'text-red-600'
-                            }`}>
+                            <span className={`font-semibold ${isDark ? 'text-red-400' : 'text-red-600'
+                              }`}>
                               ₹{book.price}
                             </span>
                             {book.category?.name && (
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
-                              }`}>
+                              <span className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
+                                }`}>
                                 {book.category.name}
                               </span>
                             )}
@@ -470,9 +451,8 @@ function Navbar() {
 
           {/* Overlay (transparent layer) */}
           <div
-            className={`absolute inset-0 w-full h-full pointer-events-none ${
-              isDark ? "bg-black/75" : "bg-white/80"
-            }`}
+            className={`absolute inset-0 w-full h-full pointer-events-none ${isDark ? "bg-black/75" : "bg-white/80"
+              }`}
           ></div>
         </div>
 
@@ -481,13 +461,12 @@ function Navbar() {
           {/* Logo */}
           <Link to="/" className="font-playfair tracking-widest w-full">
             <div
-              className={`flex items-center mt-5 ${
-                isDesktop ? "justify-center" : "justify-start px-4"
-              }`}
+              className={`flex items-center mt-5 ${isDesktop ? "justify-center" : "justify-start px-4"
+                }`}
             >
               <motion.h1
                 style={{
-                  fontSize: isHomePage 
+                  fontSize: isHomePage
                     ? (isScroll ? (isDesktop ? "2rem" : "1.5rem") : logoSize)
                     : isDesktop ? "2rem" : "1.5rem",
                   y: isHomePage ? logoY : 0,
@@ -495,9 +474,8 @@ function Navbar() {
                   letterSpacing: isScroll ? "0.15em" : "0.25em",
                   whiteSpace: "nowrap",
                 }}
-                className={`font-serif transition-all duration-500 ${
-                  isDark ? "text-red-500" : "text-red-600"
-                }`}
+                className={`font-serif transition-all duration-500 ${isDark ? "text-red-500" : "text-red-600"
+                  }`}
               >
                 {isDesktop ? "SHIVALIK" : "SHIVALIK"}
               </motion.h1>
@@ -506,18 +484,16 @@ function Navbar() {
 
           {/* Right Side Icons */}
           <div
-            className={`absolute right-4 sm:right-6 flex gap-3 sm:gap-4 ${iconPosition} ${
-              isDark ? "text-red-500" : "text-gray-600"
-            } z-10`}
+            className={`absolute right-4 sm:right-6 flex gap-3 sm:gap-4 ${iconPosition} ${isDark ? "text-red-500" : "text-gray-600"
+              } z-10`}
           >
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className={`transition-all duration-300 border-b-2 border-transparent ${
-                isDark
+              className={`transition-all duration-300 border-b-2 border-transparent ${isDark
                   ? "hover:text-white hover:border-white"
                   : "hover:text-gray-900 hover:border-gray-900"
-              }`}
+                }`}
               title={isDark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDark ? (
@@ -531,11 +507,10 @@ function Navbar() {
             <div className="relative">
               <Link
                 to="/cart"
-                className={`transition-all duration-300 border-b-2 border-transparent ${
-                  isDark
+                className={`transition-all duration-300 border-b-2 border-transparent ${isDark
                     ? "hover:text-white hover:border-white"
                     : "hover:text-gray-900 hover:border-gray-900"
-                }`}
+                  }`}
               >
                 <FiShoppingBag className={iconSize} />
                 {addCart && addCart.length > 0 && (
@@ -550,11 +525,10 @@ function Navbar() {
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className={`transition-all duration-300 border-b-2 border-transparent ${
-                  isDark
+                className={`transition-all duration-300 border-b-2 border-transparent ${isDark
                     ? "hover:text-white hover:border-white"
                     : "hover:text-gray-900 hover:border-gray-900"
-                }`}
+                  }`}
               >
                 <FiUser className={iconSize} />
               </button>
@@ -567,20 +541,18 @@ function Navbar() {
                     animate="visible"
                     exit="exit"
                     variants={dropdownVariants}
-                    className={`absolute right-0 top-full mt-2 shadow-xl rounded-lg w-60 z-[9999] font-poppins ${
-                      isDark
+                    className={`absolute right-0 top-full mt-2 shadow-xl rounded-lg w-60 z-[9999] font-poppins ${isDark
                         ? "bg-black border border-gray-600 text-red-400"
                         : "bg-white border border-gray-200 text-gray-700"
-                    }`}
+                      }`}
                   >
                     {!user ? (
                       <Link
                         to="/signin"
-                        className={`block px-6 py-3 text-sm font-medium rounded-lg transition-colors ${
-                          isDark
+                        className={`block px-6 py-3 text-sm font-medium rounded-lg transition-colors ${isDark
                             ? "text-red-400 hover:bg-red-600 hover:text-white"
                             : "text-gray-700 hover:bg-red-50 hover:text-red-600"
-                        }`}
+                          }`}
                         onClick={() => setProfileOpen(false)}
                       >
                         SIGN IN
@@ -588,21 +560,19 @@ function Navbar() {
                     ) : (
                       <>
                         <div
-                          className={`px-6 py-3 text-sm border-b ${
-                            isDark
+                          className={`px-6 py-3 text-sm border-b ${isDark
                               ? "text-red-400 border-gray-600"
                               : "text-gray-700 border-gray-200"
-                          }`}
+                            }`}
                         >
                           Hello, {user.name}
                         </div>
                         <Link
                           to="/account"
-                          className={`block px-6 py-3 text-sm font-medium transition-colors ${
-                            isDark
+                          className={`block px-6 py-3 text-sm font-medium transition-colors ${isDark
                               ? "text-red-400 hover:bg-red-600 hover:text-white"
                               : "text-gray-700 hover:bg-red-50 hover:text-red-600"
-                          }`}
+                            }`}
                           onClick={() => setProfileOpen(false)}
                         >
                           ACCOUNT SETTINGS
@@ -612,11 +582,10 @@ function Navbar() {
                             logout();
                             setProfileOpen(false);
                           }}
-                          className={`w-full text-left px-6 py-3 text-sm font-medium transition-colors rounded-b-lg ${
-                            isDark
+                          className={`w-full text-left px-6 py-3 text-sm font-medium transition-colors rounded-b-lg ${isDark
                               ? "text-red-400 hover:bg-red-600 hover:text-white"
                               : "text-gray-700 hover:bg-red-50 hover:text-red-600"
-                          }`}
+                            }`}
                         >
                           SIGN OUT
                         </button>
@@ -630,11 +599,10 @@ function Navbar() {
             {/* Search */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className={`transition-all duration-300 border-b-2 border-transparent ${
-                isDark
+              className={`transition-all duration-300 border-b-2 border-transparent ${isDark
                   ? "hover:text-white hover:border-white"
                   : "hover:text-gray-900 hover:border-gray-900"
-              }`}
+                }`}
             >
               <IoIosSearch className={iconSize} />
             </button>
@@ -642,11 +610,10 @@ function Navbar() {
             {/* Menu */}
             <button
               onClick={() => setisOpen(!isOpen)}
-              className={`transition-all duration-300 border-b-2 border-transparent ${
-                isDark
+              className={`transition-all duration-300 border-b-2 border-transparent ${isDark
                   ? "hover:text-white hover:border-white"
                   : "hover:text-gray-900 hover:border-gray-900"
-              }`}
+                }`}
             >
               <MdMenu className={iconSize} />
             </button>
@@ -655,73 +622,92 @@ function Navbar() {
       </motion.div>
 
       {/* Fullscreen Search Overlay */}
-      <SearchOverlay 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
+      <SearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
         isDark={isDark}
         overlayVariants={overlayVariants}
       />
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-[320px] sm:w-[400px] shadow-2xl z-[9997] transform transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        } ${isDark ? "bg-black" : "bg-white"}`}
+        className={`fixed top-0 right-0 h-full w-[320px] sm:w-[400px] shadow-2xl z-[9997] transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+          } ${isDark ? "bg-black" : "bg-white"}`}
       >
         <div className="flex justify-end p-6">
           <button
             onClick={() => setisOpen(false)}
-            className={`rounded-full p-3 transition-colors ${
-              isDark
+            className={`rounded-full p-3 transition-colors ${isDark
                 ? "bg-red-600 text-white hover:bg-red-700"
                 : "bg-red-600 text-white hover:bg-red-700"
-            }`}
+              }`}
           >
             <IoCloseSharp size={24} />
           </button>
         </div>
 
         <nav
-          className={`flex flex-col px-8 py-4 space-y-6 font-poppins text-lg ${
-            isDark ? "text-red-400" : "text-gray-700"
-          }`}
+          className={`flex flex-col px-8 py-4 space-y-6 font-poppins text-lg ${isDark ? "text-red-400" : "text-gray-700"
+            }`}
         >
           <Link
             to="/"
-            className={`transition-colors ${
-              isDark ? "hover:text-white" : "hover:text-red-600"
-            }`}
+            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+              }`}
             onClick={() => setisOpen(false)}
           >
             Home
           </Link>
           <Link
             to="/products"
-            className={`transition-colors ${
-              isDark ? "hover:text-white" : "hover:text-red-600"
-            }`}
+            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+              }`}
             onClick={() => setisOpen(false)}
           >
             Products
           </Link>
           <Link
             to="/about"
-            className={`transition-colors ${
-              isDark ? "hover:text-white" : "hover:text-red-600"
-            }`}
+            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+              }`}
             onClick={() => setisOpen(false)}
           >
             About
           </Link>
           <Link
             to="/contact"
-            className={`transition-colors ${
-              isDark ? "hover:text-white" : "hover:text-red-600"
-            }`}
+            className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+              }`}
             onClick={() => setisOpen(false)}
           >
             Contact
           </Link>
+          <div className={`pt-4 mt-4 border-t ${isDark ? 'border-gray-800' : 'border-gray-100'}`}>
+            <Link
+              to="/terms"
+              className={`block text-sm mb-4 transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+                }`}
+              onClick={() => setisOpen(false)}
+            >
+              Terms & Conditions
+            </Link>
+            <Link
+              to="/refund-policy"
+              className={`block text-sm mb-4 transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+                }`}
+              onClick={() => setisOpen(false)}
+            >
+              Refund Policy
+            </Link>
+            <Link
+              to="/privacy-policy"
+              className={`block text-sm transition-colors ${isDark ? "hover:text-white" : "hover:text-red-600"
+                }`}
+              onClick={() => setisOpen(false)}
+            >
+              Privacy Policy
+            </Link>
+          </div>
         </nav>
       </div>
 
