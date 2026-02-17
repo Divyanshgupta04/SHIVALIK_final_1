@@ -144,7 +144,7 @@ const sendWelcomeEmail = async (email, name) => {
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="http://localhost:5173" style="background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; display: inline-block; font-weight: bold;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; display: inline-block; font-weight: bold;">
                 Start Exploring
               </a>
             </div>
