@@ -12,6 +12,9 @@ const { verifyEmailTransport } = require('./utils/email');
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for secure cookies behind Nginx
+app.set('trust proxy', 1);
+
 // Configure allowed origins
 const allowedOrigins = [
   "http://localhost:5174", // Development
@@ -61,7 +64,7 @@ const sessionConfig = {
 if (isProduction) {
   sessionConfig.cookie.domain = '.sshjk.in'; // Allow cookie across all subdomains
   sessionConfig.cookie.secure = true; // HTTPS only in production
-  sessionConfig.cookie.sameSite = 'none'; // Required for cross-subdomain with secure cookies
+  sessionConfig.cookie.sameSite = 'lax'; // Changed from 'none' to 'lax' for same-site security
 } else {
   // Development settings
   sessionConfig.cookie.secure = false;
