@@ -21,6 +21,7 @@ import AdminDashboard from './Components/Admin/AdminDashboard';
 import AdminProducts from './Components/Admin/AdminProducts';
 import AdminUsers from './Components/Admin/AdminUsers';
 import AdminOrders from './Components/Admin/AdminOrders';
+import PaymentStatus from './Components/PaymentStatus';
 
 import AdminCatalog from './Components/Admin/Catalog/AdminCatalog';
 import AdminAnnouncements from './Components/Admin/AdminAnnouncements';
@@ -125,6 +126,7 @@ function App() {
                   {/* Legacy route kept for compatibility with existing Payment page */}
                   <Route path='/checkout/address' element={<ProtectedRoute><Address /></ProtectedRoute>} />
                   <Route path='/pay' element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+                  <Route path='/payment-status' element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
                   <Route path='*' element={<NotFound />} />
                 </Routes>
               </main>
