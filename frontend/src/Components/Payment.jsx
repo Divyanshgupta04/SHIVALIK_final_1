@@ -20,7 +20,7 @@ function Payment() {
   const buyNowItem = location.state?.buyNowItem
 
   // Derived state to handle either "Buy Now" item or normal Cart
-  const currentCart = buyNowItem ? [{ ...buyNowItem, quantity: 1 }] : cart
+  const currentCart = buyNowItem ? [{ ...buyNowItem, productId: buyNowItem.id, quantity: 1 }] : cart
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -78,23 +78,8 @@ function Payment() {
     : parseFloat(getCartTotal())
 
   const tax = subtotal * 0.18 // 18% GST
-  const shipping = subtotal > 500 ? 0 : 50 // Free shipping above ₹500
+  const shipping = 0
   const total = subtotal + tax + shipping
-
-  // Load Razorpay script
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => {
-        resolve(true)
-      }
-      script.onerror = () => {
-        resolve(false)
-      }
-      document.body.appendChild(script)
-    })
-  }
 
   const handlePayment = async () => {
     if (!user) {
@@ -102,31 +87,17 @@ function Payment() {
       return
     }
 
+    if (!userAddress) {
+      toast.error('Please add shipping address before proceeding')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript()
-      if (!scriptLoaded) {
-        toast.error('Failed to load payment gateway')
-        return
-      }
-
-      // Create order on backend
-      const orderResponse = await axios.post('/api/payment/create-order', {
-        amount: total
-      })
-
-      if (!orderResponse.data.success) {
-        toast.error('Failed to create payment order')
-        return
-      }
-
-      const { data: order, key_id } = orderResponse.data
-
-      // Prepare order data for verification
+      // Prepare order data
       const orderData = {
-        items: currentCart, // usage of new variable
+        items: currentCart,
         subtotal: subtotal,
         tax: tax,
         shipping: shipping,
@@ -134,67 +105,18 @@ function Payment() {
         identityFormId: location.state?.idData?.identityFormId || null
       }
 
-      const options = {
-        key: key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'Shivalik Service Hub',
-        description: 'Payment for your order',
-        order_id: order.id,
-        handler: async (response) => {
-          setOrderProcessing(true)
-          try {
-            // Verify payment on backend
-            const verifyResponse = await axios.post('/api/payment/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              orderData: orderData
-            })
+      // Create payment request on backend
+      const response = await axios.post('/api/payment/create-order', {
+        amount: total,
+        orderData: orderData
+      })
 
-            if (verifyResponse.data.success) {
-              toast.success('Payment successful! Order placed.')
-              // Clear cart after successful payment
-              await clearCart()
-              // Redirect to order confirmation or account page
-              navigate('/account', {
-                state: {
-                  orderSuccess: true,
-                  orderId: verifyResponse.data.orderId
-                }
-              })
-            } else {
-              toast.error('Payment verification failed')
-            }
-          } catch (error) {
-            console.error('Payment verification error:', error)
-            toast.error('Payment verification failed')
-          } finally {
-            setOrderProcessing(false)
-          }
-        },
-        prefill: {
-          name: user.name,
-          email: user.email,
-          contact: userAddress?.phone || ''
-        },
-        notes: {
-          address: userAddress ? `${userAddress.line1}, ${userAddress.city}` : ''
-        },
-        theme: {
-          color: '#2563eb'
-        },
-        modal: {
-          ondismiss: () => {
-            toast.info('Payment cancelled')
-            setLoading(false)
-          }
-        }
+      if (response.data.success && response.data.longurl) {
+        // Redirect to Instamojo
+        window.location.href = response.data.longurl;
+      } else {
+        toast.error('Failed to initiate payment. Please try again.')
       }
-
-      const razorpay = new window.Razorpay(options)
-      razorpay.open()
-
     } catch (error) {
       console.error('Payment error:', error)
       const errorMessage = error.response?.data?.message || 'Payment failed'
@@ -320,7 +242,7 @@ function Payment() {
               <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-5 bg-blue-600 rounded"></div>
-                  <span className="font-medium">Razorpay Secure Payment</span>
+                  <span className="font-medium">Instamojo Secure Payment</span>
                 </div>
                 <p className="text-sm text-gray-600">Pay securely using Credit Card, Debit Card, Net Banking, UPI, or Wallet</p>
               </div>
