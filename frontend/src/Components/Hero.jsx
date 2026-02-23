@@ -1,5 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
-import Show from './Show'
+import { useMemo, useState, useEffect } from 'react'
 import Partner from '../assets/Partner.jpg'
 import Pan from '../assets/Pan.jpg'
 import In from '../assets/Insurance.jpg'
@@ -88,14 +87,12 @@ function Hero() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isDark ? 'bg-black' : 'bg-gray-50'
-    }`}>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-black' : 'bg-gray-50'
+      }`}>
       <div className='container mx-auto px-6 sm:px-8 py-10'>
-        <motion.h1 
-          className={`text-4xl sm:text-5xl font-extrabold mb-8 ${
-            isDark ? 'text-blue-400' : 'text-blue-600'
-          }`}
+        <motion.h1
+          className={`text-4xl sm:text-5xl font-extrabold mb-8 ${isDark ? 'text-blue-400' : 'text-blue-600'
+            }`}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -108,7 +105,7 @@ function Hero() {
         ) : categories.length === 0 ? (
           <div className="py-16 text-center opacity-80">No categories available.</div>
         ) : (
-          <motion.div 
+          <motion.div
             className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -117,8 +114,8 @@ function Hero() {
             {categories.map((c, idx) => (
               <Link key={c.slug} to={`/category/${c.slug}`}>
                 <motion.div
-                  className={`${isDark 
-                    ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 shadow-black/40' 
+                  className={`${isDark
+                    ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 shadow-black/40'
                     : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100 shadow-blue-100'} 
                     group rounded-2xl p-4 flex flex-col items-center overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)]`}
                   initial={{ opacity: 0, y: 10 }}
@@ -151,8 +148,6 @@ function Hero() {
 
       </div>
 
-      {/* Keep the rest of the page content as before */}
-      <Show />
     </div>
   )
 }
