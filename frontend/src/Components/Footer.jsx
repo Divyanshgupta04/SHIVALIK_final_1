@@ -86,7 +86,7 @@ function Footer() {
               className="flex items-center gap-2"
               whileHover={{ x: 6 }}
             >
-              <MdOutlineMail className="text-red-400 text-lg" /> sshubjk@gmail.com
+              <MdOutlineMail className="text-violet-400 text-lg" /> sshubjk@gmail.com
             </motion.li>
             <motion.li
               className="flex items-start gap-2"

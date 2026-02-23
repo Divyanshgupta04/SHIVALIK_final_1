@@ -94,8 +94,8 @@ export default function AadhaarForm({ initialValue, onSubmit, onBack, disabled }
   };
 
   const inputClasses = `w-full rounded-lg border px-4 py-3 outline-none transition-all ${isDark
-      ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-500'
-      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400'
+    ? 'bg-gray-800 border-gray-700 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-500'
+    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400'
     }`;
 
   const labelClasses = `block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`;
@@ -160,7 +160,7 @@ export default function AadhaarForm({ initialValue, onSubmit, onBack, disabled }
                   <button
                     type="button"
                     onClick={() => { setAadhaarPhoto(null); document.getElementById('aadhaar-upload').value = ''; }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
+                    className="absolute -top-2 -right-2 bg-violet-500 text-white rounded-full p-1 hover:bg-violet-600 shadow-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -225,8 +225,8 @@ export default function AadhaarForm({ initialValue, onSubmit, onBack, disabled }
           type="button"
           onClick={onBack}
           className={`flex-1 rounded-xl border px-6 py-3 text-sm font-semibold transition-all ${isDark
-              ? 'border-gray-600 text-gray-300 hover:bg-gray-800'
-              : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+            ? 'border-gray-600 text-gray-300 hover:bg-gray-800'
+            : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
             }`}
           disabled={disabled}
         >

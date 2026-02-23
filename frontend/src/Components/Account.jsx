@@ -165,7 +165,7 @@ function Account() {
                         case 'delivered':
                           return { icon: FiCheckCircle, color: 'text-green-600 bg-green-50', text: 'Delivered' }
                         case 'cancelled':
-                          return { icon: FiXCircle, color: 'text-red-600 bg-red-50', text: 'Cancelled' }
+                          return { icon: FiXCircle, color: 'text-violet-600 bg-violet-50', text: 'Cancelled' }
                         default:
                           return { icon: FiAlertCircle, color: 'text-gray-600 bg-gray-50', text: status || 'Unknown' }
                       }

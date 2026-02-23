@@ -57,7 +57,7 @@ function Contact() {
           className="text-center mb-16"
         >
           <h1 className="text-5xl font-extrabold mb-4">Contact Us</h1>
-          <div className={`w-24 h-1 mx-auto rounded-full ${isDark ? 'bg-red-500' : 'bg-blue-600'}`}></div>
+          <div className={`w-24 h-1 mx-auto rounded-full ${isDark ? 'bg-violet-500' : 'bg-blue-600'}`}></div>
           <p className={`mt-6 text-lg max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Have a question or need assistance? Our team is here to help you. Reach out to us through any of the channels below.
           </p>

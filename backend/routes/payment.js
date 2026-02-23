@@ -71,7 +71,7 @@ router.post('/create-order', requireAuth, async (req, res) => {
             email: user.email,
             phone: phone,
             redirect_url: `${process.env.FRONTEND_URL}/payment-status`,
-            webhook: `${process.env.FRONTEND_URL.replace('sshjk.in', 'api.sshjk.in')}/api/payment/webhook` // Adjust based on your API URL
+            webhook: `${process.env.API_URL || 'http://localhost:5000'}/api/payment/webhook`
         };
 
         console.log('Sending Payment Data to Instamojo:', { ...paymentData, phone: phone });

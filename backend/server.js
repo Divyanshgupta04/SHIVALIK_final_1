@@ -62,7 +62,9 @@ const sessionConfig = {
 
 // Production-specific cookie settings
 if (isProduction) {
-  sessionConfig.cookie.domain = '.sshjk.in'; // Allow cookie across all subdomains
+  if (process.env.SESSION_DOMAIN) {
+    sessionConfig.cookie.domain = process.env.SESSION_DOMAIN;
+  }
   sessionConfig.cookie.secure = true; // HTTPS only in production
   sessionConfig.cookie.sameSite = 'lax'; // Changed from 'none' to 'lax' for same-site security
 } else {
