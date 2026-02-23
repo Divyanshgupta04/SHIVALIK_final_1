@@ -27,7 +27,7 @@ const SignIn = () => {
         : 'bg-gradient-to-br from-slate-100 via-sky-100 to-rose-100'
       }`}>
       {/* Decorative background blobs */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-br from-red-500/40 to-fuchsia-500/40 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-br from-violet-500/40 to-purple-500/40 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-gradient-to-br from-cyan-500/40 to-indigo-500/40 blur-3xl" />
 
       {/* Card with gradient border */}
@@ -37,7 +37,7 @@ const SignIn = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-red-500/60 via-rose-500/40 to-cyan-500/60 shadow-2xl">
+        <div className="p-[1px] rounded-2xl bg-gradient-to-br from-violet-500/60 via-violet-500/40 to-cyan-500/60 shadow-2xl">
           <div className={`${isDark
               ? 'bg-black/40 backdrop-blur-xl border border-white/10'
               : 'bg-white/80 backdrop-blur-xl border border-black/10'

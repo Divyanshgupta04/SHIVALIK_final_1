@@ -135,8 +135,8 @@ function Cart() {
                             onClick={() => removeFromCart(item.productId)} 
                             className={`p-2 rounded-lg transition-colors ${
                               isDark 
-                                ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30 hover:text-red-300' 
-                                : 'bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700'
+                                ? 'bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 hover:text-violet-300' 
+                                : 'bg-violet-100 text-violet-600 hover:bg-violet-200 hover:text-violet-700'
                             }`}
                           >
                             <FiTrash2 className="h-4 w-4" />

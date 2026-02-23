@@ -86,8 +86,8 @@ function App() {
 
               {/* Spacer to prevent content from going under the fixed navbar */}
               <div
-                className={`block w-full m-0 p-0 ${(isHomePage && !isScroll)
-                  ? 'h-[160px]'
+                className={`block w-full m-0 p-0 ${isHomePage
+                  ? 'h-0'
                   : 'h-[90px]'
                   }`}
               ></div>

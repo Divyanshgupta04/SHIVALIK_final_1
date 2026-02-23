@@ -62,7 +62,7 @@ function LibraryBookDetail() {
         {loading ? (
           <div className="py-16 text-center text-lg opacity-80">Loading book...</div>
         ) : error ? (
-          <div className="py-16 text-center text-red-500">{error}</div>
+          <div className="py-16 text-center text-violet-500">{error}</div>
         ) : !book ? (
           <div className="py-16 text-center opacity-80">Book not found.</div>
         ) : (
