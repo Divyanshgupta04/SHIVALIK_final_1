@@ -7,17 +7,7 @@ function HomePage() {
   const { isDark } = useTheme();
 
   return (
-    <div className={`w-full min-h-[90vh] relative transition-colors duration-500 flex items-center overflow-hidden h-screen px-4 sm:px-6 lg:px-12 ${isDark
-      ? 'bg-[#0a0a1a]'
-      : 'bg-gray-50'
-      }`}>
-      {/* Background Decorative Elements */}
-      {isDark && (
-        <>
-          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-violet-600/10 blur-[120px] rounded-full pointer-events-none" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
-        </>
-      )}
+    <div className="w-full min-h-[90vh] relative flex items-center overflow-hidden h-screen px-4 sm:px-6 lg:px-12">
 
       <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center relative z-10 pt-28 sm:pt-32 lg:pt-0">
 

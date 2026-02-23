@@ -227,35 +227,47 @@ export default function Category() {
           <div className={`mb-8 rounded-2xl border p-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-blue-100 bg-white'}`}>
             {!selectedSubCategoryId ? (
               <>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
                   <div>
-                    <div className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Sub-Categories</div>
-                    <div className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      Select a sub-category to view products.
-                    </div>
+                    <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>Sub-Categories</h2>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Select a sub-category to explorer specialized services.
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {subCategoriesForCatalogCategory.map((sc) => (
-                    <button
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {subCategoriesForCatalogCategory.map((sc, scIndex) => (
+                    <motion.button
                       key={sc.id}
-                      type="button"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: scIndex * 0.05 }}
+                      whileHover={{ y: -5 }}
                       onClick={() => setSelectedSubCategoryId(sc.id)}
-                      className={`text-left rounded-xl border overflow-hidden transition ${isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
+                      className={`group relative h-48 rounded-2xl border overflow-hidden transition-all duration-300 ${isDark
+                          ? 'border-white/10 bg-[#13111d] hover:border-violet-500/50 shadow-lg shadow-black/40'
+                          : 'border-gray-200 bg-white hover:border-violet-200 shadow-md'
                         }`}
                     >
-                      <div className="aspect-[4/3] bg-black/10">
+                      <div className="absolute inset-0 w-full h-full">
                         {sc.imageDataUrl ? (
-                          <img src={sc.imageDataUrl} alt={sc.name} className="w-full h-full object-cover" />
+                          <img src={sc.imageDataUrl} alt={sc.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
                         ) : (
-                          <div className={`w-full h-full flex items-center justify-center text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                            No Image
+                          <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-violet-900/10' : 'bg-gray-50'}`}>
+                            <FiGrid className="w-10 h-10 text-violet-500/20" />
                           </div>
                         )}
+                        <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a] to-transparent' : 'from-black/60 to-transparent'}`} />
                       </div>
-                      <div className={`p-3 text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{sc.name}</div>
-                    </button>
+
+                      <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                        <span className="text-lg font-black text-white group-hover:text-violet-400 transition-colors">
+                          {sc.name}
+                        </span>
+                        <div className="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">Explore Products</div>
+                      </div>
+                    </motion.button>
                   ))}
                 </div>
               </>
