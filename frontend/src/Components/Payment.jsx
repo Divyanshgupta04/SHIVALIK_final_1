@@ -87,7 +87,8 @@ function Payment() {
         toast.error('Failed to initiate payment.');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Payment failed');
+      const errorMsg = error.response?.data?.message || error.message || 'Payment failed';
+      toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg);
     } finally {
       setLoading(false);
     }

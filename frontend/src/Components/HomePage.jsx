@@ -61,10 +61,10 @@ function HomePage() {
           {/* Main Heading */}
           <h1 className={`text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-6 ${isDark ? 'text-white' : 'text-gray-900'
             }`}>
-            ELEVATE <br />
-            YOUR <br />
+            SHIVALIK <br />
+            SERVICES <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-600">
-              EXPERIENCE.
+              HUB.
             </span>
           </h1>
 

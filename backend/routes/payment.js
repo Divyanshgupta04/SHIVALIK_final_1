@@ -64,6 +64,9 @@ router.post('/create-order', requireAuth, async (req, res) => {
             });
         }
 
+        const webhookUrl = process.env.API_URL || 'http://localhost:5000';
+        const isLocalhost = webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1');
+
         const paymentData = {
             amount: amount.toString(),
             purpose: 'Order for Shivalik Service Hub',
@@ -71,7 +74,8 @@ router.post('/create-order', requireAuth, async (req, res) => {
             email: user.email,
             phone: phone,
             redirect_url: `${process.env.FRONTEND_URL}/payment-status`,
-            webhook: `${process.env.API_URL || 'http://localhost:5000'}/api/payment/webhook`
+            // Only send webhook if it's not localhost (Instamojo rejects localhost URLs)
+            ...(isLocalhost ? {} : { webhook: `${webhookUrl}/api/payment/webhook` })
         };
 
         console.log('Sending Payment Data to Instamojo:', { ...paymentData, phone: phone });
@@ -113,7 +117,15 @@ router.post('/create-order', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('Create Instamojo order error:', error.response?.data || error.message);
         const status = error.response?.status || 500;
-        const message = error.response?.data?.message || error.message || "Internal Server Error";
+        let message = error.response?.data?.message || error.message || "Internal Server Error";
+
+        // If message is an object (common with field validation errors), stringify it
+        if (typeof message === 'object') {
+            message = Object.entries(message)
+                .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                .join('; ') || JSON.stringify(message);
+        }
+
         res.status(status).json({ success: false, message: message, details: error.response?.data });
     }
 });
@@ -236,7 +248,10 @@ router.post('/webhook', async (req, res) => {
 // @access  Private
 router.get('/orders', requireAuth, async (req, res) => {
     try {
-        const orders = await Order.find({ userId: req.session.userId })
+        const orders = await Order.find({
+            userId: req.session.userId,
+            status: { $ne: 'pending' }
+        })
             .sort({ createdAt: -1 })
             .select('_id status total orderDate estimatedDelivery items');
 
