@@ -11,6 +11,7 @@ function log(message, data = {}) {
         fs.appendFileSync(LOG_FILE, logMessage);
     } catch (e) {
         // failed to log
+        //failed to fog
     }
 }
 
