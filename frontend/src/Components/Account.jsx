@@ -125,6 +125,18 @@ const Account = () => {
     return new Date(dateString).getFullYear();
   };
 
+  const handleRemoveAddress = async () => {
+    if (!window.confirm('Are you sure you want to remove your saved address?')) return;
+    try {
+      const response = await axios.delete('/api/user-auth/address');
+      if (response.data.success) {
+        setAddress(null);
+      }
+    } catch (error) {
+      console.error('Error removing address:', error);
+    }
+  };
+
   // --- Sub-components (Skeletons) ---
   const Skeleton = ({ className }) => (
     <div className={`animate-pulse ${isDark ? 'bg-white/5' : 'bg-black/5'} rounded-xl ${className}`} />
@@ -353,7 +365,12 @@ const Account = () => {
                       <div className="flex items-center gap-5 mt-6 pt-5 border-t border-white/5 relative z-10">
                         <Link to="/checkout/address" className="text-sm font-bold text-purple-400 hover:text-purple-500 transition-colors">Edit Details</Link>
                         <span className={`w-1 h-1 rounded-full ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
-                        <button className="text-sm font-bold text-red-500/70 hover:text-red-500 transition-colors">Remove</button>
+                        <button
+                          onClick={handleRemoveAddress}
+                          className="text-sm font-bold text-red-500/70 hover:text-red-500 transition-colors"
+                        >
+                          Remove
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -383,12 +400,6 @@ const Account = () => {
                 </h3>
               </div>
               <div className="space-y-4">
-                <SecurityItem
-                  title="Change Password"
-                  desc="Update your account password to stay secure."
-                  icon={ShieldCheck}
-                  isDark={isDark}
-                />
                 <SecurityItem
                   title="Two-Factor Authentication"
                   desc="Add an extra layer of security to your account."

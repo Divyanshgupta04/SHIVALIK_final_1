@@ -282,20 +282,30 @@ router.get('/me', requireAuth, async (req, res) => {
 
 // @route   POST /api/user-auth/logout
 // @desc    Logout user
-// @access  Private
-router.post('/logout', requireAuth, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-      return res.status(500).json({ message: 'Failed to logout' });
+// @access  Public (so it works even if session is partially expired)
+router.post('/logout', (req, res) => {
+  const performLogout = () => {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) console.error('Session destroy error:', err);
+        res.clearCookie('connect.sid');
+        return res.json({ success: true, message: 'Logged out successfully' });
+      });
+    } else {
+      res.clearCookie('connect.sid');
+      return res.json({ success: true, message: 'Logged out successfully' });
     }
+  };
 
-    res.clearCookie('connect.sid'); // Clear session cookie
-    res.json({
-      success: true,
-      message: 'Logged out successfully'
+  // If passport is initialized, use its logout first
+  if (typeof req.logout === 'function') {
+    req.logout((err) => {
+      if (err) console.error('Passport logout error:', err);
+      performLogout();
     });
-  });
+  } else {
+    performLogout();
+  }
 });
 
 // @route   POST /api/user-auth/resend-otp
@@ -427,21 +437,20 @@ router.get('/address', requireAuth, async (req, res) => {
   }
 });
 
-// @route   PUT /api/user-auth/address
-// @desc    Update current user's address
+// @route   DELETE /api/user-auth/address
+// @desc    Remove current user's address
 // @access  Private
-router.put('/address', requireAuth, async (req, res) => {
+router.delete('/address', requireAuth, async (req, res) => {
   try {
-    const { fullName, phone, line1, line2, city, state, postalCode, country } = req.body;
     const user = await User.findById(req.session.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.address = { fullName, phone, line1, line2, city, state, postalCode, country };
+    user.address = {};
     await user.save();
 
-    res.json({ success: true, message: 'Address updated', address: user.address });
+    res.json({ success: true, message: 'Address removed' });
   } catch (err) {
-    console.error('Update address error:', err);
+    console.error('Remove address error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

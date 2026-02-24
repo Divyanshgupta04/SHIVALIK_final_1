@@ -41,25 +41,27 @@ const CategoryFilters = ({ activeCategory, onCategoryChange, isDark, categories 
                 </Link>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-                {allCategories.map((cat, index) => (
-                    <motion.button
-                        key={cat.id || index}
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.05 }}
-                        onClick={() => onCategoryChange(cat.slug)}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold border transition-all duration-300 ${activeCategory === cat.slug
-                            ? 'bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-500/20'
-                            : isDark
-                                ? 'bg-gray-900/40 border-white/5 text-gray-400 hover:border-violet-500/30'
-                                : 'bg-white border-gray-100 text-gray-600 hover:border-violet-200 hover:text-violet-600 shadow-sm'
-                            }`}
-                    >
-                        {cat.name}
-                    </motion.button>
-                ))}
+            <div className="overflow-x-auto no-scrollbar pb-4 -mb-4">
+                <div className="flex flex-nowrap md:flex-wrap gap-3 min-w-max md:min-w-0">
+                    {allCategories.map((cat, index) => (
+                        <motion.button
+                            key={cat.id || index}
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: index * 0.05 }}
+                            onClick={() => onCategoryChange(cat.slug)}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-bold border transition-all duration-300 whitespace-nowrap ${activeCategory === cat.slug
+                                ? 'bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-500/20'
+                                : isDark
+                                    ? 'bg-gray-900/40 border-white/5 text-gray-400 hover:border-violet-500/30'
+                                    : 'bg-white border-gray-100 text-gray-600 hover:border-violet-200 hover:text-violet-600 shadow-sm'
+                                }`}
+                        >
+                            {cat.name}
+                        </motion.button>
+                    ))}
+                </div>
             </div>
         </div>
     );
