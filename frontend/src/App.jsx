@@ -27,6 +27,7 @@ import PaymentStatus from './Components/PaymentStatus';
 
 import AdminCatalog from './Components/Admin/Catalog/AdminCatalog';
 import AdminAnnouncements from './Components/Admin/AdminAnnouncements';
+import AdminHeroManager from './Components/Admin/AdminHeroManager';
 
 import SignIn from './Components/UserAuth/SignIn';
 import SignUp from './Components/UserAuth/SignUp';
@@ -84,6 +85,7 @@ function App() {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/orders" element={<AdminOrders />} />
             <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+            <Route path="/admin/hero" element={<AdminHeroManager />} />
 
             {/* User Auth Routes (without navbar and footer) */}
             <Route path="/signin" element={<SignIn />} />

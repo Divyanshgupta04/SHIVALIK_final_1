@@ -1,15 +1,42 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import config from "../config/api";
 
 function HomePage() {
   const { isDark } = useTheme();
+  const navigate = useNavigate();
+  const [heroProduct, setHeroProduct] = useState(null);
+
+  useEffect(() => {
+    const fetchHeroProduct = async () => {
+      try {
+        const res = await axios.get(`${config.apiUrl}/api/products/hero/featured`);
+        if (res.data.success) {
+          setHeroProduct(res.data.product);
+        }
+      } catch (err) {
+        console.error("Hero product fetch error:", err);
+      }
+    };
+    fetchHeroProduct();
+  }, []);
+
+  const handleBuyNow = () => {
+    if (!heroProduct) return;
+    if (heroProduct.isInsurance) {
+      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+    } else {
+      navigate('/checkout', { state: { buyNowItem: heroProduct } });
+    }
+  };
 
   return (
-    <div className="w-full min-h-[90vh] relative flex items-center overflow-hidden h-screen px-4 sm:px-6 lg:px-12">
+    <div className="w-full min-h-[90vh] relative flex items-center overflow-hidden min-h-screen px-4 sm:px-6 lg:px-12">
 
-      <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center relative z-10 pt-28 sm:pt-32 lg:pt-0">
+      <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 items-center relative z-10 pt-28 sm:pt-32 lg:pt-32">
 
         {/* Left Column: Typography & CTAs */}
         <motion.div
@@ -44,7 +71,7 @@ function HomePage() {
           {/* Description */}
           <p className={`max-w-md text-sm sm:text-base md:text-lg mb-10 leading-relaxed font-light ${isDark ? 'text-gray-400' : 'text-gray-600'
             }`}>
-            Discover a curated selection of premium services and essentials designed to empower your lifestyle. Shivalik brings luxury and utility to your fingertips.
+            {heroProduct ? heroProduct.description : "Discover a curated selection of premium services and essentials designed to empower your lifestyle. Shivalik brings luxury and utility to your fingertips."}
           </p>
 
           {/* CTAs */}
@@ -84,8 +111,8 @@ function HomePage() {
             {/* Image Wrapper with Rounded Corners and Padding */}
             <div className="absolute inset-0 w-full h-full p-12 overflow-hidden rounded-[48px] group-hover:scale-105 transition-transform duration-700">
               <img
-                src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"
-                alt="Product Preview"
+                src={heroProduct ? heroProduct.src : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"}
+                alt={heroProduct ? heroProduct.title : "Product Preview"}
                 className="w-full h-full object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                 style={{ borderRadius: '48px' }}
               />
@@ -94,14 +121,21 @@ function HomePage() {
             {/* Floating Info Card */}
             <div className="absolute bottom-6 left-6 right-6 p-6 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-between" >
               <div>
-                <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest block mb-1">New Release</span>
-                <h3 className="text-white text-lg font-bold">Limited Edition Series</h3>
-                <p className="text-gray-300 font-medium mt-1">₹4,999</p>
+                <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest block mb-1">
+                  {heroProduct ? heroProduct.category || "Featured" : "New Release"}
+                </span>
+                <h3 className="text-white text-lg font-bold">
+                  {heroProduct ? heroProduct.title : "Limited Edition Series"}
+                </h3>
+                <p className="text-gray-300 font-medium mt-1">
+                  {heroProduct ? `₹${heroProduct.price}` : "₹4,999"}
+                </p>
               </div>
-              <button className="h-12 w-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 40 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+              <button
+                onClick={handleBuyNow}
+                className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-sm hover:scale-110 transition-transform shadow-lg whitespace-nowrap"
+              >
+                Buy Now
               </button>
             </div>
           </div>
