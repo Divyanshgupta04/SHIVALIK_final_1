@@ -64,6 +64,20 @@ const ProductSchema = new mongoose.Schema({
     default: false
   },
 
+  // Pricing and Discount fields
+  originalPrice: {
+    type: Number,
+    default: 0
+  },
+  sellingPrice: {
+    type: Number,
+    default: 0
+  },
+  discountPercent: {
+    type: Number,
+    default: 0
+  },
+
   // Toggle to indicate if this is an insurance product (Link-out only)
   isInsurance: {
     type: Boolean,

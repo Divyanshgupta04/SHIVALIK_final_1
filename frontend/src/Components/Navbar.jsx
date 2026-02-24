@@ -510,7 +510,7 @@ function Navbar() {
                       }`}
                   >
                     {!user ? (
-                      <Link to="/signin" className="block px-6 py-3 hover:bg-violet-600 hover:text-white transition-colors text-sm font-black uppercase tracking-widest" onClick={() => setProfileOpen(false)}>Login</Link>
+                      <Link to="/account" className="block px-6 py-3 hover:bg-violet-600 hover:text-white transition-colors text-sm font-black uppercase tracking-widest" onClick={() => setProfileOpen(false)}>Preview Dashboard</Link>
                     ) : (
                       <>
                         <div className="px-6 py-2 mb-1 border-b border-white/5 text-[10px] uppercase tracking-[0.2em] text-violet-500 font-black">Account</div>

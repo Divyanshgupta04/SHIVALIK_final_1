@@ -4,13 +4,16 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
+import { motion } from 'framer-motion';
+import { FiCheck, FiX, FiLoader, FiArrowRight, FiMail, FiHelpCircle, FiShield } from 'react-icons/fi';
 
 function PaymentStatus() {
     const location = useLocation();
     const navigate = useNavigate();
     const { isDark } = useTheme();
     const { clearCart } = useCart();
-    const [status, setStatus] = useState('processing'); // processing, success, failed
+    const [status, setStatus] = useState('processing');
+    const [orderId, setOrderId] = useState(null);
 
     useEffect(() => {
         const verifyPayment = async () => {
@@ -36,26 +39,22 @@ function PaymentStatus() {
 
                 if (response.data.success) {
                     setStatus('success');
+                    setOrderId(response.data.orderId);
                     await clearCart();
-                    toast.success('Payment successful! Order placed.');
+                    toast.success('Order placed successfully!');
 
-                    // Redirect to account page after a delay
                     setTimeout(() => {
                         navigate('/account', {
-                            state: {
-                                orderSuccess: true,
-                                orderId: response.data.orderId
-                            }
+                            state: { orderSuccess: true, orderId: response.data.orderId }
                         });
-                    }, 3000);
+                    }, 5000);
                 } else {
                     setStatus('failed');
                     toast.error('Payment verification failed');
                 }
             } catch (error) {
-                console.error('Verification error:', error);
                 setStatus('failed');
-                toast.error(error.response?.data?.message || 'Payment verification failed');
+                toast.error(error.response?.data?.message || 'Verification failed');
             }
         };
 
@@ -63,60 +62,116 @@ function PaymentStatus() {
     }, [location, navigate, clearCart]);
 
     return (
-        <div className={`min-h-[60vh] flex flex-col items-center justify-center p-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <div className={`max-w-md w-full p-8 rounded-2xl shadow-xl border ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+        <div className={`min-h-screen flex items-center justify-center p-6 transition-colors duration-300 ${isDark ? 'bg-[#0f1115]' : 'bg-gray-50'}`}>
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`max-w-xl w-full rounded-[2.5rem] border p-8 sm:p-12 text-center relative overflow-hidden ${isDark ? 'bg-gray-900/40 border-white/5 shadow-2xl shadow-black' : 'bg-white border-gray-100 shadow-2xl shadow-gray-200'}`}
+            >
+                {/* Decorative Blobs */}
+                <div className={`absolute -top-24 -left-24 w-48 h-48 blur-3xl rounded-full opacity-20 ${status === 'success' ? 'bg-emerald-500' : status === 'failed' ? 'bg-rose-500' : 'bg-violet-500'}`} />
+                <div className={`absolute -bottom-24 -right-24 w-48 h-48 blur-3xl rounded-full opacity-10 ${status === 'success' ? 'bg-emerald-500' : status === 'failed' ? 'bg-rose-500' : 'bg-violet-500'}`} />
+
                 {status === 'processing' && (
-                    <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                        <h2 className="text-2xl font-bold mb-2">Verifying Payment</h2>
-                        <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Please wait while we confirm your payment status...</p>
+                    <div className="relative z-10">
+                        <div className="w-24 h-24 mx-auto mb-8 relative">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                                className="w-full h-full border-4 border-violet-500/20 border-t-violet-500 rounded-full"
+                            />
+                            <FiLoader className="absolute inset-0 m-auto w-8 h-8 text-violet-500 animate-pulse" />
+                        </div>
+                        <h2 className="text-3xl font-black mb-3">Verifying Payment</h2>
+                        <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Please do not refresh or close the window. We are confirming your transaction with the bank.
+                        </p>
                     </div>
                 )}
 
                 {status === 'success' && (
-                    <div className="text-center">
-                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        </div>
-                        <h2 className="text-2xl font-bold mb-2 text-green-600">Payment Successful!</h2>
-                        <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Your order has been placed successfully. You are being redirected to your account...</p>
-                        <button
-                            onClick={() => navigate('/account')}
-                            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    <div className="relative z-10">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", damping: 12 }}
+                            className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-emerald-500/40"
                         >
-                            Go to My Account
-                        </button>
+                            <FiCheck className="w-12 h-12 text-white" />
+                        </motion.div>
+
+                        <h2 className="text-3xl font-black mb-2 text-emerald-500">Order Confirmed!</h2>
+                        <p className={`text-sm font-medium mb-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Thank you for your order. Your transaction was successful and your service request is now being processed.
+                        </p>
+
+                        <div className={`p-6 rounded-3xl border mb-8 flex flex-col gap-3 ${isDark ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+                            <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-gray-500">
+                                <span>Order ID</span>
+                                <span className={isDark ? 'text-white' : 'text-gray-900'}>#{orderId || 'PENDING'}</span>
+                            </div>
+                            <div className="h-[1px] w-full bg-current opacity-5" />
+                            <p className="text-[10px] font-black uppercase text-emerald-500">Status: Successfully Placed</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <button
+                                onClick={() => navigate('/account')}
+                                className="w-full py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                            >
+                                Go to My Dashboard
+                                <FiArrowRight className="w-4 h-4" />
+                            </button>
+                            <p className="text-[10px] font-bold text-gray-500 animate-pulse">Redirecting in 5 seconds...</p>
+                        </div>
                     </div>
                 )}
 
                 {status === 'failed' && (
-                    <div className="text-center">
-                        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </div>
-                        <h2 className="text-2xl font-bold mb-2 text-red-600">Payment Failed</h2>
-                        <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>There was an issue processing your payment. Please try again or contact support.</p>
-                        <div className="flex gap-4">
+                    <div className="relative z-10">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="w-24 h-24 bg-gradient-to-br from-rose-500 to-rose-700 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-rose-500/40"
+                        >
+                            <FiX className="w-12 h-12 text-white" />
+                        </motion.div>
+
+                        <h2 className="text-3xl font-black mb-2 text-rose-500">Payment Failed</h2>
+                        <p className={`text-sm font-medium mb-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            We couldn't verify your payment. This might be due to a connection timeout or insufficient funds. No worries, your cart is still saved.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-4">
                             <button
                                 onClick={() => navigate('/pay')}
-                                className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="flex-1 py-5 bg-rose-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 Try Again
                             </button>
                             <button
                                 onClick={() => navigate('/contact')}
-                                className={`flex-1 py-3 rounded-lg border transition-colors ${isDark ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'}`}
+                                className={`flex-1 py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                             >
-                                Contact Support
+                                <FiHelpCircle className="w-4 h-4" />
+                                Get Help
                             </button>
                         </div>
                     </div>
                 )}
-            </div>
+
+                <div className="mt-12 pt-8 border-t border-dashed dark:border-white/10 border-gray-100 flex items-center justify-center gap-6">
+                    <div className="flex items-center gap-2 opacity-40">
+                        <FiMail className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase">Email Support</span>
+                    </div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-white/10" />
+                    <div className="flex items-center gap-2 opacity-40">
+                        <FiShield className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase">Secure Transaction</span>
+                    </div>
+                </div>
+            </motion.div>
         </div>
     );
 }

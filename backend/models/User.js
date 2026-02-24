@@ -46,6 +46,8 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false // Optional for Google OAuth users
   },
+  avatar: String,
+  phone: String,
   isVerified: {
     type: Boolean,
     default: false

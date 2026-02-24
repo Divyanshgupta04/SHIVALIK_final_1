@@ -18,7 +18,7 @@ console.log('✅ Google OAuth credentials loaded successfully');
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback'
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5001/api/auth/google/callback'
 },
     async (accessToken, refreshToken, profile, done) => {
         try {
@@ -26,7 +26,11 @@ passport.use(new GoogleStrategy({
             let user = await User.findOne({ googleId: profile.id });
 
             if (user) {
-                // User exists, return user
+                // User exists, update avatar if not present
+                if (!user.avatar && profile.photos && profile.photos[0]) {
+                    user.avatar = profile.photos[0].value;
+                    await user.save();
+                }
                 return done(null, user);
             }
 
@@ -37,6 +41,9 @@ passport.use(new GoogleStrategy({
                 // User exists with this email, link Google account
                 user.googleId = profile.id;
                 user.isVerified = true;
+                if (!user.avatar && profile.photos && profile.photos[0]) {
+                    user.avatar = profile.photos[0].value;
+                }
                 await user.save();
                 return done(null, user);
             }
@@ -46,6 +53,7 @@ passport.use(new GoogleStrategy({
                 googleId: profile.id,
                 name: profile.displayName,
                 email: profile.emails[0].value,
+                avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
                 isVerified: true,
                 lastLogin: new Date()
             });
