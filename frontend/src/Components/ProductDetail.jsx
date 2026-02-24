@@ -212,11 +212,24 @@ function ProductDetail() {
               </p>
             </div>
 
-            {/* Price */}
-            <div className="flex items-baseline gap-3">
-              <span className={`text-4xl font-bold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
-                ₹{product.price}
-              </span>
+            {/* Price section with Discount */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  ₹{product.sellingPrice || product.price}
+                </span>
+                {product.discountPercent > 0 && (
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500 line-through font-medium">
+                      MRP: ₹{product.originalPrice}
+                    </span>
+                    <span className={`text-sm font-bold ${product.discountPercent >= 30 ? 'text-rose-500' : 'text-emerald-500'
+                      }`}>
+                      Save {product.discountPercent}% OFF
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Rating (Static for now) */}

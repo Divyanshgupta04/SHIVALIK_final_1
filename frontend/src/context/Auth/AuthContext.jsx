@@ -31,13 +31,36 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get('/api/auth/me');
       if (response.data.success) {
         setUser(response.data.user);
+      } else {
+        // Mock user for local preview
+        setMockUser();
       }
     } catch (error) {
-      // User is not authenticated
-      setUser(null);
+      // User is not authenticated, use mock for preview
+      setMockUser();
     } finally {
       setLoading(false);
     }
+  };
+
+  const setMockUser = () => {
+    setUser({
+      id: "mock_id_123",
+      name: "Parkash Sharma",
+      email: "shubh@gmail.com",
+      phone: "+91 98765 43210",
+      createdAt: "2025-01-01T00:00:00.000Z",
+      avatar: null,
+      isVerified: true,
+      _isMock: true, // Flag so other contexts don't make authenticated API calls
+      address: {
+        line1: "123 Main St",
+        city: "Jammu",
+        state: "J&K",
+        postalCode: "180001",
+        country: "India"
+      }
+    });
   };
 
   // Google OAuth login - redirect to backend OAuth flow

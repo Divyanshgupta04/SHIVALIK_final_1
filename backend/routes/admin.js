@@ -13,7 +13,7 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
@@ -43,7 +43,10 @@ router.post('/products', auth, async (req, res) => {
       subCategoryId: subCategoryId || undefined,
       productType: productType || 'both',
       hasForm: !!hasForm,
-      isInsurance: !!isInsurance
+      isInsurance: !!isInsurance,
+      originalPrice: Number(originalPrice) || 0,
+      sellingPrice: Number(sellingPrice) || 0,
+      discountPercent: Number(discountPercent) || 0
     });
 
     await product.save();
@@ -67,7 +70,7 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance } = req.body;
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent } = req.body;
 
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
@@ -88,6 +91,9 @@ router.put('/products/:id', auth, async (req, res) => {
     if (typeof images !== 'undefined') update.images = images;
     if (typeof hasForm !== 'undefined') update.hasForm = !!hasForm;
     if (typeof isInsurance !== 'undefined') update.isInsurance = !!isInsurance;
+    if (typeof originalPrice !== 'undefined') update.originalPrice = Number(originalPrice);
+    if (typeof sellingPrice !== 'undefined') update.sellingPrice = Number(sellingPrice);
+    if (typeof discountPercent !== 'undefined') update.discountPercent = Number(discountPercent);
 
     const product = await Product.findOneAndUpdate(
       { id: req.params.id },
