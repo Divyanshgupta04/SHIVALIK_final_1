@@ -28,40 +28,18 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await axios.get('/api/auth/me');
+      const response = await axios.get('/api/user-auth/me');
       if (response.data.success) {
         setUser(response.data.user);
       } else {
-        // Mock user for local preview
-        setMockUser();
+        setUser(null);
       }
     } catch (error) {
-      // User is not authenticated, use mock for preview
-      setMockUser();
+      setUser(null);
     } finally {
       setLoading(false);
     }
   }, []);
-
-  const setMockUser = () => {
-    setUser({
-      id: "mock_id_123",
-      name: "Parkash Sharma",
-      email: "shubh@gmail.com",
-      phone: "+91 98765 43210",
-      createdAt: "2025-01-01T00:00:00.000Z",
-      avatar: null,
-      isVerified: true,
-      _isMock: true, // Flag so other contexts don't make authenticated API calls
-      address: {
-        line1: "123 Main St",
-        city: "Jammu",
-        state: "J&K",
-        postalCode: "180001",
-        country: "India"
-      }
-    });
-  };
 
   // Google OAuth login - redirect to backend OAuth flow
   const loginWithGoogle = useCallback(() => {
@@ -71,13 +49,16 @@ export const AuthProvider = ({ children }) => {
   // Handle OAuth callback success
   const handleAuthSuccess = useCallback(async () => {
     try {
-      const response = await axios.get('/api/auth/me');
+      const response = await axios.get('/api/user-auth/me');
       if (response.data.success) {
         setUser(response.data.user);
         toast.success('Welcome back!');
         return { success: true };
       }
+      setUser(null);
+      return { success: false };
     } catch (error) {
+      setUser(null);
       const message = error.response?.data?.message || 'Authentication failed';
       toast.error(message);
       return { success: false, message };
@@ -87,13 +68,13 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = useCallback(async () => {
     try {
-      await axios.post('/api/auth/logout');
+      await axios.post('/api/user-auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
       setUser(null);
       toast.success('Logged out successfully');
-    } catch (error) {
-      // Even if logout fails on server, clear local state
-      setUser(null);
-      console.error('Logout error:', error);
+      window.location.href = '/signin';
     }
   }, []);
 
