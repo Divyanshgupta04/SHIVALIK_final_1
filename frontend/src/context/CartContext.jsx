@@ -31,7 +31,7 @@ export const CartProvider = ({ children }) => {
   }, [user]);
 
   const loadCart = async () => {
-    if (user) {
+    if (user && !user._isMock) {
       // Load cart from server for authenticated users
       try {
         const response = await axios.get('/api/cart');
@@ -67,8 +67,8 @@ export const CartProvider = ({ children }) => {
   };
 
   const syncCartWithServer = async (localCart) => {
-    if (!user) return;
-    
+    if (!user || user._isMock) return;
+
     try {
       await axios.post('/api/cart/sync', { localCart });
       // Reload cart after sync
@@ -78,9 +78,9 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Sync local cart with server when user logs in
+  // Sync local cart with server when user logs in (real session only)
   useEffect(() => {
-    if (user && cart.length > 0) {
+    if (user && !user._isMock && cart.length > 0) {
       // Only sync if we have items from local storage
       const localCart = localStorage.getItem('cart');
       if (localCart) {
@@ -111,13 +111,13 @@ export const CartProvider = ({ children }) => {
             : 'both';
 
     try {
-      if (user) {
+      if (user && !user._isMock) {
         // Add to server cart for authenticated users
         const response = await axios.post('/api/cart/add', {
           productId: product.id,
           quantity
         });
-        
+
         if (response.data.success) {
           const serverCart = Array.isArray(response.data.cart) ? response.data.cart : [];
           // Frontend enrichment: attach productType if server doesn't store it.
@@ -135,11 +135,11 @@ export const CartProvider = ({ children }) => {
         // Add to local cart for non-authenticated users
         const existingItemIndex = cart.findIndex(item => item.productId === product.id);
         let newCart;
-        
+
         if (existingItemIndex >= 0) {
           // Update quantity if item exists
-          newCart = cart.map((item, index) => 
-            index === existingItemIndex 
+          newCart = cart.map((item, index) =>
+            index === existingItemIndex
               ? { ...item, quantity: item.quantity + quantity }
               : item
           );
@@ -156,7 +156,7 @@ export const CartProvider = ({ children }) => {
           };
           newCart = [...cart, cartItem];
         }
-        
+
         setCart(newCart);
         saveLocalCart(newCart);
         toast.success('Added to cart');
@@ -171,15 +171,14 @@ export const CartProvider = ({ children }) => {
 
   const updateCartItem = async (productId, quantity) => {
     setLoading(true);
-    
+
     try {
-      if (user) {
-        // Update on server for authenticated users
+      if (user && !user._isMock) {
         const response = await axios.put('/api/cart/update', {
           productId,
           quantity
         });
-        
+
         if (response.data.success) {
           const serverCart = Array.isArray(response.data.cart) ? response.data.cart : [];
           // Preserve any locally-known productType if backend doesn't provide it.
@@ -195,17 +194,17 @@ export const CartProvider = ({ children }) => {
       } else {
         // Update local cart for non-authenticated users
         let newCart;
-        
+
         if (quantity === 0) {
           newCart = cart.filter(item => item.productId !== productId);
         } else {
-          newCart = cart.map(item => 
-            item.productId === productId 
+          newCart = cart.map(item =>
+            item.productId === productId
               ? { ...item, quantity }
               : item
           );
         }
-        
+
         setCart(newCart);
         saveLocalCart(newCart);
         toast.success(quantity === 0 ? 'Item removed from cart' : 'Cart updated');
@@ -224,12 +223,11 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = async () => {
     setLoading(true);
-    
+
     try {
-      if (user) {
-        // Clear server cart for authenticated users
+      if (user && !user._isMock) {
         const response = await axios.delete('/api/cart/clear');
-        
+
         if (response.data.success) {
           setCart([]);
           toast.success('Cart cleared');

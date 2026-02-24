@@ -44,8 +44,8 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
             whileHover="hover"
             onClick={handleCardClick}
             className={`group relative flex flex-col h-full rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 ${isDark
-                    ? 'bg-gray-900/40 border border-white/5 hover:border-violet-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
-                    : 'bg-white border border-gray-100 hover:border-violet-200 shadow-[0_8px_32px_rgba(31,38,135,0.07)]'
+                ? 'bg-gray-900/40 border border-white/5 hover:border-violet-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.4)]'
+                : 'bg-white border border-gray-100 hover:border-violet-200 shadow-[0_8px_32px_rgba(31,38,135,0.07)]'
                 } backdrop-blur-sm`}
         >
             {/* Top Image & Wishlist Overlay */}
@@ -76,6 +76,12 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
 
                 {/* Badges/Category */}
                 <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                    {item.discountPercent > 0 && (
+                        <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white rounded-lg shadow-lg ${item.discountPercent >= 30 ? 'bg-rose-600 shadow-rose-500/30' : 'bg-emerald-600 shadow-emerald-500/30'
+                            }`}>
+                            {item.discountPercent}% OFF
+                        </span>
+                    )}
                     {item.isNew && (
                         <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-violet-600 text-white rounded-lg shadow-lg shadow-violet-500/30">
                             New Arrival
@@ -98,14 +104,21 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
 
             {/* Content Section */}
             <div className="p-5 flex flex-col flex-grow">
-                <div className="flex justify-between items-start gap-2 mb-2">
-                    <h3 className={`text-lg font-bold transition-colors duration-300 ${isDark ? 'text-white group-hover:text-violet-400' : 'text-gray-900 group-hover:text-violet-600'
+                <div className="mb-2">
+                    <h3 className={`text-lg font-bold mb-1 transition-colors duration-300 ${isDark ? 'text-white group-hover:text-violet-400' : 'text-gray-900 group-hover:text-violet-600'
                         } line-clamp-1`}>
                         {item.title}
                     </h3>
-                    <span className={`text-lg font-black ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
-                        ₹{item.price}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            ₹{item.sellingPrice || item.price}
+                        </span>
+                        {item.discountPercent > 0 && (
+                            <span className="text-xs text-gray-400 line-through">
+                                ₹{item.originalPrice}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-1 mb-4 text-amber-500">
@@ -128,8 +141,8 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
                                 onAddToCart(item.id);
                             }}
                             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${isDark
-                                    ? 'bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-900/20'
-                                    : 'bg-violet-600 text-white hover:bg-violet-700 shadow-lg shadow-violet-200'
+                                ? 'bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-900/20'
+                                : 'bg-violet-600 text-white hover:bg-violet-700 shadow-lg shadow-violet-200'
                                 }`}
                         >
                             <FiShoppingCart className="w-4 h-4" />
@@ -143,8 +156,8 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
                             onBuyNow(item);
                         }}
                         className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${isDark
-                                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-white/5'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 border border-gray-200'
+                            ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white border border-white/5'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 border border-gray-200'
                             }`}
                     >
                         {item.isInsurance ? <FiInfo className="w-4 h-4" /> : <FiZap className="w-4 h-4" />}

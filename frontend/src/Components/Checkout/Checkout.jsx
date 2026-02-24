@@ -1,19 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { FiChevronLeft, FiCheck, FiLock, FiShield, FiCreditCard } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { useTheme } from '../../context/ThemeContext';
 import AadhaarForm from './AadhaarForm';
 import PanForm from './PanForm';
 import UniversalIDForm from './UniversalIDForm';
 import DeliveryForm from './DeliveryForm';
-
-// Checkout.jsx
-// Step-by-step checkout:
-// 1) Identity Verification (Aadhaar/PAN/Universal) - derived from cart
-// 2) Delivery Address
-// 3) Proceed to Payment
 
 const STORAGE_KEY = 'shivalik.checkout.v1';
 
@@ -22,66 +18,25 @@ function getRequiredIdForm(cart) {
   let hasPan = false;
 
   for (const item of cart || []) {
-    // 1. Check explicit productType if available (Admin setting)
     const type = String(item.productType || '').toLowerCase();
+    if (type === 'aadhaar') { hasAadhaar = true; continue; }
+    if (type === 'pan') { hasPan = true; continue; }
+    if (type === 'both') { hasAadhaar = true; hasPan = true; continue; }
+    if (type === 'none') continue;
 
-    if (type === 'aadhaar') {
-      hasAadhaar = true;
-      continue;
-    }
-    if (type === 'pan') {
-      hasPan = true;
-      continue;
-    }
-    // If explicitly 'both', set both flags
-    if (type === 'both') {
-      hasAadhaar = true;
-      hasPan = true;
-      continue;
-    }
-
-    // explicit skip
-    if (type === 'none') {
-      continue;
-    }
-
-    // 2. Fallback: Check title/name for keywords case-insensitively
     const title = String(item.title || item.name || '').toLowerCase();
     const category = String(item.categoryName || item.category || '').toLowerCase();
     const subCategory = String(item.subCategoryName || '').toLowerCase();
-
     const textToCheck = `${title} ${category} ${subCategory}`;
 
-    if (textToCheck.includes('aadhaar') || textToCheck.includes('aadhar') || textToCheck.includes('adhar')) {
-      hasAadhaar = true;
-    }
-
-    if (textToCheck.includes('pan')) {
-      hasPan = true;
-    }
+    if (textToCheck.includes('aadhaar') || textToCheck.includes('aadhar') || textToCheck.includes('adhar')) hasAadhaar = true;
+    if (textToCheck.includes('pan')) hasPan = true;
   }
 
-  // If both exist in cart, we use Universal form
   if (hasAadhaar && hasPan) return 'universal';
   if (hasAadhaar) return 'aadhaar';
   if (hasPan) return 'pan';
-
   return null;
-}
-
-function StepPill({ active, done, children }) {
-  return (
-    <div
-      className={`rounded-full px-3 py-1 text-xs font-medium border ${active
-        ? 'bg-indigo-600 text-white border-indigo-600'
-        : done
-          ? 'bg-green-50 text-green-700 border-green-200'
-          : 'bg-white text-gray-600 border-gray-200'
-        }`}
-    >
-      {children}
-    </div>
-  );
 }
 
 export default function Checkout() {
@@ -90,18 +45,12 @@ export default function Checkout() {
   const { cart: globalCart, getCartTotal } = useCart();
   const { isDark } = useTheme();
 
-  // Initialize with location state OR session storage to persist Buy Now item
   const [buyNowItem, setBuyNowItem] = useState(() => {
     if (location.state?.buyNowItem) return location.state.buyNowItem;
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return parsed.buyNowItem || null;
-      }
-    } catch {
-      return null;
-    }
+      if (raw) return JSON.parse(raw).buyNowItem || null;
+    } catch { return null; }
     return null;
   });
 
@@ -111,14 +60,12 @@ export default function Checkout() {
 
   const requiredIdForm = useMemo(() => getRequiredIdForm(cart), [cart]);
 
-  // step: 'id' | 'delivery' | 'review'
   const [step, setStep] = useState(requiredIdForm ? 'id' : 'delivery');
   const [idData, setIdData] = useState(null);
   const [deliveryData, setDeliveryData] = useState(null);
   const [savingAddress, setSavingAddress] = useState(false);
   const [savingIdentity, setSavingIdentity] = useState(false);
 
-  // Load from session storage (so user can't accidentally lose progress by navigating)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -127,67 +74,32 @@ export default function Checkout() {
       if (parsed?.idData) setIdData(parsed.idData);
       if (parsed?.deliveryData) setDeliveryData(parsed.deliveryData);
       if (parsed?.step) setStep(parsed.step);
-      // buyNowItem is already handled in initial state
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch { }
   }, []);
 
   useEffect(() => {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        step,
-        idData,
-        deliveryData,
-        buyNowItem: buyNowItem // Persist this too!
+        step, idData, deliveryData, buyNowItem
       }));
-    } catch {
-      // ignore
-    }
+    } catch { }
   }, [step, idData, deliveryData, buyNowItem]);
 
-  // Prevent invalid step states when cart changes
   useEffect(() => {
-    // If we have a buyNowItem in storage but not in state/memo (e.g. reload), 
-    // we might want to recover it.
-    // However, the memo 'cart' currently only looks at location.state.buyNowItem.
-    // We should probably update the 'cart' memo to check simple sessionStorage/state too if we want robust reload support.
-
     if (!cart || cart.length === 0) {
-      // Check if we have it in session before giving up
       const raw = sessionStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
-      if (parsed?.buyNowItem) {
-        // Redirect to self with state to restore
-        // This causes a quick flicker but restores flow
-        // navigate('.', { state: { buyNowItem: parsed.buyNowItem }, replace: true });
-        return;
-      }
-
+      if (parsed?.buyNowItem) return;
       toast.error('Your cart is empty');
       navigate('/products');
       return;
     }
-
-    // If identity is required but we are on delivery/review without idData, force back.
-    if (requiredIdForm && !idData && step !== 'id') {
-      setStep('id');
-    }
-
-    // If identity is NOT required, skip to delivery
-    if (!requiredIdForm && step === 'id') {
-      setStep('delivery');
-    }
+    if (requiredIdForm && !idData && step !== 'id') setStep('id');
+    if (!requiredIdForm && step === 'id') setStep('delivery');
   }, [cart, requiredIdForm, idData, step, navigate]);
 
-  // Calculate total: override getCartTotal if using buyNowItem
   const currentTotal = useMemo(() => {
-    if (buyNowItem) {
-      return Number(buyNowItem.price || 0);
-    }
-    // Fallback to checking session storage if location empty (for reload support logic above)
-    // But 'cart' logic handles the truth.
+    if (buyNowItem) return Number(buyNowItem.price || 0);
     return Number(getCartTotal() || 0);
   }, [buyNowItem, getCartTotal]);
 
@@ -196,22 +108,12 @@ export default function Checkout() {
   const total = Number((subtotal + tax).toFixed(2));
 
   const goBack = () => {
-    if (step === 'id') {
-      navigate('/cart');
-      return;
-    }
-    if (step === 'delivery') {
-      if (requiredIdForm) setStep('id');
-      else navigate('/cart');
-      return;
-    }
-    if (step === 'review') {
-      setStep('delivery');
-    }
+    if (step === 'id') navigate('/cart');
+    else if (step === 'delivery') requiredIdForm ? setStep('id') : navigate('/cart');
+    else if (step === 'review') setStep('delivery');
   };
 
   const onIdSubmit = async (data) => {
-    // Persist identity form data to backend (optional but requested)
     setSavingIdentity(true);
     try {
       const cartSnapshot = (cart || []).map((i) => ({
@@ -232,9 +134,8 @@ export default function Checkout() {
       setIdData(identityFormId ? { ...data, identityFormId } : data);
       setStep('delivery');
     } catch (err) {
-      // Don't block checkout if backend save fails
-      console.error('Failed to save identity form (continuing checkout):', err);
-      toast.error('Failed to save identity form (continuing)');
+      console.error('Failed to save identity form:', err);
+      toast.error('Identity form saved locally');
       setIdData(data);
       setStep('delivery');
     } finally {
@@ -244,10 +145,6 @@ export default function Checkout() {
 
   const onDeliverySubmit = async (data) => {
     setDeliveryData(data);
-
-    // OPTIONAL: integrate with your existing backend address endpoint.
-    // This helps your existing Payment page show the saved address.
-    // If backend is not available, the flow still works (demo).
     setSavingAddress(true);
     try {
       await axios.put('/api/user-auth/address', {
@@ -260,205 +157,278 @@ export default function Checkout() {
         postalCode: data.pincode,
         country: 'India',
       });
-    } catch {
-      // Don't block checkout if address save fails in demo mode.
-    } finally {
+    } catch { } finally {
       setSavingAddress(false);
     }
-
     setStep('review');
   };
 
   const proceedToPayment = () => {
-    // Hard guard
     if (requiredIdForm && !idData) {
-      toast.error('Identity verification is required before payment');
+      toast.error('Identity verification required');
       setStep('id');
       return;
     }
     if (!deliveryData) {
-      toast.error('Delivery address is required before payment');
+      toast.error('Delivery address required');
       setStep('delivery');
       return;
     }
-
-    // Clear step cache but keep cart (Payment will clear after success).
     sessionStorage.removeItem(STORAGE_KEY);
-
-    // Go to your existing payment route.
-    // Pass buyNowItem so Payment.jsx knows what to pay for!
     navigate('/pay', {
-      state: {
-        deliveryData,
-        idData,
-        requiredIdForm,
-        buyNowItem // PASSING THIS IS CRITICAL
-      }
+      state: { deliveryData, idData, requiredIdForm, buyNowItem }
     });
   };
 
-  const pageBg = isDark
-    ? 'bg-gradient-to-br from-[#1a2332] via-[#2a3441] to-[#1e2a38] text-white'
-    : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900';
+  const steps = [
+    { id: 'id', label: 'Identity', show: !!requiredIdForm },
+    { id: 'delivery', label: 'Delivery', show: true },
+    { id: 'review', label: 'Review & Pay', show: true }
+  ].filter(s => s.show);
+
+  const currentStepIndex = steps.findIndex(s => s.id === step);
 
   return (
-    <div className={`min-h-screen ${pageBg}`}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Checkout</h1>
-            <p className={`mt-1 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              Identity verification is mandatory for government services.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={goBack}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium ${isDark
-              ? 'border-gray-600 bg-[#1a2332] text-gray-100 hover:bg-gray-700'
-              : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-          >
-            Back
-          </button>
-        </div>
-
-        {/* Stepper */}
-        <div className="mt-6 flex flex-wrap items-center gap-2">
-          {requiredIdForm && (
-            <StepPill active={step === 'id'} done={!!idData}>
-              1. Identity
-            </StepPill>
-          )}
-          <StepPill
-            active={step === 'delivery'}
-            done={!!deliveryData}
-          >
-            {requiredIdForm ? '2. Delivery' : '1. Delivery'}
-          </StepPill>
-          <StepPill active={step === 'review'} done={false}>
-            {requiredIdForm ? '3. Review & Pay' : '2. Review & Pay'}
-          </StepPill>
-        </div>
-
-        <div className={`mt-6 rounded-xl border shadow-sm ${isDark ? 'bg-[#2a3441] border-gray-600' : 'bg-white border-gray-200'}`}>
-          <div className={`px-5 py-4 border-b ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold">
-                {step === 'id' && 'Identity Verification'}
-                {step === 'delivery' && 'Delivery Address'}
-                {step === 'review' && 'Review & Payment'}
-              </div>
-              <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                Total: <span className="font-semibold">₹{total.toFixed(2)}</span>
-              </div>
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0f1115] text-white' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Header Area */}
+      <div className={`border-b ${isDark ? 'border-white/5 bg-gray-900/50' : 'border-gray-200 bg-white'} backdrop-blur-xl sticky top-0 z-40`}>
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={goBack} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}>
+              <FiChevronLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="text-xl font-black tracking-tight">Checkout</h1>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                {step === 'review' ? 'Finalizing your order' : 'Identity & Delivery Details'}
+              </p>
             </div>
           </div>
 
-          <div className="p-5">
-            {step === 'id' && requiredIdForm === 'aadhaar' && (
-              <AadhaarForm
-                initialValue={idData}
-                onBack={goBack}
-                onSubmit={onIdSubmit}
-                disabled={savingIdentity}
-              />
-            )}
+          <div className="hidden sm:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-500">
+            <FiShield className="w-4 h-4" />
+            <span>Secure 256-bit SSL</span>
+          </div>
+        </div>
+      </div>
 
-            {step === 'id' && requiredIdForm === 'pan' && (
-              <PanForm
-                initialValue={idData}
-                onBack={goBack}
-                onSubmit={onIdSubmit}
-                disabled={savingIdentity}
-              />
-            )}
+      <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+        {/* Step Indicator */}
+        <div className="mb-12 max-w-2xl mx-auto">
+          <div className="relative flex justify-between">
+            {/* Background Line */}
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 dark:bg-gray-800 -translate-y-1/2 -z-10" />
+            <motion.div
+              className="absolute top-1/2 left-0 h-0.5 bg-gradient-to-r from-violet-600 to-indigo-600 -translate-y-1/2 -z-10"
+              initial={{ width: '0%' }}
+              animate={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
 
-            {step === 'id' && requiredIdForm === 'universal' && (
-              <UniversalIDForm
-                initialValue={idData}
-                onBack={goBack}
-                onSubmit={onIdSubmit}
-                disabled={savingIdentity}
-              />
-            )}
+            {steps.map((s, idx) => {
+              const isPast = steps.findIndex(x => x.id === step) > idx;
+              const isActive = s.id === step;
+              return (
+                <div key={s.id} className="flex flex-col items-center gap-3">
+                  <div className={`
+                    w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all duration-500
+                    ${isActive ? 'bg-violet-600 text-white ring-4 ring-violet-500/20 scale-110' :
+                      isPast ? 'bg-emerald-500 text-white' :
+                        isDark ? 'bg-gray-800 text-gray-500' : 'bg-white text-gray-400 border-2 border-gray-200'}
+                  `}>
+                    {isPast ? <FiCheck className="w-5 h-5" /> : idx + 1}
+                  </div>
+                  <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-widest ${isActive ? 'text-violet-500' : 'text-gray-500'}`}>
+                    {s.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-            {step === 'delivery' && (
-              <DeliveryForm
-                initialValue={deliveryData}
-                onBack={goBack}
-                onSubmit={onDeliverySubmit}
-                disabled={savingAddress}
-              />
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Form Section */}
+          <div className="lg:col-span-8">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className={`rounded-3xl border p-6 sm:p-10 shadow-2xl ${isDark ? 'bg-gray-900/40 border-white/5 shadow-black/50' : 'bg-white border-gray-100 shadow-gray-200/50'
+                  } backdrop-blur-xl`}
+              >
+                <div className="mb-8">
+                  <h2 className="text-2xl font-black mb-2">
+                    {step === 'id' && 'Identity Verification'}
+                    {step === 'delivery' && 'Delivery Address'}
+                    {step === 'review' && 'Final Review'}
+                  </h2>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {step === 'id' && 'Government regulations require identity verification for these services.'}
+                    {step === 'delivery' && 'Ensure your shipping details are accurate for timely delivery.'}
+                    {step === 'review' && 'Check your details one last time before proceeding to payment.'}
+                  </p>
+                </div>
 
-            {step === 'review' && (
-              <div className="space-y-6">
-                <div className={`rounded-lg border p-4 ${isDark ? 'border-gray-600 bg-[#1a2332]' : 'border-gray-200 bg-gray-50'}`}>
-                  <div className="text-sm font-semibold">Order Summary</div>
-                  <div className={`mt-3 space-y-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                    {cart.map((item) => (
-                      <div key={item.productId} className="flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{item.title}</div>
-                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Qty: {item.quantity} • Type: {String(item.productType || 'both').toUpperCase()}
+                {step === 'id' && requiredIdForm === 'aadhaar' && (
+                  <AadhaarForm initialValue={idData} onBack={goBack} onSubmit={onIdSubmit} disabled={savingIdentity} />
+                )}
+                {step === 'id' && requiredIdForm === 'pan' && (
+                  <PanForm initialValue={idData} onBack={goBack} onSubmit={onIdSubmit} disabled={savingIdentity} />
+                )}
+                {step === 'id' && requiredIdForm === 'universal' && (
+                  <UniversalIDForm initialValue={idData} onBack={goBack} onSubmit={onIdSubmit} disabled={savingIdentity} />
+                )}
+                {step === 'delivery' && (
+                  <DeliveryForm initialValue={deliveryData} onBack={goBack} onSubmit={onDeliverySubmit} disabled={savingAddress} />
+                )}
+                {step === 'review' && (
+                  <div className="space-y-8">
+                    {/* Compact Review Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {requiredIdForm && (
+                        <div className={`group p-6 rounded-3xl border transition-all duration-300 relative ${isDark ? 'bg-white/5 border-white/5 hover:border-violet-500/30 shadow-xl shadow-black/20' : 'bg-gray-50 border-gray-100 hover:border-violet-600/20 shadow-lg shadow-gray-200/50'}`}>
+                          <button
+                            type="button"
+                            onClick={() => setStep('id')}
+                            className="absolute top-4 right-4 text-[10px] font-black uppercase tracking-widest text-violet-500 hover:text-violet-400 transition-colors bg-violet-500/10 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transform translate-y-1 group-hover:translate-y-0"
+                          >
+                            Edit
+                          </button>
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-4 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                            Identity Details
+                          </h4>
+                          <div className="space-y-1">
+                            <p className="text-sm font-black">{idData?.fullName}</p>
+                            <p className={`text-xs font-bold ${isDark ? 'text-gray-500' : 'text-gray-400'} uppercase tracking-tighter`}>
+                              {requiredIdForm === 'universal' ? 'Aadhaar & PAN' : requiredIdForm.toUpperCase()} VERIFIED
+                            </p>
+                            <p className={`text-[10px] mt-2 font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                              Document identification has been pre-verified and encrypted.
+                            </p>
                           </div>
                         </div>
-                        <div className="font-medium">₹{(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</div>
-                      </div>
-                    ))}
-
-                    <div className={`pt-3 mt-3 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
-                      <div className="flex justify-between">
-                        <span>Subtotal</span>
-                        <span>₹{subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>GST (18%)</span>
-                        <span>₹{tax.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between font-semibold">
-                        <span>Total</span>
-                        <span>₹{total.toFixed(2)}</span>
+                      )}
+                      <div className={`group p-6 rounded-3xl border transition-all duration-300 relative ${isDark ? 'bg-white/5 border-white/5 hover:border-violet-500/30 shadow-xl shadow-black/20' : 'bg-gray-50 border-gray-100 hover:border-violet-600/20 shadow-lg shadow-gray-200/50'}`}>
+                        <button
+                          type="button"
+                          onClick={() => setStep('delivery')}
+                          className="absolute top-4 right-4 text-[10px] font-black uppercase tracking-widest text-violet-500 hover:text-violet-400 transition-colors bg-violet-500/10 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transform translate-y-1 group-hover:translate-y-0"
+                        >
+                          Edit
+                        </button>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-4 flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                          Shipping To
+                        </h4>
+                        <div className="space-y-1">
+                          <p className="text-sm font-black">{deliveryData?.fullName}</p>
+                          <p className={`text-xs font-bold ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{deliveryData?.mobile}</p>
+                          <p className={`text-xs mt-2 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {deliveryData?.address}<br />
+                            {deliveryData?.city}, {deliveryData?.state} - {deliveryData?.pincode}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className={`rounded-lg border p-4 ${isDark ? 'border-gray-600 bg-[#1a2332]' : 'border-gray-200 bg-gray-50'}`}>
-                  <div className="text-sm font-semibold">Delivery Address</div>
-                  <div className={`mt-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                    <div className="font-medium">{deliveryData?.fullName}</div>
-                    <div>{deliveryData?.mobile}</div>
-                    <div className="mt-1">{deliveryData?.address}</div>
-                    <div className="mt-1">{deliveryData?.city}, {deliveryData?.state} - {deliveryData?.pincode}</div>
-                  </div>
-                </div>
-
-                {requiredIdForm && (
-                  <div className={`rounded-lg border p-4 ${isDark ? 'border-gray-600 bg-[#1a2332]' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="text-sm font-semibold">Identity Verified</div>
-                    <div className={`mt-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                      <div>Form: <span className="font-medium">{requiredIdForm.toUpperCase()}</span></div>
-                      <div>Name: <span className="font-medium">{idData?.fullName || '—'}</span></div>
+                    <div className="pt-8 border-t border-dashed dark:border-white/10 border-gray-200">
+                      <button
+                        type="button"
+                        onClick={proceedToPayment}
+                        className="w-full py-5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl font-black text-lg shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-4 group"
+                      >
+                        <FiCreditCard className="w-6 h-6 transition-transform group-hover:rotate-12" />
+                        Complete Order & Pay ₹{total}
+                      </button>
+                      <div className="flex flex-col items-center gap-3 mt-6">
+                        <div className="flex items-center gap-2">
+                          <FiShield className="w-4 h-4 text-emerald-500" />
+                          <p className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            Verified Secure Transaction
+                          </p>
+                        </div>
+                        <p className={`text-center text-[9px] font-medium leading-relaxed max-w-sm ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                          By proceeding, you agree to Shivalik Service Hub's <span className="underline cursor-pointer">Terms of Service</span> and <span className="underline cursor-pointer">Privacy Policy</span>.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-                <button
-                  type="button"
-                  onClick={proceedToPayment}
-                  className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
-                >
-                  Proceed to Payment →
-                </button>
+          {/* Sticky Summary Section */}
+          <div className="lg:col-span-4 lg:sticky lg:top-32">
+            <div className={`rounded-3xl border p-6 sm:p-8 overflow-hidden relative ${isDark ? 'bg-gray-900/40 border-white/5 shadow-2xl shadow-black/50' : 'bg-white border-gray-100 shadow-xl shadow-gray-200/50'
+              }`}>
+              {/* Decorative Gradient Blob */}
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/10 blur-3xl rounded-full" />
 
-                <p className={`text-xs text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                  You cannot skip identity and delivery steps.
-                </p>
+              <h3 className="text-lg font-black mb-6 flex items-center gap-2">
+                Order Summary
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                  {cart.length} item{cart.length !== 1 ? 's' : ''}
+                </span>
+              </h3>
+
+              <div className="space-y-4 mb-8">
+                {cart.map((item) => (
+                  <div key={item.productId || item.id} className="flex gap-4">
+                    <div className={`w-12 h-12 rounded-xl border flex-shrink-0 flex items-center justify-center overflow-hidden ${isDark ? 'bg-gray-800 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+                      <img src={item.src} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <p className="text-sm font-bold truncate">{item.title}</p>
+                      <p className={`text-[10px] font-bold uppercase tracking-tighter ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                        Qty: {item.quantity} • {String(item.productType || 'Basic').toUpperCase()}
+                      </p>
+                    </div>
+                    <p className="text-sm font-black whitespace-nowrap">₹{Number(item.price || 0) * Number(item.quantity || 1)}</p>
+                  </div>
+                ))}
               </div>
-            )}
+
+              <div className={`space-y-3 pt-6 border-t ${isDark ? 'border-white/5' : 'border-gray-100'}`}>
+                <div className="flex justify-between text-sm font-medium">
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Subtotal</span>
+                  <span className="font-bold">₹{subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-medium">
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>GST (18%)</span>
+                  <span className="font-bold">₹{tax.toFixed(2)}</span>
+                </div>
+                {location.state?.discount > 0 && (
+                  <div className="flex justify-between text-sm font-medium text-emerald-500">
+                    <span>Discount</span>
+                    <span className="font-black">-₹{location.state.discount}</span>
+                  </div>
+                )}
+
+                <div className={`pt-4 mt-2 flex justify-between items-end border-t border-dashed ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                  <div>
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-emerald-500' : 'text-emerald-600'}`}>Total Payable</p>
+                    <p className="text-3xl font-black leading-none">₹{total}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust Badge */}
+              <div className={`mt-8 p-4 rounded-2xl flex items-center gap-4 ${isDark ? 'bg-emerald-500/5 ring-1 ring-emerald-500/20' : 'bg-emerald-50 ring-1 ring-emerald-500/10'}`}>
+                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white flex-shrink-0">
+                  <FiLock className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-600 leading-tight">Secure Payment</p>
+                  <p className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Your data is encrypted and protected.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

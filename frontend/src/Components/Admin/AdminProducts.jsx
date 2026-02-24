@@ -48,10 +48,58 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea value={formData.description} onChange={e => handleChange('description', e.target.value)} className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" rows="3" required />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-            <input type="text" value={formData.price} onChange={e => handleChange('price', e.target.value)} className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" required />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Original Price (MRP)</label>
+              <input
+                type="number"
+                value={formData.originalPrice || ''}
+                onChange={e => {
+                  const val = parseFloat(e.target.value) || 0;
+                  const sell = parseFloat(formData.sellingPrice) || 0;
+                  const discount = val > 0 ? Math.round(((val - sell) / val) * 100) : 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    originalPrice: val,
+                    discountPercent: discount >= 0 ? discount : 0
+                  }));
+                }}
+                className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. 5000"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price</label>
+              <input
+                type="number"
+                value={formData.sellingPrice || ''}
+                onChange={e => {
+                  const val = parseFloat(e.target.value) || 0;
+                  const orig = parseFloat(formData.originalPrice) || 0;
+                  const discount = orig > 0 ? Math.round(((orig - val) / orig) * 100) : 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    sellingPrice: val,
+                    price: val.toString(), // Backward compatibility
+                    discountPercent: discount >= 0 ? discount : 0
+                  }));
+                }}
+                className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. 3500"
+                required
+              />
+            </div>
           </div>
+          {formData.originalPrice > 0 && formData.sellingPrice > 0 && (
+            <div className={`text-xs font-bold px-3 py-1.5 rounded-lg inline-block ${formData.discountPercent >= 30 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+              }`}>
+              Discount Preview: {formData.discountPercent}% OFF
+              {formData.sellingPrice > formData.originalPrice && (
+                <span className="ml-2 text-red-500 underline">Warning: Selling price &gt; MRP</span>
+              )}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
             <input type="url" value={formData.src} onChange={e => handleChange('src', e.target.value)} className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" required />
@@ -155,7 +203,21 @@ const AdminProducts = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [formData, setFormData] = useState({ id: '', title: '', description: '', price: '', src: '', category: '', subCategoryId: '', productType: 'none', hasForm: false, isInsurance: false })
+  const [formData, setFormData] = useState({
+    id: '',
+    title: '',
+    description: '',
+    price: '',
+    originalPrice: 0,
+    sellingPrice: 0,
+    discountPercent: 0,
+    src: '',
+    category: '',
+    subCategoryId: '',
+    productType: 'none',
+    hasForm: false,
+    isInsurance: false
+  })
   const [categories, setCategories] = useState([])
   const [subcategories, setSubcategories] = useState([])
   const [loadingSubcategories, setLoadingSubcategories] = useState(false)
@@ -226,7 +288,21 @@ const AdminProducts = () => {
   const openAdd = () => {
     const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0
     const defaultCategory = categories[0]?.slug || ''
-    setFormData({ id: maxId + 1, title: '', description: '', price: '', src: '', category: defaultCategory, subCategoryId: '', productType: 'none', hasForm: false, isInsurance: false })
+    setFormData({
+      id: maxId + 1,
+      title: '',
+      description: '',
+      price: '',
+      originalPrice: 0,
+      sellingPrice: 0,
+      discountPercent: 0,
+      src: '',
+      category: defaultCategory,
+      subCategoryId: '',
+      productType: 'none',
+      hasForm: false,
+      isInsurance: false
+    })
     setSubcategories([])
     // Fetch subcategories for default category if it exists
     if (categories[0]?._id) {
@@ -236,7 +312,21 @@ const AdminProducts = () => {
   }
   const openEdit = (p) => {
     setSelectedProduct(p);
-    setFormData({ id: p.id, title: p.title, description: p.description, price: p.price, src: p.src, category: p.category || '', subCategoryId: p.subCategoryId || '', productType: p.productType || 'none', hasForm: !!p.hasForm, isInsurance: !!p.isInsurance });
+    setFormData({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      price: p.price,
+      originalPrice: p.originalPrice || 0,
+      sellingPrice: p.sellingPrice || 0,
+      discountPercent: p.discountPercent || 0,
+      src: p.src,
+      category: p.category || '',
+      subCategoryId: p.subCategoryId || '',
+      productType: p.productType || 'none',
+      hasForm: !!p.hasForm,
+      isInsurance: !!p.isInsurance
+    });
     // Fetch subcategories for the product's category
     if (p.categoryId) {
       fetchSubcategories(p.categoryId)
@@ -332,7 +422,12 @@ const AdminProducts = () => {
                       <div className="text-sm font-medium text-gray-900">{p.title}</div>
                       <div className="text-sm text-gray-500">{p.description}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 font-medium">₹{p.price}</td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <div className="text-gray-900 font-bold">₹{p.sellingPrice || p.price}</div>
+                      {p.discountPercent > 0 && (
+                        <div className="text-[10px] text-emerald-600 font-bold uppercase">{p.discountPercent}% OFF</div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm"><div className="flex gap-2">
                       <button onClick={() => openEdit(p)} className="text-blue-600 hover:text-blue-900 p-1" title="Edit">
                         <FiEdit />
