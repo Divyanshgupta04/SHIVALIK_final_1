@@ -82,6 +82,12 @@ const ProductSchema = new mongoose.Schema({
   isInsurance: {
     type: Boolean,
     default: false
+  },
+
+  // Toggle for Hero section featured product
+  isHeroFeatured: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

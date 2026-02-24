@@ -13,7 +13,7 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
@@ -46,7 +46,8 @@ router.post('/products', auth, async (req, res) => {
       isInsurance: !!isInsurance,
       originalPrice: Number(originalPrice) || 0,
       sellingPrice: Number(sellingPrice) || 0,
-      discountPercent: Number(discountPercent) || 0
+      discountPercent: Number(discountPercent) || 0,
+      isHeroFeatured: !!isHeroFeatured
     });
 
     await product.save();
@@ -70,7 +71,7 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent } = req.body;
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
 
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
@@ -94,6 +95,7 @@ router.put('/products/:id', auth, async (req, res) => {
     if (typeof originalPrice !== 'undefined') update.originalPrice = Number(originalPrice);
     if (typeof sellingPrice !== 'undefined') update.sellingPrice = Number(sellingPrice);
     if (typeof discountPercent !== 'undefined') update.discountPercent = Number(discountPercent);
+    if (typeof isHeroFeatured !== 'undefined') update.isHeroFeatured = !!isHeroFeatured;
 
     const product = await Product.findOneAndUpdate(
       { id: req.params.id },
@@ -504,6 +506,55 @@ router.post('/announcements/send', auth, async (req, res) => {
   } catch (error) {
     console.error('Announcement send error:', error);
     res.status(500).json({ message: 'Server error sending announcements' });
+  }
+});
+
+// @route   GET /api/admin/hero-product
+// @desc    Get currently featured hero product
+// @access  Private (Admin only)
+router.get('/hero-product', auth, async (req, res) => {
+  try {
+    const product = await Product.findOne({ isHeroFeatured: true });
+    res.json({ success: true, product });
+  } catch (error) {
+    console.error('Get hero product error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/admin/hero-product/set
+// @desc    Set a product as hero featured (exclusively)
+// @access  Private (Admin only)
+router.post('/hero-product/set', auth, async (req, res) => {
+  try {
+    const { productId } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ message: 'Product ID is required' });
+    }
+
+    // Unset current featured product
+    await Product.updateMany({ isHeroFeatured: true }, { isHeroFeatured: false });
+
+    // Set new featured product
+    const product = await Product.findOneAndUpdate(
+      { id: productId },
+      { isHeroFeatured: true },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Hero featured product updated successfully',
+      product
+    });
+  } catch (error) {
+    console.error('Set hero product error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
