@@ -141,7 +141,7 @@ function App() {
                     {/* Legacy route kept for compatibility with existing Payment page */}
                     <Route path='/checkout/address' element={<ProtectedRoute><Address /></ProtectedRoute>} />
                     <Route path='/pay' element={<ProtectedRoute><Payment /></ProtectedRoute>} />
-                    <Route path='/payment-status' element={<ProtectedRoute><PaymentStatus /></ProtectedRoute>} />
+                    <Route path='/payment-status' element={<PaymentStatus />} />
                     <Route path='*' element={<NotFound />} />
                   </Routes>
                 </main>

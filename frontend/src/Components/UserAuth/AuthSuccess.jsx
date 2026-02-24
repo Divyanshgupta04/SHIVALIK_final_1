@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/Auth/AuthContext';
 import { motion } from 'framer-motion';
@@ -6,9 +6,13 @@ import { motion } from 'framer-motion';
 const AuthSuccess = () => {
     const navigate = useNavigate();
     const { handleAuthSuccess } = useAuth();
+    const hasExecuted = useRef(false);
 
     useEffect(() => {
         const completeAuth = async () => {
+            if (hasExecuted.current) return;
+            hasExecuted.current = true;
+
             const result = await handleAuthSuccess();
             if (result.success) {
                 // Redirect to home page after successful authentication

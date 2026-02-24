@@ -3,13 +3,13 @@ const formData = require('form-data');
 
 const createInstamojoPayment = async (data) => {
     const body = new formData();
-    body.append('amount', data.amount);
-    body.append('purpose', data.purpose);
-    body.append('buyer_name', data.buyer_name);
-    body.append('email', data.email);
-    body.append('phone', data.phone);
-    body.append('redirect_url', data.redirect_url);
-    body.append('webhook', data.webhook);
+    if (data.amount) body.append('amount', data.amount);
+    if (data.purpose) body.append('purpose', data.purpose);
+    if (data.buyer_name) body.append('buyer_name', data.buyer_name);
+    if (data.email) body.append('email', data.email);
+    if (data.phone) body.append('phone', data.phone);
+    if (data.redirect_url) body.append('redirect_url', data.redirect_url);
+    if (data.webhook) body.append('webhook', data.webhook);
     body.append('allow_repeated_payments', 'false');
     body.append('send_email', 'false');
     body.append('send_sms', 'false');

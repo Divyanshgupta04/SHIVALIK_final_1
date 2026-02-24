@@ -244,6 +244,9 @@ router.get('/orders', auth, async (req, res) => {
     let query = {};
     if (status && status !== 'all') {
       query.status = status;
+    } else {
+      // Exclude pending orders by default in admin view
+      query.status = { $ne: 'pending' };
     }
 
     const orders = await Order.find(query)
@@ -255,8 +258,9 @@ router.get('/orders', auth, async (req, res) => {
     const totalOrders = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrders / limit);
 
-    // Calculate order statistics
+    // Calculate order statistics (excluding pending)
     const orderStats = await Order.aggregate([
+      { $match: { status: { $ne: 'pending' } } },
       {
         $group: {
           _id: '$status',
