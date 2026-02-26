@@ -4,13 +4,14 @@ import { useTheme } from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "./ProductCard";
+import ProductCardSkeleton from "./ProductCardSkeleton";
 import CategoryFilters from "./CategoryFilters";
 import SubCategoryCard from "./SubCategoryCard";
 import { useCatalog } from "../context/CatalogContext";
 import { FiPlus, FiArrowLeft } from "react-icons/fi";
 
 function BestSellingProduct() {
-  const { product, HandleClickAdd } = useContext(ProductsData);
+  const { product, HandleClickAdd, loading } = useContext(ProductsData);
   const { categories, subCategories } = useCatalog();
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -142,6 +143,13 @@ function BestSellingProduct() {
                 />
               ))}
             </motion.div>
+          ) : loading ? (
+            <motion.div
+              key="loading"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+            >
+              <ProductCardSkeleton isDark={isDark} count={8} />
+            </motion.div>
           ) : (
             <motion.div
               key="products"
@@ -182,7 +190,7 @@ function BestSellingProduct() {
           </motion.div>
         )}
 
-        {displayedProducts.length === 0 && !showSubCategories && (
+        {displayedProducts.length === 0 && !showSubCategories && !loading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

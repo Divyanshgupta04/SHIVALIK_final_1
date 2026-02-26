@@ -9,6 +9,7 @@ import { normalizeForCompare, slugifyName } from '../utils/slug';
 import config from '../config/api';
 import PanService from './PanService';
 import ProductCard from "./ProductCard";
+import ProductCardSkeleton from "./ProductCardSkeleton";
 
 // Category keyword mapping for better filtering
 const CATEGORY_MAP = {
@@ -184,7 +185,11 @@ export default function Category() {
 
   const productsSection = (list, emptyMessage) => {
     if (loading || contextLoading) {
-      return <div className="py-16 text-center text-lg opacity-80">Loading {heading}...</div>;
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <ProductCardSkeleton isDark={isDark} count={6} />
+        </div>
+      );
     }
     if (error) {
       return <div className="py-16 text-center text-violet-500">{error}</div>;

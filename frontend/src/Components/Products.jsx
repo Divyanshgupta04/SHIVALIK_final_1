@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import ProductCard from "./ProductCard";
+import ProductCardSkeleton from "./ProductCardSkeleton";
 
 function Products() {
   const { product, HandleClickAdd, loading } = useContext(ProductsData)
@@ -44,7 +45,28 @@ function Products() {
         </motion.div>
 
         {loading ? (
-          <div className="py-16 text-center text-lg opacity-80">Loading products...</div>
+          <>
+            {/* Shimmer loading for New Arrivals */}
+            <section className="mb-16">
+              <div className="flex items-center gap-4 mb-8">
+                <div className={`h-7 w-40 rounded-lg animate-pulse ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                <div className="h-px flex-1 bg-gradient-to-r from-violet-500/50 to-transparent"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <ProductCardSkeleton isDark={isDark} count={3} />
+              </div>
+            </section>
+            {/* Shimmer loading for All Products */}
+            <section>
+              <div className="flex items-center gap-4 mb-8">
+                <div className={`h-7 w-36 rounded-lg animate-pulse ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                <div className="h-px flex-1 bg-gradient-to-r from-violet-500/50 to-transparent"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <ProductCardSkeleton isDark={isDark} count={8} />
+              </div>
+            </section>
+          </>
         ) : (
           <>
             {/* New Arrivals */}
