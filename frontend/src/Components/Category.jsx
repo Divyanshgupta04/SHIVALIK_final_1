@@ -175,8 +175,8 @@ export default function Category() {
   }, [selectedSubCategoryId, subCategoriesForCatalogCategory]);
 
   const handleBuyNow = (p) => {
-    if (p.isInsurance) {
-      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+    if (p.isInsurance && p.externalLink) {
+      window.open(p.externalLink, '_blank');
     } else {
       navigate('/checkout', { state: { buyNowItem: p } });
     }
@@ -246,8 +246,8 @@ export default function Category() {
                       whileHover={{ y: -5 }}
                       onClick={() => setSelectedSubCategoryId(sc.id)}
                       className={`group relative h-48 rounded-2xl border overflow-hidden transition-all duration-300 ${isDark
-                          ? 'border-white/10 bg-[#13111d] hover:border-violet-500/50 shadow-lg shadow-black/40'
-                          : 'border-gray-200 bg-white hover:border-violet-200 shadow-md'
+                        ? 'border-white/10 bg-[#13111d] hover:border-violet-500/50 shadow-lg shadow-black/40'
+                        : 'border-gray-200 bg-white hover:border-violet-200 shadow-md'
                         }`}
                     >
                       <div className="absolute inset-0 w-full h-full">

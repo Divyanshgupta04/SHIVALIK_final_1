@@ -165,24 +165,30 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
             <label className="inline-flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={!!formData.hasForm}
-                onChange={e => handleChange('hasForm', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Enable form for this product</span>
-            </label>
-          </div>
-          <div className="pt-1">
-            <label className="inline-flex items-center gap-2">
-              <input
-                type="checkbox"
                 checked={!!formData.isInsurance}
-                onChange={e => handleChange('isInsurance', e.target.checked)}
+                onChange={e => {
+                  handleChange('isInsurance', e.target.checked)
+                  if (!e.target.checked) handleChange('externalLink', '')
+                }}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Link to insurance page (External Link)</span>
+              <span className="text-sm text-gray-700">Link to external page (External Link)</span>
             </label>
           </div>
+          {formData.isInsurance && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">External URL</label>
+              <input
+                type="url"
+                value={formData.externalLink || ''}
+                onChange={e => handleChange('externalLink', e.target.value)}
+                placeholder="https://example.com/your-page"
+                className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">Users will be redirected to this link when clicking "Apply Now"</p>
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium">
               {isEdit ? 'Update' : 'Add'} Product
@@ -215,8 +221,8 @@ const AdminProducts = () => {
     category: '',
     subCategoryId: '',
     productType: 'none',
-    hasForm: false,
-    isInsurance: false
+    isInsurance: false,
+    externalLink: ''
   })
   const [categories, setCategories] = useState([])
   const [subcategories, setSubcategories] = useState([])
@@ -300,8 +306,8 @@ const AdminProducts = () => {
       category: defaultCategory,
       subCategoryId: '',
       productType: 'none',
-      hasForm: false,
-      isInsurance: false
+      isInsurance: false,
+      externalLink: ''
     })
     setSubcategories([])
     // Fetch subcategories for default category if it exists
@@ -324,8 +330,8 @@ const AdminProducts = () => {
       category: p.category || '',
       subCategoryId: p.subCategoryId || '',
       productType: p.productType || 'none',
-      hasForm: !!p.hasForm,
-      isInsurance: !!p.isInsurance
+      isInsurance: !!p.isInsurance,
+      externalLink: p.externalLink || ''
     });
     // Fetch subcategories for the product's category
     if (p.categoryId) {

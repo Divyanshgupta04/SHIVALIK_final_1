@@ -84,6 +84,13 @@ const ProductSchema = new mongoose.Schema({
     default: false
   },
 
+  // External URL to redirect users to when isInsurance is true
+  externalLink: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
   // Toggle for Hero section featured product
   isHeroFeatured: {
     type: Boolean,

@@ -270,8 +270,8 @@ function ProductDetail() {
 
               <button
                 onClick={() => {
-                  if (product.isInsurance) {
-                    window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+                  if (product.isInsurance && product.externalLink) {
+                    window.open(product.externalLink, '_blank');
                   } else {
                     handleBuyNow();
                   }

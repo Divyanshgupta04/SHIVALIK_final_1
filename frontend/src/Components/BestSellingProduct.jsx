@@ -36,8 +36,8 @@ function BestSellingProduct() {
   }, [activeCategory]);
 
   const handleBuyNow = (item) => {
-    if (item.isInsurance) {
-      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+    if (item.isInsurance && item.externalLink) {
+      window.open(item.externalLink, '_blank');
     } else {
       navigate('/checkout', { state: { buyNowItem: item } });
     }
@@ -172,8 +172,8 @@ function BestSellingProduct() {
             <button
               onClick={() => setVisibleCount(prev => prev + 10)}
               className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl ${isDark
-                  ? 'bg-white text-black hover:bg-gray-200 shadow-white/5'
-                  : 'bg-black text-white hover:bg-gray-800 shadow-black/10'
+                ? 'bg-white text-black hover:bg-gray-200 shadow-white/5'
+                : 'bg-black text-white hover:bg-gray-800 shadow-black/10'
                 }`}
             >
               See More Products

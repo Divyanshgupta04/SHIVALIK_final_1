@@ -26,8 +26,8 @@ function HomePage() {
 
   const handleBuyNow = () => {
     if (!heroProduct) return;
-    if (heroProduct.isInsurance) {
-      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+    if (heroProduct.isInsurance && heroProduct.externalLink) {
+      window.open(heroProduct.externalLink, '_blank');
     } else {
       navigate('/checkout', { state: { buyNowItem: heroProduct } });
     }
