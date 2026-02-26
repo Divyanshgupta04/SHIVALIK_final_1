@@ -1,110 +1,197 @@
-import React, { useContext } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { ProductsData } from "../context/Context";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import ProductCard from "./ProductCard";
+import CategoryFilters from "./CategoryFilters";
+import SubCategoryCard from "./SubCategoryCard";
+import { useCatalog } from "../context/CatalogContext";
+import { FiPlus, FiArrowLeft } from "react-icons/fi";
 
 function BestSellingProduct() {
   const { product, HandleClickAdd } = useContext(ProductsData);
+  const { categories, subCategories } = useCatalog();
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeSubCategory, setActiveSubCategory] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Reset visible count and subcategory when category changes
+  useEffect(() => {
+    setVisibleCount(10);
+    setActiveSubCategory(null);
+  }, [activeCategory]);
+
+  const handleBuyNow = (item) => {
+    if (item.isInsurance) {
+      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+    } else {
+      navigate('/checkout', { state: { buyNowItem: item } });
+    }
+  };
+
+  // Get current category object
+  const currentCategory = useMemo(() => {
+    if (activeCategory === 'all') return null;
+    return categories.find(c => c.slug === activeCategory || c.id === activeCategory);
+  }, [categories, activeCategory]);
+
+  // Find sub-categories for active category
+  const relevantSubCategories = useMemo(() => {
+    if (!currentCategory) return [];
+    return subCategories.filter(sc => sc.categoryId === currentCategory.id);
+  }, [subCategories, currentCategory]);
+
+  const filteredProducts = useMemo(() => {
+    let result = activeCategory === 'all' ? [...product] : product.filter(p => {
+      // Prioritize explicit category slug/ID match
+      const categoryMatch = p.category === activeCategory || p.categoryId === activeCategory;
+      if (!categoryMatch) {
+        // Fallback: Check if the category name matches (slugified)
+        const pCat = p.category?.toLowerCase() || '';
+        if (pCat !== activeCategory.toLowerCase()) {
+          // Deep search as last resort
+          const title = p.title?.toLowerCase() || '';
+          const desc = p.description?.toLowerCase() || '';
+          if (!`${title} ${desc}`.includes(activeCategory.toLowerCase())) return false;
+        }
+      }
+
+      // If a subcategory is active, filter by it too
+      if (activeSubCategory) {
+        return p.subCategoryId === activeSubCategory.id;
+      }
+
+      return true;
+    });
+
+    // Sort by createdAt (newest first)
+    return result.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0);
+      const dateB = new Date(b.createdAt || 0);
+      return dateB - dateA;
+    });
+  }, [product, activeCategory, activeSubCategory]);
+
+  const displayedProducts = isMobile ? filteredProducts.slice(0, visibleCount) : filteredProducts;
+  const hasMore = isMobile && visibleCount < filteredProducts.length;
+
+  // Decide what to show: Subcategories or Products
+  const showSubCategories = activeCategory !== 'all' && relevantSubCategories.length > 0 && !activeSubCategory;
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* ... header ... */}
+    <div id="marketplace" className="flex flex-col mb-16">
+      <CategoryFilters
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+        isDark={isDark}
+        categories={categories}
+      />
 
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        {product.map((item, index) => (
+      <div className="container mx-auto px-4">
+        {activeCategory !== 'all' && (
           <motion.div
-            key={item.id}
-            onClick={() => navigate(`/product/${item.id}`)}
-            className={`group relative overflow-hidden rounded-2xl transition-all duration-300 cursor-pointer ${isDark
-              ? 'bg-gray-800 hover:bg-gray-700 border border-gray-600'
-              : 'bg-white hover:bg-gray-50 border border-gray-200'
-              } shadow-lg hover:shadow-xl`}
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            whileHover={{ scale: 1.05, y: -10 }}
-            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-4 mb-8"
           >
-            {/* Image */}
-            <div className="relative h-48 overflow-hidden">
-              <img
-                className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
-                src={item.src}
-                alt={item.title}
-              />
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
-
-            {/* Content */}
-            <div className="p-4">
-              <h2 className={`text-lg font-bold mb-2 line-clamp-2 transition-colors duration-300 ${isDark ? 'text-white' : 'text-gray-900'
-                }`}>{item.title}</h2>
-
-              <p className={`text-sm mb-3 line-clamp-2 transition-colors duration-300 ${isDark ? 'text-gray-300' : 'text-gray-600'
-                }`}>{item.description}</p>
-
-              {/* Rating */}
-              <div className="flex items-center mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                  </svg>
-                ))}
-                <span className={`ml-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'
-                  }`}>★★★★★</span>
-              </div>
-
-              {/* Price */}
-              <div className="flex items-center justify-between mb-4">
-                <span className={`text-xl font-bold transition-colors duration-300 ${isDark ? 'text-blue-400' : 'text-blue-600'
-                  }`}>₹{item.price}</span>
-                <span className={`text-sm line-through transition-colors duration-300 ${isDark ? 'text-gray-500' : 'text-gray-400'
-                  }`}>₹{Math.floor(item.price * 1.2)}</span>
-              </div>
-
-              {/* Buttons */}
-              <div className="space-y-2">
-                {!item.isInsurance && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      HandleClickAdd(item.id);
-                    }}
-                    className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
-                  >
-                    Add to Cart
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (item.isInsurance) {
-                      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
-                    } else {
-                      navigate('/checkout', { state: { buyNowItem: item } });
-                    }
-                  }}
-                  className={`block w-full py-2.5 px-4 text-sm font-medium rounded-lg transition-all duration-300 transform hover:scale-105 text-center ${isDark
-                    ? 'bg-gray-600 text-white hover:bg-gray-700'
-                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                    }`}
-                >
-                  {item.isInsurance ? 'Apply Now' : 'Buy Now'}
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={() => {
+                if (activeSubCategory) setActiveSubCategory(null);
+                else setActiveCategory('all');
+              }}
+              className={`flex items-center gap-2 text-sm font-bold transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              <FiArrowLeft className="w-4 h-4" />
+              {activeSubCategory ? `Back to ${currentCategory?.name}` : 'Back to All Categories'}
+            </button>
+            {activeSubCategory && (
+              <span className={`text-sm font-medium ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>/ {activeSubCategory.name}</span>
+            )}
           </motion.div>
-        ))}
-      </motion.div>
+        )}
+
+        <AnimatePresence mode="wait">
+          {showSubCategories ? (
+            <motion.div
+              key="subcategories"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {relevantSubCategories.map(sc => (
+                <SubCategoryCard
+                  key={sc.id}
+                  subCategory={sc}
+                  isDark={isDark}
+                  onClick={() => setActiveSubCategory(sc)}
+                />
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="products"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+            >
+              <AnimatePresence mode="popLayout">
+                {displayedProducts.map((item, index) => (
+                  <ProductCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    isDark={isDark}
+                    onAddToCart={HandleClickAdd}
+                    onBuyNow={handleBuyNow}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!showSubCategories && hasMore && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-12 flex justify-center"
+          >
+            <button
+              onClick={() => setVisibleCount(prev => prev + 10)}
+              className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl ${isDark
+                  ? 'bg-white text-black hover:bg-gray-200 shadow-white/5'
+                  : 'bg-black text-white hover:bg-gray-800 shadow-black/10'
+                }`}
+            >
+              See More Products
+              <FiPlus className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+
+        {displayedProducts.length === 0 && !showSubCategories && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className={`py-20 text-center text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
+          >
+            No products found in this section.
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

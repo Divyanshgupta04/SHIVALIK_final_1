@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from './Auth/AuthContext';
 import axios from 'axios';
@@ -30,8 +30,8 @@ export const CartProvider = ({ children }) => {
     loadCart();
   }, [user]);
 
-  const loadCart = async () => {
-    if (user) {
+  const loadCart = useCallback(async () => {
+    if (user && !user._isMock) {
       // Load cart from server for authenticated users
       try {
         const response = await axios.get('/api/cart');
@@ -56,7 +56,7 @@ export const CartProvider = ({ children }) => {
         setCart([]);
       }
     }
-  };
+  }, [user]);
 
   const saveLocalCart = (cartData) => {
     try {
@@ -66,9 +66,9 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const syncCartWithServer = async (localCart) => {
-    if (!user) return;
-    
+  const syncCartWithServer = useCallback(async (localCart) => {
+    if (!user || user._isMock) return;
+
     try {
       await axios.post('/api/cart/sync', { localCart });
       // Reload cart after sync
@@ -76,11 +76,11 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to sync cart:', error);
     }
-  };
+  }, [user, loadCart]);
 
-  // Sync local cart with server when user logs in
+  // Sync local cart with server when user logs in (real session only)
   useEffect(() => {
-    if (user && cart.length > 0) {
+    if (user && !user._isMock && cart.length > 0) {
       // Only sync if we have items from local storage
       const localCart = localStorage.getItem('cart');
       if (localCart) {
@@ -94,7 +94,7 @@ export const CartProvider = ({ children }) => {
     }
   }, [user]);
 
-  const addToCart = async (product, quantity = 1) => {
+  const addToCart = useCallback(async (product, quantity = 1) => {
     setLoading(true);
 
     // Derive productType for identity verification flow.
@@ -111,13 +111,13 @@ export const CartProvider = ({ children }) => {
             : 'both';
 
     try {
-      if (user) {
+      if (user && !user._isMock) {
         // Add to server cart for authenticated users
         const response = await axios.post('/api/cart/add', {
           productId: product.id,
           quantity
         });
-        
+
         if (response.data.success) {
           const serverCart = Array.isArray(response.data.cart) ? response.data.cart : [];
           // Frontend enrichment: attach productType if server doesn't store it.
@@ -135,11 +135,11 @@ export const CartProvider = ({ children }) => {
         // Add to local cart for non-authenticated users
         const existingItemIndex = cart.findIndex(item => item.productId === product.id);
         let newCart;
-        
+
         if (existingItemIndex >= 0) {
           // Update quantity if item exists
-          newCart = cart.map((item, index) => 
-            index === existingItemIndex 
+          newCart = cart.map((item, index) =>
+            index === existingItemIndex
               ? { ...item, quantity: item.quantity + quantity }
               : item
           );
@@ -156,7 +156,7 @@ export const CartProvider = ({ children }) => {
           };
           newCart = [...cart, cartItem];
         }
-        
+
         setCart(newCart);
         saveLocalCart(newCart);
         toast.success('Added to cart');
@@ -167,19 +167,18 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, cart]);
 
-  const updateCartItem = async (productId, quantity) => {
+  const updateCartItem = useCallback(async (productId, quantity) => {
     setLoading(true);
-    
+
     try {
-      if (user) {
-        // Update on server for authenticated users
+      if (user && !user._isMock) {
         const response = await axios.put('/api/cart/update', {
           productId,
           quantity
         });
-        
+
         if (response.data.success) {
           const serverCart = Array.isArray(response.data.cart) ? response.data.cart : [];
           // Preserve any locally-known productType if backend doesn't provide it.
@@ -195,17 +194,17 @@ export const CartProvider = ({ children }) => {
       } else {
         // Update local cart for non-authenticated users
         let newCart;
-        
+
         if (quantity === 0) {
           newCart = cart.filter(item => item.productId !== productId);
         } else {
-          newCart = cart.map(item => 
-            item.productId === productId 
+          newCart = cart.map(item =>
+            item.productId === productId
               ? { ...item, quantity }
               : item
           );
         }
-        
+
         setCart(newCart);
         saveLocalCart(newCart);
         toast.success(quantity === 0 ? 'Item removed from cart' : 'Cart updated');
@@ -216,20 +215,17 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, cart]);
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = useCallback(async (productId) => {
     await updateCartItem(productId, 0);
-  };
+  }, [updateCartItem]);
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     setLoading(true);
-    
     try {
-      if (user) {
-        // Clear server cart for authenticated users
+      if (user && !user._isMock) {
         const response = await axios.delete('/api/cart/clear');
-        
         if (response.data.success) {
           setCart([]);
           toast.success('Cart cleared');
@@ -246,17 +242,17 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const getCartTotal = () => {
+  const getCartTotal = useCallback(() => {
     return cart.reduce((total, item) => {
       const price = parseFloat(item.price) || 0;
       const quantity = item.quantity || 0;
       return total + (price * quantity);
     }, 0).toFixed(2);
-  };
+  }, [cart]);
 
-  const value = {
+  const value = useMemo(() => ({
     cart,
     itemCount,
     loading,
@@ -266,7 +262,7 @@ export const CartProvider = ({ children }) => {
     clearCart,
     getCartTotal,
     loadCart
-  };
+  }), [cart, itemCount, loading, addToCart, updateCartItem, removeFromCart, clearCart, getCartTotal, loadCart]);
 
   return (
     <CartContext.Provider value={value}>

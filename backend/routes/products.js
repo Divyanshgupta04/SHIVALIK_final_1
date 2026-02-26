@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findOne({ id: req.params.id });
-    
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -71,6 +71,22 @@ router.get('/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Get product error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/products/hero/featured
+// @desc    Get the featured product for the hero section
+// @access  Public
+router.get('/hero/featured', async (req, res) => {
+  try {
+    const product = await Product.findOne({ isHeroFeatured: true });
+    res.json({
+      success: true,
+      product
+    });
+  } catch (error) {
+    console.error('Get hero featured product error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

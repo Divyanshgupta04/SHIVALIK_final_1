@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import config from '../../config/api';
@@ -26,62 +26,66 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
-      const response = await axios.get('/api/auth/me');
+      const response = await axios.get('/api/user-auth/me');
       if (response.data.success) {
         setUser(response.data.user);
+      } else {
+        setUser(null);
       }
     } catch (error) {
-      // User is not authenticated
       setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Google OAuth login - redirect to backend OAuth flow
-  const loginWithGoogle = () => {
+  const loginWithGoogle = useCallback(() => {
     window.location.href = `${config.apiUrl}/api/auth/google`;
-  };
+  }, []);
 
   // Handle OAuth callback success
-  const handleAuthSuccess = async () => {
+  const handleAuthSuccess = useCallback(async () => {
     try {
-      const response = await axios.get('/api/auth/me');
+      const response = await axios.get('/api/user-auth/me');
       if (response.data.success) {
         setUser(response.data.user);
         toast.success('Welcome back!');
         return { success: true };
       }
+      setUser(null);
+      return { success: false };
     } catch (error) {
+      setUser(null);
       const message = error.response?.data?.message || 'Authentication failed';
       toast.error(message);
       return { success: false, message };
     }
-  };
+  }, []);
 
   // Logout user
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
-      await axios.post('/api/auth/logout');
+      await axios.post('/api/user-auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
       setUser(null);
       toast.success('Logged out successfully');
-    } catch (error) {
-      // Even if logout fails on server, clear local state
-      setUser(null);
-      console.error('Logout error:', error);
+      window.location.href = '/signin';
     }
-  };
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     loginWithGoogle,
     handleAuthSuccess,
     logout,
     checkAuth
-  };
+  }), [user, loading, loginWithGoogle, handleAuthSuccess, logout, checkAuth]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -8,6 +8,7 @@ import { useCatalog } from '../context/CatalogContext';
 import { normalizeForCompare, slugifyName } from '../utils/slug';
 import config from '../config/api';
 import PanService from './PanService';
+import ProductCard from "./ProductCard";
 
 // Category keyword mapping for better filtering
 const CATEGORY_MAP = {
@@ -35,12 +36,12 @@ function filterBySlug(items = [], slug) {
   const normalizedSlug = normalize(slug);
   // Use additional keywords if available
   const searchTerms = CATEGORY_MAP[slug] ? [normalizedSlug, ...CATEGORY_MAP[slug]] : [normalizedSlug];
-  
+
   return items.filter((p) => {
     const cat = normalize(p?.category || '');
     const title = normalize(p?.title || '');
     const desc = normalize(p?.description || '');
-    
+
     // Check against all search terms
     return searchTerms.some(term => {
       const normalizedTerm = normalize(term);
@@ -58,7 +59,7 @@ export default function Category() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { product: allProducts, loading: contextLoading } = useContext(ProductsData);
+  const { product: allProducts, loading: contextLoading, HandleClickAdd } = useContext(ProductsData);
   const { categories: catalogCategories, subCategories: catalogSubCategories } = useCatalog();
 
   const catalogCategory = useMemo(() => {
@@ -173,58 +174,36 @@ export default function Category() {
     return (subCategoriesForCatalogCategory || []).find((sc) => String(sc.id) === String(selectedSubCategoryId)) || null;
   }, [selectedSubCategoryId, subCategoriesForCatalogCategory]);
 
+  const handleBuyNow = (p) => {
+    if (p.isInsurance) {
+      window.open('https://advisor.turtlemintinsurance.com/profile/284308/SHIVALIK_SERVICES_HUB_NEAR_SBI_RAJOURI', '_blank');
+    } else {
+      navigate('/checkout', { state: { buyNowItem: p } });
+    }
+  };
+
   const productsSection = (list, emptyMessage) => {
     if (loading || contextLoading) {
       return <div className="py-16 text-center text-lg opacity-80">Loading {heading}...</div>;
     }
     if (error) {
-      return <div className="py-16 text-center text-red-500">{error}</div>;
+      return <div className="py-16 text-center text-violet-500">{error}</div>;
     }
     if (!list || list.length === 0) {
       return <div className="py-16 text-center opacity-80">{emptyMessage}</div>;
     }
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {list.map((item, index) => (
-          <Link key={item.id || `${slug}-${index}`} to={`/product/${item.id}`}>
-            <motion.div
-              className={`${isDark ? 'bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10' : 'bg-gradient-to-br from-white to-blue-50 border border-blue-100'} group rounded-2xl overflow-hidden shadow-[0_10px_24px_rgba(0,0,0,0.12)]`}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.03 }}
-              whileHover={{ y: -4 }}
-            >
-              <div className="relative h-48 overflow-hidden">
-                {item.src ? (
-                  <img
-                    src={item.src}
-                    alt={item.title || 'Item'}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
-                  />
-                ) : (
-                  <div className={`absolute inset-0 flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                    No image
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-lg mb-1 line-clamp-1">{item.title || 'Item'}</h3>
-                {item.description && (
-                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-sm mb-3 line-clamp-2`}>
-                    {item.description}
-                  </p>
-                )}
-                <div className="flex items-center justify-between">
-                  {item.price ? (
-                    <span className={`${isDark ? 'text-blue-300' : 'text-blue-700'} font-bold text-xl`}>₹{item.price}</span>
-                  ) : (
-                    <span className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-sm`}>Contact for pricing</span>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </Link>
+          <ProductCard
+            key={item.id || `${slug}-${index}`}
+            item={item}
+            index={index}
+            isDark={isDark}
+            onAddToCart={HandleClickAdd}
+            onBuyNow={handleBuyNow}
+          />
         ))}
       </div>
     );
@@ -248,36 +227,47 @@ export default function Category() {
           <div className={`mb-8 rounded-2xl border p-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-blue-100 bg-white'}`}>
             {!selectedSubCategoryId ? (
               <>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
                   <div>
-                    <div className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Sub-Categories</div>
-                    <div className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      Select a sub-category to view products.
-                    </div>
+                    <h2 className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>Sub-Categories</h2>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Select a sub-category to explorer specialized services.
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {subCategoriesForCatalogCategory.map((sc) => (
-                    <button
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {subCategoriesForCatalogCategory.map((sc, scIndex) => (
+                    <motion.button
                       key={sc.id}
-                      type="button"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: scIndex * 0.05 }}
+                      whileHover={{ y: -5 }}
                       onClick={() => setSelectedSubCategoryId(sc.id)}
-                      className={`text-left rounded-xl border overflow-hidden transition ${
-                        isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
-                      }`}
+                      className={`group relative h-48 rounded-2xl border overflow-hidden transition-all duration-300 ${isDark
+                          ? 'border-white/10 bg-[#13111d] hover:border-violet-500/50 shadow-lg shadow-black/40'
+                          : 'border-gray-200 bg-white hover:border-violet-200 shadow-md'
+                        }`}
                     >
-                      <div className="aspect-[4/3] bg-black/10">
+                      <div className="absolute inset-0 w-full h-full">
                         {sc.imageDataUrl ? (
-                          <img src={sc.imageDataUrl} alt={sc.name} className="w-full h-full object-cover" />
+                          <img src={sc.imageDataUrl} alt={sc.name} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" />
                         ) : (
-                          <div className={`w-full h-full flex items-center justify-center text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                            No Image
+                          <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-violet-900/10' : 'bg-gray-50'}`}>
+                            <FiGrid className="w-10 h-10 text-violet-500/20" />
                           </div>
                         )}
+                        <div className={`absolute inset-0 bg-gradient-to-t ${isDark ? 'from-[#0a0a1a] to-transparent' : 'from-black/60 to-transparent'}`} />
                       </div>
-                      <div className={`p-3 text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{sc.name}</div>
-                    </button>
+
+                      <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                        <span className="text-lg font-black text-white group-hover:text-violet-400 transition-colors">
+                          {sc.name}
+                        </span>
+                        <div className="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">Explore Products</div>
+                      </div>
+                    </motion.button>
                   ))}
                 </div>
               </>
@@ -296,11 +286,10 @@ export default function Category() {
                   <button
                     type="button"
                     onClick={() => setSelectedSubCategoryId('')}
-                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${
-                      isDark
-                        ? 'border-white/20 text-gray-200 hover:bg-white/10'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${isDark
+                      ? 'border-white/20 text-gray-200 hover:bg-white/10'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     ← Back
                   </button>

@@ -37,6 +37,7 @@ router.get('/status', (req, res) => {
                 id: req.user._id,
                 name: req.user.name,
                 email: req.user.email,
+                avatar: req.user.avatar,
                 isVerified: req.user.isVerified
             }
         });
@@ -62,6 +63,8 @@ router.get('/me', (req, res) => {
             id: req.user._id,
             name: req.user.name,
             email: req.user.email,
+            avatar: req.user.avatar,
+            phone: req.user.phone,
             isVerified: req.user.isVerified,
             createdAt: req.user.createdAt,
             lastLogin: req.user.lastLogin,

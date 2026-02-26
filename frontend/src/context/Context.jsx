@@ -265,6 +265,8 @@ export function Context({ children }) {
         // Store as a slug so routing and filtering work (e.g. "Aadhaar Services" -> "aadhaar-services").
         category: slugifyName(category?.name || ''),
         productType: p.productType || '',
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
       };
     });
   }, [catalogProducts, catalogCategoriesById, catalogSubCategoriesById]);

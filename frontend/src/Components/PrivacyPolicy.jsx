@@ -60,7 +60,7 @@ function PrivacyPolicy() {
                         }`}>
                         Privacy Policy
                     </h1>
-                    <div className={`w-24 h-1 mx-auto rounded-full ${isDark ? 'bg-red-500' : 'bg-blue-600'
+                    <div className={`w-24 h-1 mx-auto rounded-full ${isDark ? 'bg-violet-500' : 'bg-blue-600'
                         }`}></div>
                     <p className={`mt-6 text-lg max-w-2xl mx-auto ${isDark ? 'text-gray-400' : 'text-gray-600'
                         }`}>

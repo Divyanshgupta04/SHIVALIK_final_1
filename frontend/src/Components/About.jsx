@@ -56,7 +56,7 @@ function About() {
             }`}>
             About us
           </h1>
-          <div className={`w-24 h-1 mx-auto rounded-full ${isDark ? 'bg-red-500' : 'bg-blue-600'
+          <div className={`w-24 h-1 mx-auto rounded-full ${isDark ? 'bg-violet-500' : 'bg-blue-600'
             }`}></div>
         </motion.div>
 
@@ -172,23 +172,23 @@ function About() {
                 {/* Multiple pulsing circle effects for glow */}
                 <div className="relative">
                   {/* Outer glow - slowest */}
-                  <div className={`absolute w-20 h-20 rounded-full animate-ping ${isDark ? 'bg-red-500/20' : 'bg-red-500/30'
+                  <div className={`absolute w-20 h-20 rounded-full animate-ping ${isDark ? 'bg-violet-500/20' : 'bg-violet-500/30'
                     }`} style={{ top: '-10px', left: '-10px', animationDuration: '2s' }}></div>
 
                   {/* Middle glow */}
-                  <div className={`absolute w-16 h-16 rounded-full animate-ping ${isDark ? 'bg-red-500/30' : 'bg-red-500/40'
+                  <div className={`absolute w-16 h-16 rounded-full animate-ping ${isDark ? 'bg-violet-500/30' : 'bg-violet-500/40'
                     }`} style={{ top: '-8px', left: '-8px', animationDuration: '1.5s' }}></div>
 
                   {/* Inner glow - fastest */}
-                  <div className={`absolute w-12 h-12 rounded-full animate-ping ${isDark ? 'bg-red-500/40' : 'bg-red-500/50'
+                  <div className={`absolute w-12 h-12 rounded-full animate-ping ${isDark ? 'bg-violet-500/40' : 'bg-violet-500/50'
                     }`} style={{ top: '-6px', left: '-6px', animationDuration: '1s' }}></div>
 
                   {/* Static glow ring */}
-                  <div className={`absolute w-14 h-14 rounded-full blur-sm ${isDark ? 'bg-red-500/50' : 'bg-red-500/60'
+                  <div className={`absolute w-14 h-14 rounded-full blur-sm ${isDark ? 'bg-violet-500/50' : 'bg-violet-500/60'
                     }`} style={{ top: '-7px', left: '-7px' }}></div>
 
                   {/* Location pin/marker */}
-                  <div className={`relative w-10 h-10 rounded-full flex items-center justify-center shadow-2xl ${isDark ? 'bg-red-600' : 'bg-red-500'
+                  <div className={`relative w-10 h-10 rounded-full flex items-center justify-center shadow-2xl ${isDark ? 'bg-violet-600' : 'bg-violet-500'
                     }`} style={{
                       boxShadow: isDark
                         ? '0 0 20px rgba(239, 68, 68, 0.8), 0 0 40px rgba(239, 68, 68, 0.4)'

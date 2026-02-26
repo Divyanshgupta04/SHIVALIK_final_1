@@ -124,7 +124,7 @@ function ProductDetail() {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
         <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-        <Link to="/products" className={`px-6 py-3 rounded-lg ${isDark ? 'bg-red-600 hover:bg-red-700' : 'bg-red-600 hover:bg-red-700'} text-white`}>
+        <Link to="/products" className={`px-6 py-3 rounded-lg ${isDark ? 'bg-violet-600 hover:bg-violet-700' : 'bg-violet-600 hover:bg-violet-700'} text-white`}>
           Back to Products
         </Link>
       </div>
@@ -179,7 +179,7 @@ function ProductDetail() {
                     key={idx}
                     onClick={() => setMainImage(img)}
                     className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${mainImage === img
-                      ? isDark ? 'border-red-500' : 'border-red-600'
+                      ? isDark ? 'border-violet-500' : 'border-violet-600'
                       : isDark ? 'border-gray-800 hover:border-gray-700' : 'border-gray-200 hover:border-gray-300'
                       } ${isDark ? 'bg-gray-900' : 'bg-white'}`}
                     whileHover={{ scale: 1.05 }}
@@ -212,11 +212,24 @@ function ProductDetail() {
               </p>
             </div>
 
-            {/* Price */}
-            <div className="flex items-baseline gap-3">
-              <span className={`text-4xl font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                ₹{product.price}
-              </span>
+            {/* Price section with Discount */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <span className={`text-4xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  ₹{product.sellingPrice || product.price}
+                </span>
+                {product.discountPercent > 0 && (
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500 line-through font-medium">
+                      MRP: ₹{product.originalPrice}
+                    </span>
+                    <span className={`text-sm font-bold ${product.discountPercent >= 30 ? 'text-rose-500' : 'text-emerald-500'
+                      }`}>
+                      Save {product.discountPercent}% OFF
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Rating (Static for now) */}
@@ -247,7 +260,7 @@ function ProductDetail() {
                     ? isDark
                       ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                       : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-violet-600 hover:bg-violet-700 text-white'
                     }`}
                 >
                   <FiShoppingCart />
@@ -273,16 +286,16 @@ function ProductDetail() {
 
               <button
                 className={`p-4 rounded-lg border transition-all ${isDark
-                  ? 'border-gray-700 hover:border-red-600 hover:bg-gray-900'
-                  : 'border-gray-300 hover:border-red-600 hover:bg-gray-50'
+                  ? 'border-gray-700 hover:border-violet-600 hover:bg-gray-900'
+                  : 'border-gray-300 hover:border-violet-600 hover:bg-gray-50'
                   }`}
               >
                 <FiHeart className="text-xl" />
               </button>
               <button
                 className={`p-4 rounded-lg border transition-all ${isDark
-                  ? 'border-gray-700 hover:border-red-600 hover:bg-gray-900'
-                  : 'border-gray-300 hover:border-red-600 hover:bg-gray-50'
+                  ? 'border-gray-700 hover:border-violet-600 hover:bg-gray-900'
+                  : 'border-gray-300 hover:border-violet-600 hover:bg-gray-50'
                   }`}
               >
                 <FiShare2 className="text-xl" />
@@ -318,7 +331,7 @@ function ProductDetail() {
                     <h3 className={`font-medium mb-1 line-clamp-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {item.title}
                     </h3>
-                    <p className={`font-semibold ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                    <p className={`font-semibold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
                       ₹{item.price}
                     </p>
                   </div>
