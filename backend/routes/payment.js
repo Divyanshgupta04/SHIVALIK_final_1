@@ -36,8 +36,11 @@ router.post('/create-order', requireAuth, async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Use provided shipping address if available, otherwise fallback to user's saved address
+        const shippingAddress = orderData.shippingAddress || user.address;
+
         // Sanitize phone number (Instamojo expects 10 digits, no leading zero or +91)
-        let phone = user.address?.phone || '';
+        let phone = shippingAddress?.phone || '';
         // Remove all non-digit characters
         phone = phone.replace(/\D/g, '');
 
@@ -89,7 +92,7 @@ router.post('/create-order', requireAuth, async (req, res) => {
                 userEmail: user.email,
                 userName: user.name,
                 items: orderData.items,
-                shippingAddress: user.address,
+                shippingAddress: shippingAddress,
                 identityFormId: orderData.identityFormId,
                 payment: {
                     payment_request_id: response.payment_request.id,

@@ -15,8 +15,8 @@ function Payment() {
   const { user } = useAuth();
   const { isDark } = useTheme();
   const [loading, setLoading] = useState(false);
-  const [userAddress, setUserAddress] = useState(null);
-  const [addressLoading, setAddressLoading] = useState(true);
+  const [userAddress, setUserAddress] = useState(location.state?.deliveryData || null);
+  const [addressLoading, setAddressLoading] = useState(!location.state?.deliveryData);
 
   const buyNowItem = location.state?.buyNowItem;
   const currentCart = buyNowItem ? [{ ...buyNowItem, productId: buyNowItem.id, quantity: 1 }] : cart;
@@ -36,7 +36,7 @@ function Payment() {
   }, [user, navigate]);
 
   const fetchAddress = async () => {
-    if (user) {
+    if (user && !userAddress) {
       setAddressLoading(true);
       try {
         const res = await axios.get('/api/user-auth/address');
@@ -54,7 +54,9 @@ function Payment() {
   };
 
   useEffect(() => {
-    fetchAddress();
+    if (!userAddress) {
+      fetchAddress();
+    }
   }, [user]);
 
   const subtotal = buyNowItem ? Number(buyNowItem.price || 0) : parseFloat(getCartTotal());
@@ -73,7 +75,17 @@ function Payment() {
         tax: tax,
         shipping: shipping,
         total: total,
-        identityFormId: location.state?.idData?.identityFormId || null
+        identityFormId: location.state?.idData?.identityFormId || null,
+        shippingAddress: {
+          fullName: userAddress.fullName,
+          phone: userAddress.mobile || userAddress.phone,
+          line1: userAddress.address || userAddress.line1,
+          line2: userAddress.line2 || '',
+          city: userAddress.city,
+          state: userAddress.state,
+          postalCode: userAddress.pincode || userAddress.postalCode,
+          country: userAddress.country || 'India'
+        }
       };
 
       const response = await axios.post('/api/payment/create-order', {
