@@ -80,6 +80,8 @@ export const StatsProvider = ({ children }) => {
     fetchStats();
     
     // Update stats every 30 seconds
+    //for new git 
+    
     const interval = setInterval(fetchStats, 30000);
     
     return () => clearInterval(interval);
