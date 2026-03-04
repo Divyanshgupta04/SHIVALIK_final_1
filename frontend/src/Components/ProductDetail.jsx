@@ -3,9 +3,11 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { ProductsData } from '../context/Context';
-import { FiShoppingCart, FiHeart, FiShare2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiShare2, FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
 import axios from 'axios';
 import config from '../config/api';
+import { useWishlist } from '../context/WishlistContext';
+import { toast } from 'react-hot-toast';
 
 function ProductDetail() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ function ProductDetail() {
   const location = useLocation();
   const { isDark } = useTheme();
   const { product: allProducts, addCart, HandleClickAdd } = useContext(ProductsData);
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +114,38 @@ function ProductDetail() {
     }
   };
 
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    toggleWishlist(product);
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    const shareData = {
+      title: product.title,
+      text: product.description,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!', {
+          icon: '🔗',
+          style: {
+            borderRadius: '12px',
+            background: '#333',
+            color: '#fff',
+          },
+        });
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -131,7 +166,8 @@ function ProductDetail() {
     );
   }
 
-  const isInCart = addCart?.some(item => item.id === product.id);
+  const isInCart = addCart?.some(item => String(item.id) === String(product.id) || String(item.productId) === String(product.id));
+  const isWishlisted = isInWishlist(product.id);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -263,15 +299,15 @@ function ProductDetail() {
                     : 'bg-violet-600 hover:bg-violet-700 text-white'
                     }`}
                 >
-                  <FiShoppingCart />
+                  {isInCart ? <FiCheck /> : <FiShoppingCart />}
                   {isInCart ? 'Already in Cart' : 'Add to Cart'}
                 </button>
               )}
 
               <button
                 onClick={() => {
-                  if (product.isInsurance && product.externalLink) {
-                    window.open(product.externalLink, '_blank');
+                  if (product.isInsurance) {
+                    navigate('/apply-review', { state: { buyNowItem: product } });
                   } else {
                     handleBuyNow();
                   }
@@ -285,14 +321,18 @@ function ProductDetail() {
               </button>
 
               <button
-                className={`p-4 rounded-lg border transition-all ${isDark
-                  ? 'border-gray-700 hover:border-violet-600 hover:bg-gray-900'
-                  : 'border-gray-300 hover:border-violet-600 hover:bg-gray-50'
+                onClick={handleWishlistToggle}
+                className={`p-4 rounded-lg border transition-all ${isWishlisted
+                  ? 'bg-rose-500/10 border-rose-500 text-rose-500'
+                  : isDark
+                    ? 'border-gray-700 hover:border-violet-600 hover:bg-gray-900'
+                    : 'border-gray-300 hover:border-violet-600 hover:bg-gray-50'
                   }`}
               >
-                <FiHeart className="text-xl" />
+                <FiHeart className={`text-xl ${isWishlisted ? 'fill-current' : ''}`} />
               </button>
               <button
+                onClick={handleShare}
                 className={`p-4 rounded-lg border transition-all ${isDark
                   ? 'border-gray-700 hover:border-violet-600 hover:bg-gray-900'
                   : 'border-gray-300 hover:border-violet-600 hover:bg-gray-50'

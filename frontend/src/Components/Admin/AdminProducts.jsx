@@ -101,6 +101,17 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
             </div>
           )}
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Other Charges (Replacement for GST)</label>
+            <input
+              type="number"
+              value={formData.otherCharges || 0}
+              onChange={e => handleChange('otherCharges', parseFloat(e.target.value) || 0)}
+              className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. 50"
+            />
+            <p className="mt-1 text-[10px] text-gray-500 italic">This will be added to the price instead of a % GST.</p>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
             <input type="url" value={formData.src} onChange={e => handleChange('src', e.target.value)} className="w-full p-2 border text-gray-900 border-gray-300 rounded focus:ring-2 focus:ring-blue-500" required />
           </div>
@@ -199,7 +210,7 @@ const ProductModal = ({ show, onClose, onSubmit, title, isEdit = false, formData
           </div>
         </form>
       </motion.div>
-    </div>
+    </div >
   )
 }
 
@@ -222,7 +233,8 @@ const AdminProducts = () => {
     subCategoryId: '',
     productType: 'none',
     isInsurance: false,
-    externalLink: ''
+    externalLink: '',
+    otherCharges: 0
   })
   const [categories, setCategories] = useState([])
   const [subcategories, setSubcategories] = useState([])
@@ -307,7 +319,8 @@ const AdminProducts = () => {
       subCategoryId: '',
       productType: 'none',
       isInsurance: false,
-      externalLink: ''
+      externalLink: '',
+      otherCharges: 0
     })
     setSubcategories([])
     // Fetch subcategories for default category if it exists
@@ -331,7 +344,8 @@ const AdminProducts = () => {
       subCategoryId: p.subCategoryId || '',
       productType: p.productType || 'none',
       isInsurance: !!p.isInsurance,
-      externalLink: p.externalLink || ''
+      externalLink: p.externalLink || '',
+      otherCharges: p.otherCharges || 0
     });
     // Fetch subcategories for the product's category
     if (p.categoryId) {

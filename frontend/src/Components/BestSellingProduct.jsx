@@ -37,8 +37,8 @@ function BestSellingProduct() {
   }, [activeCategory]);
 
   const handleBuyNow = (item) => {
-    if (item.isInsurance && item.externalLink) {
-      window.open(item.externalLink, '_blank');
+    if (item.isInsurance) {
+      navigate('/apply-review', { state: { buyNowItem: item } });
     } else {
       navigate('/checkout', { state: { buyNowItem: item } });
     }

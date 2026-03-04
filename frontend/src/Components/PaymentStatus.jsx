@@ -58,13 +58,23 @@ function PaymentStatus() {
                     setStatus('success');
                     setOrderId(response.data.orderId);
                     try { await clearCart(); } catch (e) { /* cart clear is best-effort */ }
-                    toast.success('Order placed successfully!');
 
-                    setTimeout(() => {
-                        navigate('/account', {
-                            state: { orderSuccess: true, orderId: response.data.orderId }
-                        });
-                    }, 5000);
+                    const isExternal = response.data.isExternalLinkOrder;
+                    const link = response.data.externalLink;
+
+                    if (isExternal && link) {
+                        toast.success('Payment verified! Redirecting to your service...', { duration: 6000 });
+                        setTimeout(() => {
+                            window.location.href = link; // Use same window for reliability
+                        }, 5000);
+                    } else {
+                        toast.success('Order placed successfully!');
+                        setTimeout(() => {
+                            navigate('/account', {
+                                state: { orderSuccess: true, orderId: response.data.orderId }
+                            });
+                        }, 5000);
+                    }
                 } else {
                     setStatus('failed');
                     toast.error('Payment verification failed');
@@ -150,14 +160,31 @@ function PaymentStatus() {
                         </div>
 
                         <div className="space-y-4">
-                            <button
-                                onClick={() => navigate('/account')}
-                                className="w-full py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-                            >
-                                Go to My Dashboard
-                                <FiArrowRight className="w-4 h-4" />
-                            </button>
-                            <p className="text-[10px] font-bold text-gray-500 animate-pulse">Redirecting in 5 seconds...</p>
+                            {status === 'success' && orderId && location.state?.isExternalLinkOrder ? (
+                                <button
+                                    onClick={() => {
+                                        const link = location.state?.externalLink;
+                                        if (link) window.location.href = link;
+                                        else navigate('/account');
+                                    }}
+                                    className="w-full py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                >
+                                    Go to Your Service
+                                    <FiArrowRight className="w-4 h-4" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => navigate('/account')}
+                                    className="w-full py-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                >
+                                    Go to My Dashboard
+                                    <FiArrowRight className="w-4 h-4" />
+                                </button>
+                            )}
+
+                            <p className="text-[10px] font-bold text-gray-500 animate-pulse">
+                                {location.state?.isExternalLinkOrder ? 'Redirecting to your service in 5 seconds...' : 'Redirecting in 5 seconds...'}
+                            </p>
                         </div>
                     </div>
                 )}

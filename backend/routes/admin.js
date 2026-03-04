@@ -13,7 +13,7 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, externalLink, otherCharges, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
@@ -47,7 +47,9 @@ router.post('/products', auth, async (req, res) => {
       originalPrice: Number(originalPrice) || 0,
       sellingPrice: Number(sellingPrice) || 0,
       discountPercent: Number(discountPercent) || 0,
-      isHeroFeatured: !!isHeroFeatured
+      isHeroFeatured: !!isHeroFeatured,
+      externalLink: externalLink || '',
+      otherCharges: Number(otherCharges) || 0
     });
 
     await product.save();
@@ -71,7 +73,7 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, externalLink, otherCharges, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
 
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
@@ -96,6 +98,8 @@ router.put('/products/:id', auth, async (req, res) => {
     if (typeof sellingPrice !== 'undefined') update.sellingPrice = Number(sellingPrice);
     if (typeof discountPercent !== 'undefined') update.discountPercent = Number(discountPercent);
     if (typeof isHeroFeatured !== 'undefined') update.isHeroFeatured = !!isHeroFeatured;
+    if (typeof externalLink !== 'undefined') update.externalLink = externalLink;
+    if (typeof otherCharges !== 'undefined') update.otherCharges = Number(otherCharges);
 
     const product = await Product.findOneAndUpdate(
       { id: req.params.id },

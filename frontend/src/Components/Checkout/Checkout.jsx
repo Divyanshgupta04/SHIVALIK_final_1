@@ -104,8 +104,8 @@ export default function Checkout() {
   }, [buyNowItem, getCartTotal]);
 
   const subtotal = currentTotal;
-  const tax = Number((subtotal * 0.18).toFixed(2));
-  const total = Number((subtotal + tax).toFixed(2));
+  const otherCharges = cart.reduce((sum, item) => sum + (Number(item.otherCharges || 0) * (item.quantity || 1)), 0);
+  const total = Number((subtotal + otherCharges).toFixed(2));
 
   const goBack = () => {
     if (step === 'id') navigate('/cart');
@@ -400,8 +400,8 @@ export default function Checkout() {
                   <span className="font-bold">₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-medium">
-                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>GST (18%)</span>
-                  <span className="font-bold">₹{tax.toFixed(2)}</span>
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Other Charges</span>
+                  <span className="font-bold">₹{otherCharges.toFixed(2)}</span>
                 </div>
                 {location.state?.discount > 0 && (
                   <div className="flex justify-between text-sm font-medium text-emerald-500">

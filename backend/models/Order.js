@@ -12,6 +12,9 @@ const OrderItemSchema = new mongoose.Schema({
   description: String,
   price: String,
   src: String,
+  externalLink: String, // for Apply Now products
+  isExternalLink: { type: Boolean, default: false },
+  otherCharges: { type: Number, default: 0 },
   quantity: {
     type: Number,
     required: true,
@@ -44,16 +47,21 @@ const OrderSchema = new mongoose.Schema({
   // Order items
   items: [OrderItemSchema],
 
-  // Shipping address
+  // Whether this order is an external-link (Apply Now) order
+  isExternalLinkOrder: { type: Boolean, default: false },
+  // The external URL the user is redirected to after payment
+  externalLink: { type: String },
+
+  // Shipping address (optional for external-link orders)
   shippingAddress: {
-    fullName: { type: String, required: true },
-    phone: { type: String, required: true },
-    line1: { type: String, required: true },
+    fullName: { type: String },
+    phone: { type: String },
+    line1: { type: String },
     line2: { type: String },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    postalCode: { type: String, required: true },
-    country: { type: String, required: true }
+    city: { type: String },
+    state: { type: String },
+    postalCode: { type: String },
+    country: { type: String }
   },
 
   // Payment information
@@ -96,6 +104,10 @@ const OrderSchema = new mongoose.Schema({
     default: 0
   },
   shipping: {
+    type: Number,
+    default: 0
+  },
+  otherCharges: {
     type: Number,
     default: 0
   },

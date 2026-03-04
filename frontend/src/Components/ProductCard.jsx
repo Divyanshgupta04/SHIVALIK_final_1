@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingCart, FiZap, FiInfo } from 'react-icons/fi';
+import { useWishlist } from '../context/WishlistContext';
 
 const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
     const navigate = useNavigate();
-    const [isWishlisted, setIsWishlisted] = useState(false);
+    const { toggleWishlist, isInWishlist } = useWishlist();
+
+    const isWishlisted = isInWishlist(item.id);
 
     // Animation variants
     const cardVariants = {
@@ -61,7 +64,7 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
                 <button
                     onClick={(e) => {
                         stopPropagation(e);
-                        setIsWishlisted(!isWishlisted);
+                        toggleWishlist(item);
                     }}
                     className="absolute top-3 right-3 z-10 p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
                 >

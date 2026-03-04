@@ -284,8 +284,8 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
                 <span>₹${order.subtotal || order.total}</span>
               </div>
               <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f3f4f6;">
-                <span style="color: #6b7280;">Tax:</span>
-                <span>₹0.00</span>
+                <span style="color: #6b7280;">Other Charges:</span>
+                <span>₹${order.otherCharges || 0}</span>
               </div>
               <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #2563eb; margin-top: 5px;">
                 <span style="font-weight: bold; color: #1f2937;">Total:</span>
@@ -293,6 +293,20 @@ const sendOrderConfirmationEmail = async (email, name, order) => {
               </div>
             </div>
           </div>
+
+          ${(order.isExternalLinkOrder && order.externalLink) ? `
+          <!-- Unlocked Link Section -->
+          <div style="background-color: #f0fdf4; border: 2px dashed #22c55e; border-radius: 12px; padding: 25px; margin-bottom: 40px; text-align: center;">
+            <h2 style="color: #166534; margin: 0 0 10px 0; font-size: 20px;">🔓 Access Your Service</h2>
+            <p style="color: #166534; margin: 0 0 20px 0; font-weight: bold;">This is ur unlocked link from shivalik servcide hub:</p>
+            <a href="${order.externalLink}" style="display: inline-block; background-color: #22c55e; color: white; text-decoration: none; padding: 12px 35px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+              Open Service Link
+            </a>
+            <p style="color: #166534; margin: 15px 0 0 0; font-size: 12px; font-style: italic;">
+              Note: Keep this link safe for future access.
+            </p>
+          </div>
+          ` : ''}
 
           <!-- Footer -->
           <div style="text-align: center; color: #9ca3af; font-size: 12px; padding-top: 20px; border-top: 1px solid #e5e7eb;">

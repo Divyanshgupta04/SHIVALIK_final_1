@@ -91,6 +91,12 @@ const ProductSchema = new mongoose.Schema({
     default: ''
   },
 
+  // Custom charges defined by admin, replaces GST
+  otherCharges: {
+    type: Number,
+    default: 0
+  },
+
   // Toggle for Hero section featured product
   isHeroFeatured: {
     type: Boolean,

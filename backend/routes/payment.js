@@ -36,15 +36,22 @@ router.post('/create-order', requireAuth, async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const isExternalLinkOrder = !!orderData.isExternalLinkOrder;
+        const externalLink = orderData.externalLink || '';
+
         // Use provided shipping address if available, otherwise fallback to user's saved address
-        const shippingAddress = orderData.shippingAddress || user.address;
+        const shippingAddress = orderData.shippingAddress || user.address || {};
 
-        // Sanitize phone number (Instamojo expects 10 digits, no leading zero or +91)
-        let phone = shippingAddress?.phone || '';
-        // Remove all non-digit characters
-        phone = phone.replace(/\D/g, '');
+        // Sanitize phone number (Instamojo expects exactly 10 digits)
+        let phone = '';
 
-        // Remove leading 91 if it's 12 digits
+        // Priority: 1. shippingAddress.phone, 2. user.phone, 3. Placeholder (only if digital service)
+        phone = shippingAddress?.phone || shippingAddress?.mobile || user.phone || '';
+
+        // Clean the number
+        phone = phone.toString().replace(/\D/g, '');
+
+        // Remove leading 91
         if (phone.length === 12 && phone.startsWith('91')) {
             phone = phone.substring(2);
         }
@@ -54,17 +61,22 @@ router.post('/create-order', requireAuth, async (req, res) => {
             phone = phone.substring(1);
         }
 
-        // If it's still more than 10 digits, take the last 10
+        // Take last 10 digits if longer
         if (phone.length > 10) {
             phone = phone.slice(-10);
         }
 
-        // Final validation: must be exactly 10 digits
+        // Final validation
         if (phone.length !== 10) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a valid 10-digit mobile number in your shipping address. (Current cleaned number: " + phone + ")"
-            });
+            // If it's a standard order, we MUST have a valid phone
+            if (!isExternalLinkOrder) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please provide a valid 10-digit mobile number in your shipping address."
+                });
+            }
+            // fallback for external link if the cleaning failed
+            phone = '9999999999';
         }
 
         const webhookUrl = process.env.API_URL || 'http://localhost:5000';
@@ -92,8 +104,18 @@ router.post('/create-order', requireAuth, async (req, res) => {
                 userEmail: user.email,
                 userName: user.name,
                 items: orderData.items,
-                shippingAddress: shippingAddress,
+                shippingAddress: isExternalLinkOrder ? {
+                    fullName: user.name,
+                    phone: phone,
+                    line1: 'External Link Service',
+                    city: 'Online',
+                    state: 'Digital',
+                    postalCode: '000000',
+                    country: 'India'
+                } : shippingAddress,
                 identityFormId: orderData.identityFormId,
+                isExternalLinkOrder: isExternalLinkOrder,
+                externalLink: externalLink,
                 payment: {
                     payment_request_id: response.payment_request.id,
                     amount: amount,
@@ -101,7 +123,8 @@ router.post('/create-order', requireAuth, async (req, res) => {
                     payment_status: 'Pending'
                 },
                 subtotal: orderData.subtotal,
-                tax: orderData.tax || 0,
+                otherCharges: Number(orderData.otherCharges) || 0,
+                tax: 0,
                 shipping: orderData.shipping || 0,
                 total: orderData.total,
                 status: 'pending'
@@ -182,7 +205,12 @@ router.get('/verify-status', requireAuth, async (req, res) => {
                     console.error('Email error:', e);
                 }
 
-                return res.status(200).json({ success: true, orderId: order._id });
+                return res.status(200).json({
+                    success: true,
+                    orderId: order._id,
+                    isExternalLinkOrder: order.isExternalLinkOrder,
+                    externalLink: order.externalLink
+                });
             }
         }
 

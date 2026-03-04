@@ -165,6 +165,8 @@ export function Context({ children }) {
         // Store as a slug so routing and filtering work (e.g. "Aadhaar Services" -> "aadhaar-services").
         category: slugifyName(category?.name || ''),
         productType: p.productType || '',
+        isInsurance: !!p.isInsurance,
+        externalLink: p.externalLink || '',
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       };

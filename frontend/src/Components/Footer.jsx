@@ -74,19 +74,30 @@ function Footer() {
               className="flex items-center gap-2"
               whileHover={{ x: 6 }}
             >
-              <MdOutlinePhone className="text-[#008585] text-lg" /> 7889588384
+              <a href="tel:+917889588384" className="flex items-center gap-2 hover:underline">
+                <MdOutlinePhone className="text-[#008585] text-lg" /> 7889588384
+              </a>
             </motion.li>
             <motion.li
               className="flex items-center gap-2"
               whileHover={{ x: 6 }}
             >
-              <FaWhatsapp className="text-green-500 text-lg" /> 7889588384
+              <a
+                href="https://wa.me/917889588384?text=Hello%20Shivalik%20Service%20Hub!%20I%20have%20a%20query%20regarding%20your%20services."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:underline"
+              >
+                <FaWhatsapp className="text-green-500 text-lg" /> 7889588384
+              </a>
             </motion.li>
             <motion.li
               className="flex items-center gap-2"
               whileHover={{ x: 6 }}
             >
-              <MdOutlineMail className="text-violet-400 text-lg" /> sshubjk@gmail.com
+              <a href="mailto:sshubjk@gmail.com" className="flex items-center gap-2 hover:underline">
+                <MdOutlineMail className="text-violet-400 text-lg" /> sshubjk@gmail.com
+              </a>
             </motion.li>
             <motion.li
               className="flex items-start gap-2"
@@ -137,6 +148,17 @@ function Footer() {
               >
                 <IoLogoInstagram className="text-pink-500" /> Instagram
               </Link>
+            </motion.div>
+            <motion.div whileHover={{ x: 6 }}>
+              <a
+                href="https://wa.me/917889588384?text=Hello%20Shivalik%20Service%20Hub!%20I%20have%20a%20query%20regarding%20your%20services."
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-2 transition ${isDark ? 'hover:text-white' : 'hover:text-gray-900'
+                  }`}
+              >
+                <FaWhatsapp className="text-green-500" /> WhatsApp
+              </a>
             </motion.div>
           </div>
         </motion.div>

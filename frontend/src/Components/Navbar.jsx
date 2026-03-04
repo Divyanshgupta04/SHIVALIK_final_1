@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { ProductsData } from "../context/Context";
-import { FiShoppingBag, FiUser, FiSun, FiMoon } from "react-icons/fi";
+import { FiShoppingBag, FiUser, FiSun, FiMoon, FiHeart } from "react-icons/fi";
+import { useWishlist } from "../context/WishlistContext";
 import { IoIosSearch } from "react-icons/io";
 import { MdMenu } from "react-icons/md";
 
@@ -378,6 +379,8 @@ function Navbar() {
     overlayVariants
   } = useContext(ProductsData);
 
+  const { wishlistCount } = useWishlist();
+
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -491,6 +494,16 @@ function Navbar() {
               )}
             </Link>
 
+            {/* Wishlist Link */}
+            <Link to="/wishlist" className="relative p-2.5 rounded-full transition-colors group">
+              <FiHeart className={isScrolled || isDark ? "text-gray-400 group-hover:text-violet-500" : "text-gray-500 group-hover:text-violet-500"} size={20} />
+              {wishlistCount > 0 && (
+                <span className="absolute top-2 right-2 h-4 w-4 bg-rose-600 text-[10px] font-black text-white rounded-full flex items-center justify-center border-2 border-white/10">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef}>
               <button
@@ -523,16 +536,6 @@ function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* CTA: Get a Quote */}
-            <Link
-              to="/contact"
-              className={`hidden md:flex min-w-[130px] px-7 py-3 rounded-full font-black text-[10px] uppercase tracking-[0.15em] items-center justify-center transition-all duration-500 shadow-xl ${isScrolled
-                ? "bg-violet-600 text-white hover:bg-violet-700 hover:-translate-y-1 shadow-violet-600/20"
-                : "bg-violet-600 text-white hover:bg-violet-700 shadow-violet-600/20"
-                }`}
-            >
-              Get a quote
-            </Link>
 
             {/* Mobile Menu */}
             <button

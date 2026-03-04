@@ -26,8 +26,8 @@ function HomePage() {
 
   const handleBuyNow = () => {
     if (!heroProduct) return;
-    if (heroProduct.isInsurance && heroProduct.externalLink) {
-      window.open(heroProduct.externalLink, '_blank');
+    if (heroProduct.isInsurance) {
+      navigate('/apply-review', { state: { buyNowItem: heroProduct } });
     } else {
       navigate('/checkout', { state: { buyNowItem: heroProduct } });
     }

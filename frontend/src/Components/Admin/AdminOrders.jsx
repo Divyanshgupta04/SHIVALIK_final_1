@@ -183,8 +183,8 @@ const AdminOrders = () => {
               <span>₹${subtotal.toFixed(2)}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-              <span style="color: #64748b;">Tax (0%):</span>
-              <span>₹0.00</span>
+              <span style="color: #64748b;">Other Charges:</span>
+              <span>₹${(order.otherCharges || 0).toFixed(2)}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #2563eb; margin-top: 5px;">
               <span style="font-weight: bold;">Total:</span>
@@ -366,8 +366,8 @@ const AdminOrders = () => {
           <td>₹${order.subtotal}</td>
         </tr>
         <tr class="total-row">
-          <td colspan="3">Tax (GST)</td>
-          <td>₹${order.tax}</td>
+          <td colspan="3">Other Charges</td>
+          <td>₹${order.otherCharges || 0}</td>
         </tr>
         <tr class="total-row">
           <td colspan="3">Shipping</td>
@@ -629,7 +629,7 @@ const AdminOrders = () => {
                   </table>
                   <div className="px-4 py-3 bg-gray-50 text-right">
                     <div className="text-sm text-gray-700">Subtotal: ₹{selectedOrder.subtotal}</div>
-                    <div className="text-sm text-gray-700">Tax: ₹{selectedOrder.tax}</div>
+                    <div className="text-sm text-gray-700">Other Charges: ₹{selectedOrder.otherCharges || 0}</div>
                     <div className="text-sm text-gray-700">Shipping: ₹{selectedOrder.shipping}</div>
                     <div className="text-lg font-bold mt-1 text-gray-900">Total: ₹{selectedOrder.total}</div>
                   </div>

@@ -23,8 +23,8 @@ function Cart() {
 
   const subtotalNum = Number(getCartTotal());
   const deliveryFee = 0; // Free
-  const tax = Number((subtotalNum * 0.18).toFixed(2));
-  const total = (subtotalNum + deliveryFee + tax).toFixed(2);
+  const otherCharges = cart.reduce((sum, item) => sum + (Number(item.otherCharges || 0) * (item.quantity || 1)), 0);
+  const total = (subtotalNum + deliveryFee + otherCharges).toFixed(2);
 
   const inc = (item) => updateCartItem(item.productId, (item.quantity || 1) + 1);
   const dec = (item) => updateCartItem(item.productId, Math.max(1, (item.quantity || 1) - 1));
@@ -144,8 +144,8 @@ function Cart() {
                       variants={itemVariants}
                       layout
                       className={`group relative rounded-[2.5rem] border p-6 md:p-8 transition-all duration-700 ${isDark
-                          ? 'bg-[#15151e] border-white/5 hover:bg-[#1a1a28] hover:shadow-2xl hover:shadow-purple-900/20'
-                          : 'bg-white border-gray-100 hover:shadow-2xl hover:shadow-gray-200/50'
+                        ? 'bg-[#15151e] border-white/5 hover:bg-[#1a1a28] hover:shadow-2xl hover:shadow-purple-900/20'
+                        : 'bg-white border-gray-100 hover:shadow-2xl hover:shadow-gray-200/50'
                         }`}
                     >
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-8">
@@ -259,8 +259,8 @@ function Cart() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className={`rounded-[3rem] border p-10 relative overflow-hidden transition-all duration-500 ${isDark
-                  ? 'bg-[#15151e] border-white/5 shadow-2xl shadow-black/80'
-                  : 'bg-white border-gray-100 shadow-2xl shadow-gray-200/50'
+                ? 'bg-[#15151e] border-white/5 shadow-2xl shadow-black/80'
+                : 'bg-white border-gray-100 shadow-2xl shadow-gray-200/50'
                 }`}
             >
               {/* Dynamic Gradient Background Glow */}
@@ -302,9 +302,9 @@ function Cart() {
                         }`}>
                         <FiShield className="w-4 h-4 text-gray-500" />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Tax (18%)</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Other Charges</span>
                     </div>
-                    <span className="font-black text-lg tabular-nums opacity-60">{formatINR(tax)}</span>
+                    <span className="font-black text-lg tabular-nums opacity-60">{formatINR(otherCharges)}</span>
                   </div>
                 </div>
 
@@ -324,8 +324,8 @@ function Cart() {
                     disabled={cart.length === 0}
                     onClick={() => navigate('/checkout')}
                     className={`group w-full py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all relative overflow-hidden disabled:opacity-30 disabled:cursor-not-allowed shadow-2xl ${isDark
-                        ? 'bg-white text-black hover:shadow-white/10'
-                        : 'bg-gray-900 text-white hover:bg-black hover:shadow-black/20'
+                      ? 'bg-white text-black hover:shadow-white/10'
+                      : 'bg-gray-900 text-white hover:bg-black hover:shadow-black/20'
                       }`}
                   >
                     <span>Finalize Order</span>

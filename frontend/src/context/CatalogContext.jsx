@@ -100,6 +100,8 @@ export function CatalogProvider({ children }) {
               subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
               productType: p.productType || 'both',
               imageDataUrl: p.src || '',
+              isInsurance: !!p.isInsurance,
+              externalLink: p.externalLink || '',
               createdAt: p.createdAt,
             })),
         );

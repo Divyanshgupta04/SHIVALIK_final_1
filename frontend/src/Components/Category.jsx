@@ -176,8 +176,8 @@ export default function Category() {
   }, [selectedSubCategoryId, subCategoriesForCatalogCategory]);
 
   const handleBuyNow = (p) => {
-    if (p.isInsurance && p.externalLink) {
-      window.open(p.externalLink, '_blank');
+    if (p.isInsurance) {
+      navigate('/apply-review', { state: { buyNowItem: p } });
     } else {
       navigate('/checkout', { state: { buyNowItem: p } });
     }

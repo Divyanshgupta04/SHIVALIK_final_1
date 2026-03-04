@@ -19,6 +19,7 @@ function Payment() {
   const [addressLoading, setAddressLoading] = useState(!location.state?.deliveryData);
 
   const buyNowItem = location.state?.buyNowItem;
+  const isExternalLinkOrder = !!location.state?.isExternalLinkOrder;
   const currentCart = buyNowItem ? [{ ...buyNowItem, productId: buyNowItem.id, quantity: 1 }] : cart;
 
   useEffect(() => {
@@ -60,32 +61,46 @@ function Payment() {
   }, [user]);
 
   const subtotal = buyNowItem ? Number(buyNowItem.price || 0) : parseFloat(getCartTotal());
-  const tax = subtotal * 0.18;
+  const otherCharges = currentCart.reduce((sum, item) => sum + (Number(item.otherCharges || 0) * (item.quantity || 1)), 0);
   const shipping = 0;
-  const total = subtotal + tax + shipping;
+  const total = subtotal + otherCharges + shipping;
+  const tax = 0; // Set to 0 as it's replaced by otherCharges
 
   const handlePayment = async () => {
-    if (!userAddress) return toast.error('Please add shipping address');
+    if (!isExternalLinkOrder && !userAddress) return toast.error('Please add shipping address');
     setLoading(true);
 
     try {
+      const shippingAddress = isExternalLinkOrder ? {
+        fullName: location.state?.deliveryData?.fullName || 'Digital Service',
+        phone: location.state?.deliveryData?.mobile || location.state?.deliveryData?.phone || '0000000000',
+        line1: location.state?.deliveryData?.address || 'External Link Service',
+        city: location.state?.deliveryData?.city || 'Online',
+        state: location.state?.deliveryData?.state || 'Digital',
+        postalCode: location.state?.deliveryData?.pincode || '000000',
+        country: 'India'
+      } : {
+        fullName: userAddress.fullName,
+        phone: userAddress.mobile || userAddress.phone,
+        line1: userAddress.address || userAddress.line1,
+        line2: userAddress.line2 || '',
+        city: userAddress.city,
+        state: userAddress.state,
+        postalCode: userAddress.pincode || userAddress.postalCode,
+        country: userAddress.country || 'India'
+      };
+
       const orderData = {
         items: currentCart,
         subtotal: subtotal,
-        tax: tax,
+        otherCharges: otherCharges,
+        tax: 0,
         shipping: shipping,
         total: total,
         identityFormId: location.state?.idData?.identityFormId || null,
-        shippingAddress: {
-          fullName: userAddress.fullName,
-          phone: userAddress.mobile || userAddress.phone,
-          line1: userAddress.address || userAddress.line1,
-          line2: userAddress.line2 || '',
-          city: userAddress.city,
-          state: userAddress.state,
-          postalCode: userAddress.pincode || userAddress.postalCode,
-          country: userAddress.country || 'India'
-        }
+        isExternalLinkOrder: isExternalLinkOrder,
+        externalLink: isExternalLinkOrder ? (buyNowItem?.externalLink || '') : '',
+        shippingAddress: shippingAddress
       };
 
       const response = await axios.post('/api/payment/create-order', {
@@ -179,7 +194,14 @@ function Payment() {
                 </button>
               </div>
 
-              {addressLoading ? (
+              {isExternalLinkOrder ? (
+                <div className={`p-6 rounded-2xl flex items-center gap-4 ${isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'}`}>
+                  <FiShield className="w-5 h-5 text-blue-500" />
+                  <p className="text-sm font-bold text-blue-500">
+                    Digital Service: No shipping address required.
+                  </p>
+                </div>
+              ) : addressLoading ? (
                 <div className="space-y-3 animate-pulse">
                   <div className="h-4 w-1/3 bg-gray-200 dark:bg-white/10 rounded" />
                   <div className="h-3 w-1/2 bg-gray-200 dark:bg-white/10 rounded" />
@@ -233,8 +255,8 @@ function Payment() {
                   <span className="font-bold">₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs font-medium">
-                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Tax (GST 18%)</span>
-                  <span className="font-bold">₹{tax.toFixed(2)}</span>
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Other Charges</span>
+                  <span className="font-bold">₹{otherCharges.toFixed(2)}</span>
                 </div>
                 <div className={`pt-4 mt-2 flex justify-between items-end border-t border-dashed ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                   <div>
@@ -246,7 +268,7 @@ function Payment() {
 
               <button
                 onClick={handlePayment}
-                disabled={loading || !userAddress || addressLoading}
+                disabled={loading || (!isExternalLinkOrder && (!userAddress || addressLoading))}
                 className={`w-full py-5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black uppercase tracking-widest text-sm shadow-2xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mt-8 disabled:opacity-50 disabled:grayscale disabled:hover:scale-100`}
               >
                 {loading ? (
