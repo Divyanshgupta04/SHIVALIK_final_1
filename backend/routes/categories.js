@@ -116,14 +116,14 @@ router.delete('/:slug', auth, async (req, res) => {
 router.post('/seed', auth, async (req, res) => {
   try {
     const defaultCategories = [
-      { name: 'Partner Program', slug: 'partner', imageUrl: '/src/assets/Partner.jpg' },
-      { name: 'Pan Card', slug: 'pan', imageUrl: '/src/assets/Pan.jpg' },
-      { name: 'Insurance', slug: 'insurance', imageUrl: '/src/assets/Insurance.jpg' },
-      { name: 'Service', slug: 'service', imageUrl: '/src/assets/service.jpg' },
-      { name: 'Tax', slug: 'tax', imageUrl: '/src/assets/tax.jpg' },
-      { name: 'Land Record', slug: 'land-record', imageUrl: '/src/assets/land.jpg' },
-      { name: 'Certificate', slug: 'certificate', imageUrl: '/src/assets/Car.jpg' },
-      { name: 'Library Section', slug: 'library', imageUrl: '/src/assets/li.jpg' }
+      { name: 'Partner Program', slug: 'partner', imageUrl: '/Partner.jpg' },
+      { name: 'Pan Card', slug: 'pan', imageUrl: '/Pan.jpg' },
+      { name: 'Insurance', slug: 'insurance', imageUrl: '/Insurance.jpg' },
+      { name: 'Service', slug: 'service', imageUrl: '/service.jpg' },
+      { name: 'Tax', slug: 'tax', imageUrl: '/tax.jpg' },
+      { name: 'Land Record', slug: 'land-record', imageUrl: '/land.jpg' },
+      { name: 'Certificate', slug: 'certificate', imageUrl: '/Car.jpg' },
+      { name: 'Library Section', slug: 'library', imageUrl: '/li.jpg' }
     ];
 
     const results = [];
