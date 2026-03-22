@@ -13,7 +13,7 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.post('/products', auth, async (req, res) => {
   try {
-    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, externalLink, otherCharges, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
+    const { id, title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, externalLink, otherCharges, originalPrice, sellingPrice, discountPercent, isHeroFeatured, homePageOrder } = req.body;
 
     // Check if product with same ID already exists
     const existingProduct = await Product.findOne({ id });
@@ -48,6 +48,7 @@ router.post('/products', auth, async (req, res) => {
       sellingPrice: Number(sellingPrice) || 0,
       discountPercent: Number(discountPercent) || 0,
       isHeroFeatured: !!isHeroFeatured,
+      homePageOrder: Number(homePageOrder) || 0,
       externalLink: externalLink || '',
       otherCharges: Number(otherCharges) || 0
     });
@@ -73,7 +74,7 @@ router.post('/products', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.put('/products/:id', auth, async (req, res) => {
   try {
-    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, externalLink, otherCharges, originalPrice, sellingPrice, discountPercent, isHeroFeatured } = req.body;
+    const { title, description, price, src, category, categoryId, subCategoryId, productType, images, hasForm, isInsurance, externalLink, otherCharges, originalPrice, sellingPrice, discountPercent, isHeroFeatured, homePageOrder } = req.body;
 
     const update = { title, description, price, src };
     if (typeof category !== 'undefined') update.category = category;
@@ -98,6 +99,7 @@ router.put('/products/:id', auth, async (req, res) => {
     if (typeof sellingPrice !== 'undefined') update.sellingPrice = Number(sellingPrice);
     if (typeof discountPercent !== 'undefined') update.discountPercent = Number(discountPercent);
     if (typeof isHeroFeatured !== 'undefined') update.isHeroFeatured = !!isHeroFeatured;
+    if (typeof homePageOrder !== 'undefined') update.homePageOrder = Number(homePageOrder);
     if (typeof externalLink !== 'undefined') update.externalLink = externalLink;
     if (typeof otherCharges !== 'undefined') update.otherCharges = Number(otherCharges);
 
@@ -562,6 +564,37 @@ router.post('/hero-product/set', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Set hero product error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/admin/home-products/set
+// @desc    Set products for home page with specific order
+// @access  Private (Admin only)
+router.post('/home-products/set', auth, async (req, res) => {
+  try {
+    const { productIds } = req.body; // Array of product IDs in order
+
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ message: 'Product IDs must be an array' });
+    }
+
+    // Reset all homePageOrder to 0
+    await Product.updateMany({}, { homePageOrder: 0 });
+
+    // Update orders for selected products (limit to 14)
+    const updates = productIds.slice(0, 14).map((id, index) => {
+      return Product.findOneAndUpdate({ id }, { homePageOrder: index + 1 });
+    });
+
+    await Promise.all(updates);
+
+    res.json({
+      success: true,
+      message: 'Home page products updated successfully'
+    });
+  } catch (error) {
+    console.error('Set home products error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

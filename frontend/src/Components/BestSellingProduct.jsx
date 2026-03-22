@@ -57,93 +57,30 @@ function BestSellingProduct() {
   }, [subCategories, currentCategory]);
 
   const filteredProducts = useMemo(() => {
-    let result = activeCategory === 'all' ? [...product] : product.filter(p => {
-      // Prioritize explicit category slug/ID match
-      const categoryMatch = p.category === activeCategory || p.categoryId === activeCategory;
-      if (!categoryMatch) {
-        // Fallback: Check if the category name matches (slugified)
-        const pCat = p.category?.toLowerCase() || '';
-        if (pCat !== activeCategory.toLowerCase()) {
-          // Deep search as last resort
-          const title = p.title?.toLowerCase() || '';
-          const desc = p.description?.toLowerCase() || '';
-          if (!`${title} ${desc}`.includes(activeCategory.toLowerCase())) return false;
-        }
-      }
-
-      // If a subcategory is active, filter by it too
-      if (activeSubCategory) {
-        return p.subCategoryId === activeSubCategory.id;
-      }
-
-      return true;
-    });
-
-    // Sort by createdAt (newest first)
-    return result.sort((a, b) => {
-      const dateA = new Date(a.createdAt || 0);
-      const dateB = new Date(b.createdAt || 0);
-      return dateB - dateA;
-    });
-  }, [product, activeCategory, activeSubCategory]);
-
-  const displayedProducts = isMobile ? filteredProducts.slice(0, visibleCount) : filteredProducts;
-  const hasMore = isMobile && visibleCount < filteredProducts.length;
-
-  // Decide what to show: Subcategories or Products
-  const showSubCategories = activeCategory !== 'all' && relevantSubCategories.length > 0 && !activeSubCategory;
+    // Show ONLY products selected by admin for home page
+    return product
+      .filter(p => p.homePageOrder > 0)
+      .sort((a, b) => a.homePageOrder - b.homePageOrder);
+  }, [product]);
 
   return (
-    <div id="marketplace" className="flex flex-col mb-16">
-      <CategoryFilters
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        isDark={isDark}
-        categories={categories}
-      />
+    <div id="marketplace" className="flex flex-col mb-16 px-4 sm:px-8">
+      {/* Section Header */}
+      <motion.div 
+        className="container mx-auto mb-10 text-center sm:text-left"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+      >
+        <span className="text-violet-500 font-bold tracking-widest uppercase text-xs mb-2 block">Our Top Picks</span>
+        <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Best Selling <span className="text-violet-600">Products</span>
+        </h2>
+      </motion.div>
 
-      <div className="container mx-auto px-4">
-        {activeCategory !== 'all' && (
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-4 mb-8"
-          >
-            <button
-              onClick={() => {
-                if (activeSubCategory) setActiveSubCategory(null);
-                else setActiveCategory('all');
-              }}
-              className={`flex items-center gap-2 text-sm font-bold transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
-            >
-              <FiArrowLeft className="w-4 h-4" />
-              {activeSubCategory ? `Back to ${currentCategory?.name}` : 'Back to All Categories'}
-            </button>
-            {activeSubCategory && (
-              <span className={`text-sm font-medium ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>/ {activeSubCategory.name}</span>
-            )}
-          </motion.div>
-        )}
-
+      <div className="container mx-auto">
         <AnimatePresence mode="wait">
-          {showSubCategories ? (
-            <motion.div
-              key="subcategories"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {relevantSubCategories.map(sc => (
-                <SubCategoryCard
-                  key={sc.id}
-                  subCategory={sc}
-                  isDark={isDark}
-                  onClick={() => setActiveSubCategory(sc)}
-                />
-              ))}
-            </motion.div>
-          ) : loading ? (
+          {loading ? (
             <motion.div
               key="loading"
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
@@ -156,7 +93,7 @@ function BestSellingProduct() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
             >
               <AnimatePresence mode="popLayout">
-                {displayedProducts.map((item, index) => (
+                {filteredProducts.map((item, index) => (
                   <ProductCard
                     key={item.id}
                     item={item}
@@ -171,32 +108,37 @@ function BestSellingProduct() {
           )}
         </AnimatePresence>
 
-        {!showSubCategories && hasMore && (
+        {filteredProducts.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-12 flex justify-center"
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-16 flex justify-center"
           >
             <button
-              onClick={() => setVisibleCount(prev => prev + 10)}
-              className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl ${isDark
-                ? 'bg-white text-black hover:bg-gray-200 shadow-white/5'
-                : 'bg-black text-white hover:bg-gray-800 shadow-black/10'
+              onClick={() => navigate('/products')}
+              className={`group relative flex items-center gap-3 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-2xl hover:scale-105 active:scale-95 ${isDark
+                ? 'bg-white text-black hover:bg-gray-100 shadow-white/10'
+                : 'bg-black text-white hover:bg-gray-800 shadow-black/20'
                 }`}
             >
-              See More Products
-              <FiPlus className="w-4 h-4" />
+              <span>Explore All Products</span>
+              <div className="w-5 h-5 rounded-full bg-violet-600 text-white flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </button>
           </motion.div>
         )}
 
-        {displayedProducts.length === 0 && !showSubCategories && !loading && (
+        {filteredProducts.length === 0 && !loading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={`py-20 text-center text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
           >
-            No products found in this section.
+            No products selected for the home page.
           </motion.div>
         )}
       </div>

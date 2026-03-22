@@ -44,6 +44,7 @@ export function CatalogProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // One-time load (local cache) + refresh from DB
   useEffect(() => {
@@ -57,6 +58,7 @@ export function CatalogProvider({ children }) {
     // Fetch latest from DB so storefront always shows newly added admin catalog data.
     // If API is unavailable, cached localStorage data still works.
     (async () => {
+      setLoading(true);
       try {
         const [catRes, subRes, prodRes] = await Promise.all([
           axios.get(`${config.apiUrl}/api/categories`),
@@ -102,11 +104,14 @@ export function CatalogProvider({ children }) {
               imageDataUrl: p.src || '',
               isInsurance: !!p.isInsurance,
               externalLink: p.externalLink || '',
+              homePageOrder: p.homePageOrder || 0,
               createdAt: p.createdAt,
             })),
         );
       } catch {
         // ignore (offline / backend not running)
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
@@ -133,6 +138,7 @@ export function CatalogProvider({ children }) {
     categories,
     subCategories,
     products,
+    loading,
 
     // maps (handy for rendering)
     categoriesById,

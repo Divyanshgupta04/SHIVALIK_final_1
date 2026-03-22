@@ -7,9 +7,13 @@ import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./ProductCardSkeleton";
 
 function Products() {
-  const { product, HandleClickAdd, loading } = useContext(ProductsData)
+  const { product, HandleClickAdd, loading, fetchAllProducts } = useContext(ProductsData)
   const { isDark } = useTheme()
   const navigate = useNavigate()
+
+  React.useEffect(() => {
+    fetchAllProducts({ limit: 100 });
+  }, []);
 
   const handleBuyNow = (item) => {
     if (item.isInsurance) {

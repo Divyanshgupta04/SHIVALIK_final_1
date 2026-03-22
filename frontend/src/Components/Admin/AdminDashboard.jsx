@@ -470,6 +470,9 @@ const AdminDashboard = () => {
                 <a href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiUsers /> <span>Users</span>
                 </a>
+                <a href="/admin/home-products" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
+                  <FiStar className="text-amber-500" /> <span>Home Products</span>
+                </a>
                 <a href="/admin/announcements" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700">
                   <FiMessageSquare /> <span>Announcements</span>
                 </a>

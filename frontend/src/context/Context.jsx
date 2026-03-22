@@ -56,16 +56,46 @@ export function Context({ children }) {
     isDesktop ? ["0vw", "0vw"] : ["-5vw", "-5vw"]
   );
 
-  // Fetch products from API
+  // Fetch products for home page ONLY (fast)
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/products`);
+      setLoading(true);
+      const response = await axios.get(`${config.apiUrl}/api/products/home/list`);
       if (response.data.success) {
         setProduct(response.data.products);
       }
     } catch (error) {
-      console.log('Failed to fetch products from API, using fallback data');
-      // Fallback products are already set in initial state
+      console.log('Failed to fetch home products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch ALL products (for products page or admin)
+  const fetchAllProducts = async (params = {}) => {
+    try {
+      setLoading(true);
+      const { limit = 100, page = 1, categoryId, subCategoryId } = params;
+      let url = `${config.apiUrl}/api/products?limit=${limit}&page=${page}`;
+      if (categoryId) url += `&categoryId=${categoryId}`;
+      if (subCategoryId) url += `&subCategoryId=${subCategoryId}`;
+
+      const response = await axios.get(url);
+      if (response.data.success) {
+        // Merge with existing products to avoid losing home products
+        setProduct(prev => {
+          const map = new Map();
+          // Add existing ones first
+          prev.forEach(p => map.set(String(p.id), p));
+          // Overwrite/Add new ones
+          response.data.products.forEach(p => map.set(String(p.id), p));
+          return Array.from(map.values());
+        });
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Failed to fetch all products:', error);
+      toast.error('Failed to load products');
     } finally {
       setLoading(false);
     }
@@ -167,6 +197,7 @@ export function Context({ children }) {
         productType: p.productType || '',
         isInsurance: !!p.isInsurance,
         externalLink: p.externalLink || '',
+        homePageOrder: p.homePageOrder || 0,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       };
@@ -217,6 +248,7 @@ export function Context({ children }) {
     loading,
     socket,
     fetchProducts,
+    fetchAllProducts,
     user, // Add user to context
   };
 

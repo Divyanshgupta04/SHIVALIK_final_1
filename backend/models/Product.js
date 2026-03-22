@@ -101,9 +101,20 @@ const ProductSchema = new mongoose.Schema({
   isHeroFeatured: {
     type: Boolean,
     default: false
+  },
+
+  // Order for home page products (1-14, 0 means not featured)
+  homePageOrder: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true
 });
+
+// Optimization Indexes
+ProductSchema.index({ homePageOrder: 1 });
+ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ subCategoryId: 1 });
 
 module.exports = mongoose.model('Product', ProductSchema);

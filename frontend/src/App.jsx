@@ -23,9 +23,11 @@ import AdminDashboard from './Components/Admin/AdminDashboard';
 import AdminProducts from './Components/Admin/AdminProducts';
 import AdminUsers from './Components/Admin/AdminUsers';
 import AdminOrders from './Components/Admin/AdminOrders';
+import AdminHomeProducts from './Components/Admin/AdminHomeProducts';
 import PaymentStatus from './Components/PaymentStatus';
 
 import AdminCatalog from './Components/Admin/Catalog/AdminCatalog';
+import BrowseCategories from './Components/BrowseCategories';
 import AdminAnnouncements from './Components/Admin/AdminAnnouncements';
 import AdminHeroManager from './Components/Admin/AdminHeroManager';
 
@@ -87,6 +89,7 @@ function App() {
               <Route path="/admin/catalog" element={<AdminCatalog />} />
 
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/home-products" element={<AdminHomeProducts />} />
               <Route path="/admin/orders" element={<AdminOrders />} />
               <Route path="/admin/announcements" element={<AdminAnnouncements />} />
               <Route path="/admin/hero" element={<AdminHeroManager />} />
@@ -119,6 +122,7 @@ function App() {
                         element={
                           <>
                             <HomePage />
+                            <BrowseCategories />
                             <BestSellingProduct />
                             <Show />
                             {/* <Card/> */}

@@ -9,16 +9,20 @@ function HomePage() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const [heroProduct, setHeroProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchHeroProduct = async () => {
       try {
+        setIsLoading(true);
         const res = await axios.get(`${config.apiUrl}/api/products/hero/featured`);
         if (res.data.success) {
           setHeroProduct(res.data.product);
         }
       } catch (err) {
         console.error("Hero product fetch error:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchHeroProduct();
@@ -46,17 +50,21 @@ function HomePage() {
           className="flex flex-col items-start text-left"
         >
           {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className={`mb-6 px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase border ${isDark
-              ? 'bg-white/5 border-white/10 text-gray-400'
-              : 'bg-black/5 border-black/10 text-gray-500'
-              }`}
-          >
-            THE FUTURE OF SHOPPING IS HERE
-          </motion.div>
+          {isLoading ? (
+            <div className={`mb-6 w-48 h-6 rounded-full animate-pulse ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className={`mb-6 px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase border ${isDark
+                ? 'bg-white/5 border-white/10 text-gray-400'
+                : 'bg-black/5 border-black/10 text-gray-500'
+                }`}
+            >
+              THE FUTURE OF SHOPPING IS HERE
+            </motion.div>
+          )}
 
           {/* Main Heading */}
           <h1 className={`text-5xl sm:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter mb-6 ${isDark ? 'text-white' : 'text-gray-900'
@@ -69,10 +77,20 @@ function HomePage() {
           </h1>
 
           {/* Description */}
-          <p className={`max-w-md text-sm sm:text-base md:text-lg mb-10 leading-relaxed font-light ${isDark ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-            {heroProduct ? heroProduct.description : "Discover a curated selection of premium services and essentials designed to empower your lifestyle. Shivalik brings luxury and utility to your fingertips."}
-          </p>
+          <div className="w-full max-w-md mb-10">
+            {isLoading ? (
+              <div className="space-y-3">
+                <div className={`h-4 w-full rounded animate-pulse ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                <div className={`h-4 w-5/6 rounded animate-pulse ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+                <div className={`h-4 w-4/6 rounded animate-pulse ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+              </div>
+            ) : (
+              <p className={`text-sm sm:text-base md:text-lg leading-relaxed font-light ${isDark ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                {heroProduct ? heroProduct.description : "Discover a curated selection of premium services and essentials designed to empower your lifestyle. Shivalik brings luxury and utility to your fingertips."}
+              </p>
+            )}
+          </div>
 
           {/* CTAs */}
           <div className="flex flex-wrap gap-4 items-center">
@@ -109,34 +127,47 @@ function HomePage() {
           {/* Main Showcase Container */}
           <div className="relative aspect-[4/5] sm:aspect-[3/4] lg:aspect-square w-full rounded-[40px] overflow-hidden shadow-2xl">
             {/* Image Wrapper with Rounded Corners and Padding */}
-            <div className="absolute inset-0 w-full h-full p-12 overflow-hidden rounded-[48px] group-hover:scale-105 transition-transform duration-700">
-              <img
-                src={heroProduct ? heroProduct.src : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"}
-                alt={heroProduct ? heroProduct.title : "Product Preview"}
-                className="w-full h-full object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                style={{ borderRadius: '48px' }}
-              />
+            <div className={`absolute inset-0 w-full h-full p-12 overflow-hidden rounded-[48px] ${isLoading ? 'animate-pulse' : 'group-hover:scale-105 transition-transform duration-700'}`}>
+              {isLoading ? (
+                <div className={`w-full h-full rounded-[48px] ${isDark ? 'bg-white/10' : 'bg-gray-200'}`} />
+              ) : (
+                <img
+                  src={heroProduct ? heroProduct.src : "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"}
+                  alt={heroProduct ? heroProduct.title : "Product Preview"}
+                  className="w-full h-full object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                  style={{ borderRadius: '48px' }}
+                />
+              )}
             </div>
 
             {/* Floating Info Card */}
             <div className="absolute bottom-6 left-6 right-6 p-6 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-between" >
-              <div>
-                <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest block mb-1">
-                  {heroProduct ? heroProduct.category || "Featured" : "New Release"}
-                </span>
-                <h3 className="text-white text-lg font-bold">
-                  {heroProduct ? heroProduct.title : "Limited Edition Series"}
-                </h3>
-                <p className="text-gray-300 font-medium mt-1">
-                  {heroProduct ? `₹${heroProduct.price}` : "₹4,999"}
-                </p>
-              </div>
-              <button
-                onClick={handleBuyNow}
-                className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-sm hover:scale-110 transition-transform shadow-lg whitespace-nowrap"
-              >
-                Buy Now
-              </button>
+              {isLoading ? (
+                <div className="w-full space-y-2">
+                  <div className="h-2 w-20 bg-white/20 rounded animate-pulse" />
+                  <div className="h-4 w-40 bg-white/20 rounded animate-pulse" />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest block mb-1">
+                      {heroProduct ? heroProduct.category || "Featured" : "New Release"}
+                    </span>
+                    <h3 className="text-white text-lg font-bold">
+                      {heroProduct ? heroProduct.title : "Limited Edition Series"}
+                    </h3>
+                    <p className="text-gray-300 font-medium mt-1">
+                      {heroProduct ? `₹${heroProduct.price}` : "₹4,999"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleBuyNow}
+                    className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-sm hover:scale-110 transition-transform shadow-lg whitespace-nowrap"
+                  >
+                    Buy Now
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

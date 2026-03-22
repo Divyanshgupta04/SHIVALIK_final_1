@@ -8,7 +8,8 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { category, q, categoryId, subCategoryId } = req.query;
+    const { category, q, categoryId, subCategoryId, limit = 50, page = 1 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const buildRegex = (s) => ({ $regex: String(s).trim(), $options: 'i' });
 
@@ -43,9 +44,18 @@ router.get('/', async (req, res) => {
       filter = Object.keys(base).length ? { $and: [base, textFilter] } : textFilter;
     }
 
-    const products = await Product.find(filter).sort({ id: 1 });
+    const total = await Product.countDocuments(filter);
+    const products = await Product.find(filter)
+      .sort({ id: 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
     res.json({
       success: true,
+      count: products.length,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
       products
     });
   } catch (error) {
@@ -87,6 +97,25 @@ router.get('/hero/featured', async (req, res) => {
     });
   } catch (error) {
     console.error('Get hero featured product error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/products/home/list
+// @desc    Get products selected for the home page (up to 14)
+// @access  Public
+router.get('/home/list', async (req, res) => {
+  try {
+    const products = await Product.find({ homePageOrder: { $gt: 0 } })
+      .sort({ homePageOrder: 1 })
+      .limit(14);
+      
+    res.json({
+      success: true,
+      products
+    });
+  } catch (error) {
+    console.error('Get home products error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
