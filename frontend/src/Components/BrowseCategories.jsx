@@ -30,26 +30,13 @@ const BrowseCategories = () => {
 
     const handleCategoryClick = async (category) => {
         console.log('Category Clicked:', category.name, 'ID:', category.id);
-        const relevantSubCats = subCategories.filter(sc => {
-            const match = String(sc.categoryId) === String(category.id);
-            if (!match && sc.categoryId === category.id) {
-                console.warn('Type mismatch in subcategory filter:', typeof sc.categoryId, typeof category.id);
-            }
-            return match;
-        });
-
-        console.log('Relevant SubCategories count:', relevantSubCats.length);
         setSelectedCategory(category);
-        
-        if (relevantSubCats.length > 0) {
-            setView('subcategories');
-        } else {
-            setView('products');
-            setIsLocalLoading(true);
-            console.log('No subcategories. Fetching products for category ID:', category.id);
-            await fetchAllProducts({ categoryId: category.id, limit: 100 });
-            setIsLocalLoading(false);
-        }
+        setView('category-detail');
+        setIsLocalLoading(true);
+        // Fetch products for THIS category (including direct ones and subcat ones potentially)
+        // The filter in filteredProducts will ensure we show what's requested
+        await fetchAllProducts({ categoryId: category.id, limit: 100 });
+        setIsLocalLoading(false);
     };
 
     const handleSubCategoryClick = async (subCat) => {
@@ -61,28 +48,30 @@ const BrowseCategories = () => {
     };
 
     const handleBack = () => {
-        if (view === 'products' && selectedSubCategory) {
-            setView('subcategories');
+        if (view === 'products') {
+            setView('category-detail');
             setSelectedSubCategory(null);
-        } else if (view === 'products' && !selectedSubCategory) {
-            setView('categories');
-            setSelectedCategory(null);
-        } else if (view === 'subcategories') {
+        } else if (view === 'category-detail') {
             setView('categories');
             setSelectedCategory(null);
         }
     };
 
     const filteredProducts = useMemo(() => {
-        if (view !== 'products') return [];
-        const result = product.filter(p => {
+        if (view === 'categories') return [];
+        
+        return product.filter(p => {
             if (selectedSubCategory) {
                 return String(p.subCategoryId) === String(selectedSubCategory.id);
             }
-            return String(p.categoryId) === String(selectedCategory?.id);
+            if (selectedCategory) {
+                // If in category-detail view, we might want to show ONLY direct products 
+                // OR all products. User said "if inside some category product and sub category both is there that should alsocome"
+                // which usually means showing the direct ones specifically in that view.
+                return String(p.categoryId) === String(selectedCategory.id) && (!p.subCategoryId || p.subCategoryId === '');
+            }
+            return false;
         });
-        console.log('Filtered Products count:', result.length, 'for view:', selectedSubCategory ? 'SubCat' : 'Cat');
-        return result;
     }, [product, view, selectedCategory, selectedSubCategory]);
 
     const containerVariants = {
@@ -122,10 +111,10 @@ const BrowseCategories = () => {
                         <h2 className={`text-3xl sm:text-5xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             {view === 'categories' ? (
                                 <>Browse <span className="text-violet-600">Categories</span></>
-                            ) : view === 'subcategories' ? (
-                                <>Select <span className="text-violet-600">Sub-Category</span></>
+                            ) : view === 'category-detail' ? (
+                                <>{selectedCategory?.name}</>
                             ) : (
-                                selectedSubCategory ? selectedSubCategory.name : selectedCategory?.name
+                                selectedSubCategory?.name
                             )}
                         </h2>
                     </div>
@@ -195,41 +184,79 @@ const BrowseCategories = () => {
                         </motion.div>
                     )}
 
-                    {/* SUB-CATEGORIES */}
-                    {view === 'subcategories' && (
+                    {/* CATEGORY DETAIL (SubCats + Products) */}
+                    {view === 'category-detail' && (
                         <motion.div
-                            key="subcategories-grid"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
+                            key="category-detail-view"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                            className="space-y-12"
                         >
-                            {catalogLoading && subCategories.length === 0 ? (
-                                [...Array(3)].map((_, i) => (
-                                    <div key={i} className={`h-64 rounded-3xl animate-pulse ${isDark ? 'bg-white/5' : 'bg-gray-100'}`} />
-                                ))
-                            ) : (
-                                subCategories.filter(sc => String(sc.categoryId) === String(selectedCategory?.id)).map(sc => (
-                                    <motion.div key={sc.id} variants={itemVariants}>
-                                        <SubCategoryCard
-                                            subCategory={sc}
-                                            isDark={isDark}
-                                            onClick={() => handleSubCategoryClick(sc)}
-                                        />
-                                    </motion.div>
-                                ))
+                            {/* Subcategories Subsection */}
+                            {subCategories.some(sc => String(sc.categoryId) === String(selectedCategory?.id)) && (
+                                <div>
+                                    <h4 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                        <div className="w-2 h-2 rounded-full bg-violet-600" />
+                                        Sub-Categories
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {subCategories.filter(sc => String(sc.categoryId) === String(selectedCategory?.id)).map(sc => (
+                                            <motion.div key={sc.id} variants={itemVariants} initial="hidden" animate="visible">
+                                                <SubCategoryCard
+                                                    subCategory={sc}
+                                                    isDark={isDark}
+                                                    onClick={() => handleSubCategoryClick(sc)}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
+
+                            {/* Products Subsection (Direct Products) */}
+                            <div>
+                                <h4 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                    <div className="w-2 h-2 rounded-full bg-violet-600" />
+                                    {subCategories.some(sc => String(sc.categoryId) === String(selectedCategory?.id)) 
+                                        ? `Direct Products in ${selectedCategory?.name}` 
+                                        : 'Products'
+                                    }
+                                </h4>
+                                
+                                {isLocalLoading || contextLoading ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                                        <ProductCardSkeleton isDark={isDark} count={4} />
+                                    </div>
+                                ) : filteredProducts.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                                        {filteredProducts.map((item, index) => (
+                                            <motion.div key={item.id} variants={itemVariants} initial="hidden" animate="visible">
+                                                <ProductCard
+                                                    item={item}
+                                                    index={index}
+                                                    isDark={isDark}
+                                                    onAddToCart={HandleClickAdd}
+                                                    onBuyNow={handleBuyNow}
+                                                />
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className={`p-10 rounded-3xl border-2 border-dashed text-center ${isDark ? 'border-white/5 text-gray-500' : 'border-gray-100 text-gray-400'}`}>
+                                        <p>No direct products found in this category.</p>
+                                    </div>
+                                )}
+                            </div>
                         </motion.div>
                     )}
 
-                    {/* PRODUCTS */}
+                    {/* SUBCATEGORY PRODUCTS ONLY */}
                     {view === 'products' && (
                         <motion.div
-                            key="products-grid"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
+                            key="subcategory-products-view"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                         >
                             {isLocalLoading || contextLoading ? (
@@ -239,7 +266,7 @@ const BrowseCategories = () => {
                             ) : filteredProducts.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                                     {filteredProducts.map((item, index) => (
-                                        <motion.div key={item.id} variants={itemVariants}>
+                                        <motion.div key={item.id} variants={itemVariants} initial="hidden" animate="visible">
                                             <ProductCard
                                                 item={item}
                                                 index={index}
@@ -253,7 +280,7 @@ const BrowseCategories = () => {
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
                                     <div className={`mb-6 text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                        No products found in this category.
+                                        No products found in this sub-category.
                                     </div>
                                     <button 
                                         onClick={() => refreshCatalog()}
