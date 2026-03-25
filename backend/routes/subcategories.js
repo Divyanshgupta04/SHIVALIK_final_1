@@ -102,8 +102,8 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Sub-category not found' });
     }
 
-    // Remove products under this sub-category
-    await Product.deleteMany({ subCategoryId: subCategory._id });
+    // Unlink products under this sub-category (instead of deleting them)
+    await Product.updateMany({ subCategoryId: subCategory._id }, { subCategoryId: null });
 
     // Emit socket event
     if (req.io) req.io.emit('subCategoryDeleted', subCategory._id);

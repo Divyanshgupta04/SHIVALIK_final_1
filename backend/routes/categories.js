@@ -101,14 +101,16 @@ router.delete('/:slug', auth, async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    // Cleanup: remove sub-categories and products under this category.
-    // This keeps Catalog Manager data consistent when managed via DB.
+    // Cleanup: remove sub-categories and UNLINK products under this category.
+    // This keeps products in the marketplace even if their category is gone.
     try {
       await SubCategory.deleteMany({ categoryId: category._id });
-      await Product.deleteMany({ $or: [{ categoryId: category._id }, { category: category.slug }] });
+      await Product.updateMany(
+        { $or: [{ categoryId: category._id }, { category: category.slug }] },
+        { categoryId: null, subCategoryId: null, category: '' }
+      );
     } catch (e) {
-      console.error('Cascade delete category cleanup error:', e);
-      // Don't fail the request after the category is deleted.
+      console.error('Cascade unlink category cleanup error:', e);
     }
 
     // Emit socket event
