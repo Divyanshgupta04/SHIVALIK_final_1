@@ -65,8 +65,11 @@ const BrowseCategories = () => {
                 return String(p.subCategoryId) === String(selectedSubCategory.id);
             }
             if (selectedCategory) {
-                // Return ONLY products directly in this category (no specific sub-category)
-                return String(p.categoryId) === String(selectedCategory.id) && (!p.subCategoryId || p.subCategoryId === '');
+                const catIdMatch = String(p.categoryId) === String(selectedCategory.id);
+                // Also try slug match as fallback for older products or sync issues
+                const catSlugMatch = p.category && selectedCategory.name && (p.category === selectedCategory.slug || p.category === slugifyName(selectedCategory.name));
+                
+                return catIdMatch || catSlugMatch;
             }
             return false;
         });
@@ -212,12 +215,12 @@ const BrowseCategories = () => {
                                 </div>
                             )}
 
-                            {/* Products Subsection (Direct Products) */}
+                            {/* Products Subsection */}
                             <div>
                                 <h4 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                     <div className="w-2 h-2 rounded-full bg-violet-600" />
                                     {subCategories.some(sc => String(sc.categoryId) === String(selectedCategory?.id)) 
-                                        ? `Direct Products in ${selectedCategory?.name}` 
+                                        ? `Products in ${selectedCategory?.name}` 
                                         : 'Products'
                                     }
                                 </h4>

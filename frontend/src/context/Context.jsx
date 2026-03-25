@@ -86,9 +86,15 @@ export function Context({ children }) {
         setProduct(prev => {
           const map = new Map();
           // Add existing ones first
-          prev.forEach(p => map.set(String(p.id), p));
+          prev.forEach(p => {
+            const key = String(p._id || p.id);
+            map.set(key, p);
+          });
           // Overwrite/Add new ones
-          response.data.products.forEach(p => map.set(String(p.id), p));
+          response.data.products.forEach(p => {
+            const key = String(p._id || p.id);
+            map.set(key, { ...p, id: p.id || p._id }); // Ensure id exists for UI/Cart
+          });
           return Array.from(map.values());
         });
         return response.data;
@@ -114,7 +120,7 @@ export function Context({ children }) {
     socket.on('productUpdated', (updatedProduct) => {
       setProduct(prevProducts =>
         prevProducts.map(p =>
-          p.id === updatedProduct.id ? updatedProduct : p
+          (p._id === updatedProduct._id || p.id === updatedProduct.id) ? { ...updatedProduct, id: updatedProduct.id || updatedProduct._id } : p
         )
       );
       toast.success(`Product updated: ${updatedProduct.title}`);
@@ -178,7 +184,8 @@ export function Context({ children }) {
       const subCategory = catalogSubCategoriesById?.get?.(p.subCategoryId);
 
       return {
-        id: p.id,
+        _id: p._id,
+        id: p.id || p._id,
         title: p.name,
         description: subCategory?.name
           ? `${subCategory.name} • ${category?.name || 'Service'}`
@@ -210,7 +217,9 @@ export function Context({ children }) {
     const map = new Map();
     for (const p of [...(product || []), ...(catalogProductsMapped || [])]) {
       if (!p) continue;
-      map.set(String(p.id), p);
+      // Prefer _id for uniqueness, fallback to id
+      const key = String(p._id || p.id);
+      map.set(key, p);
     }
     return Array.from(map.values());
   }, [product, catalogProductsMapped]);

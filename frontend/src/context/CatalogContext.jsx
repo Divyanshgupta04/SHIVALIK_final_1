@@ -57,7 +57,8 @@ export function CatalogProvider({ children }) {
       const mappedProds = dbProducts
         .filter(p => !!p.categoryId)
         .map(p => ({
-          id: p.id,
+          _id: p._id, // Keep the real MongoDB ID
+          id: p.id || String(p._id), // Fallback to string _id if numeric id is missing
           name: p.title,
           price: Number(p.price || 0),
           originalPrice: Number(p.originalPrice || 0),
