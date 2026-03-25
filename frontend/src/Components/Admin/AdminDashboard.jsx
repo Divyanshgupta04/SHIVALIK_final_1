@@ -369,6 +369,20 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleRepairImages = async () => {
+    if (window.confirm('This will fix broken image paths in the database (e.g. from src/assets/ to /). Proceed?')) {
+      try {
+        const response = await axios.post(`${config.apiUrl}/api/categories/repair-images`, {}, getAuthHeaders());
+        if (response.data.success) {
+          toast.success(response.data.message);
+          fetchProducts(); // Refresh to see updated paths
+        }
+      } catch (error) {
+        toast.error('Failed to repair image paths');
+      }
+    }
+  };
+
   const openEditModal = (product) => {
     setSelectedProduct(product);
     setFormData({
@@ -430,6 +444,9 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-3">
               <button onClick={() => { fetchProducts(); fetchDashboardStats(); fetchOrders(); }} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
                 <FiRefreshCw /> <span>Refresh</span>
+              </button>
+              <button onClick={handleRepairImages} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors">
+                <FiSettings /> <span>Repair Paths</span>
               </button>
               <button onClick={handleLogout} className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
                 <FiLogOut /> <span>Logout</span>

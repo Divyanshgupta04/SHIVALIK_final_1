@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 import config from '../config/api';
 
 // CatalogContext
@@ -46,6 +47,60 @@ export function CatalogProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const refreshCatalog = async () => {
+    setLoading(true);
+    try {
+      const [catRes, subRes, prodRes] = await Promise.all([
+        axios.get(`${config.apiUrl}/api/categories`),
+        axios.get(`${config.apiUrl}/api/subcategories`),
+        axios.get(`${config.apiUrl}/api/products?limit=1000`), // Fetch all for catalog
+      ]);
+
+      const dbCategories = Array.isArray(catRes?.data?.categories) ? catRes.data.categories : [];
+      const dbSubCategories = Array.isArray(subRes?.data?.subCategories) ? subRes.data.subCategories : [];
+      const dbProducts = Array.isArray(prodRes?.data?.products) ? prodRes.data.products : [];
+
+      const mappedCats = dbCategories.map(c => ({
+        id: String(c._id),
+        name: c.name,
+        slug: c.slug,
+        imageDataUrl: c.imageUrl || '',
+      }));
+
+      const mappedSubs = dbSubCategories.map(sc => ({
+        id: String(sc._id),
+        name: sc.name,
+        slug: sc.slug,
+        categoryId: String(sc.categoryId),
+        imageDataUrl: sc.imageUrl || '',
+      }));
+
+      const mappedProds = dbProducts
+        .filter(p => !!p.categoryId)
+        .map(p => ({
+          id: p.id,
+          name: p.title,
+          price: Number(p.price || 0),
+          categoryId: String(p.categoryId),
+          subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
+          productType: p.productType || 'both',
+          imageDataUrl: p.src || '',
+          isInsurance: !!p.isInsurance,
+          externalLink: p.externalLink || '',
+          homePageOrder: p.homePageOrder || 0,
+          createdAt: p.createdAt,
+        }));
+
+      setCategories(mappedCats);
+      setSubCategories(mappedSubs);
+      setProducts(mappedProds);
+    } catch (err) {
+      console.error('Catalog Sync Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // One-time load (local cache) + refresh from DB
   useEffect(() => {
     const stored = loadFromStorage();
@@ -55,65 +110,60 @@ export function CatalogProvider({ children }) {
       setProducts(Array.isArray(stored.products) ? stored.products : []);
     }
 
-    // Fetch latest from DB so storefront always shows newly added admin catalog data.
-    // If API is unavailable, cached localStorage data still works.
-    (async () => {
-      setLoading(true);
-      try {
-        const [catRes, subRes, prodRes] = await Promise.all([
-          axios.get(`${config.apiUrl}/api/categories`),
-          axios.get(`${config.apiUrl}/api/subcategories`),
-          axios.get(`${config.apiUrl}/api/products`),
-        ]);
+    refreshCatalog();
+  }, []);
 
-        const dbCategories = Array.isArray(catRes?.data?.categories) ? catRes.data.categories : [];
-        const dbSubCategories = Array.isArray(subRes?.data?.subCategories) ? subRes.data.subCategories : [];
-        const dbProducts = Array.isArray(prodRes?.data?.products) ? prodRes.data.products : [];
+  // Socket setup for real-time category/subcategory updates
+  useEffect(() => {
+    const socket = io(config.socketUrl);
 
-        // Normalize into the Catalog Manager shapes
-        setCategories(
-          dbCategories.map((c) => ({
-            id: String(c._id),
-            name: c.name,
-            slug: c.slug,
-            imageDataUrl: c.imageUrl || '',
-          })),
-        );
+    socket.on('categoryAdded', (cat) => {
+      setCategories(prev => [...prev.filter(c => c.id !== String(cat._id)), {
+        id: String(cat._id),
+        name: cat.name,
+        slug: cat.slug,
+        imageDataUrl: cat.imageUrl || ''
+      }]);
+    });
 
-        setSubCategories(
-          dbSubCategories.map((sc) => ({
-            id: String(sc._id),
-            name: sc.name,
-            slug: sc.slug,
-            categoryId: String(sc.categoryId),
-            imageDataUrl: sc.imageUrl || '',
-          })),
-        );
+    socket.on('categoryUpdated', (cat) => {
+      setCategories(prev => prev.map(c => c.id === String(cat._id) ? {
+        id: String(cat._id),
+        name: cat.name,
+        slug: cat.slug,
+        imageDataUrl: cat.imageUrl || ''
+      } : c));
+    });
 
-        // Only take products that are part of the catalog system (linked to categoryId)
-        setProducts(
-          dbProducts
-            .filter((p) => !!p.categoryId)
-            .map((p) => ({
-              id: p.id,
-              name: p.title,
-              price: Number(p.price || 0),
-              categoryId: String(p.categoryId),
-              subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
-              productType: p.productType || 'both',
-              imageDataUrl: p.src || '',
-              isInsurance: !!p.isInsurance,
-              externalLink: p.externalLink || '',
-              homePageOrder: p.homePageOrder || 0,
-              createdAt: p.createdAt,
-            })),
-        );
-      } catch {
-        // ignore (offline / backend not running)
-      } finally {
-        setLoading(false);
-      }
-    })();
+    socket.on('categoryDeleted', (id) => {
+      setCategories(prev => prev.filter(c => c.id !== String(id)));
+    });
+
+    socket.on('subCategoryAdded', (sc) => {
+      setSubCategories(prev => [...prev.filter(item => item.id !== String(sc._id)), {
+        id: String(sc._id),
+        name: sc.name,
+        slug: sc.slug,
+        categoryId: String(sc.categoryId),
+        imageDataUrl: sc.imageUrl || ''
+      }]);
+    });
+
+    socket.on('subCategoryUpdated', (sc) => {
+      setSubCategories(prev => prev.map(item => item.id === String(sc._id) ? {
+        id: String(sc._id),
+        name: sc.name,
+        slug: sc.slug,
+        categoryId: String(sc.categoryId),
+        imageDataUrl: sc.imageUrl || ''
+      } : item));
+    });
+
+    socket.on('subCategoryDeleted', (id) => {
+      setSubCategories(prev => prev.filter(item => item.id !== String(id)));
+    });
+
+    return () => socket.disconnect();
   }, []);
 
   // Persist
@@ -152,6 +202,7 @@ export function CatalogProvider({ children }) {
     // helpers
     makeId,
 
+    refreshCatalog,
     // reset
     clearAll: () => {
       setCategories([]);

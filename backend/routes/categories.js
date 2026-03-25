@@ -48,6 +48,9 @@ router.post('/', auth, async (req, res) => {
     const category = new Category(payload);
     await category.save();
 
+    // Emit socket event
+    if (req.io) req.io.emit('categoryAdded', category);
+
     res.status(201).json({ success: true, category });
   } catch (error) {
     console.error('Create category error:', error);
@@ -74,6 +77,9 @@ router.put('/:slug', auth, async (req, res) => {
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
+
+    // Emit socket event
+    if (req.io) req.io.emit('categoryUpdated', category);
 
     res.json({ success: true, category });
   } catch (error) {
@@ -103,9 +109,41 @@ router.delete('/:slug', auth, async (req, res) => {
       // Don't fail the request after the category is deleted.
     }
 
+    // Emit socket event
+    if (req.io) req.io.emit('categoryDeleted', category._id);
+
     res.json({ success: true, message: 'Category deleted successfully' });
   } catch (error) {
     console.error('Delete category error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/categories/repair-images
+// @desc    One-time fix for legacy image paths (src/assets/ -> /)
+// @access  Private (Admin only)
+router.post('/repair-images', auth, async (req, res) => {
+  try {
+    const categories = await Category.find({ imageUrl: { $regex: 'src/assets' } });
+    const subCategories = await SubCategory.find({ imageUrl: { $regex: 'src/assets' } });
+
+    let updatedCount = 0;
+
+    for (const cat of categories) {
+      cat.imageUrl = cat.imageUrl.replace(/.*\/src\/assets\//, '/');
+      await cat.save();
+      updatedCount++;
+    }
+
+    for (const sc of subCategories) {
+      sc.imageUrl = sc.imageUrl.replace(/.*\/src\/assets\//, '/');
+      await sc.save();
+      updatedCount++;
+    }
+
+    res.json({ success: true, message: `Repaired ${updatedCount} image paths.` });
+  } catch (error) {
+    console.error('Repair images error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

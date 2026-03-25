@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { FiCheckCircle, FiFileText, FiCamera, FiUpload, FiArrowRight, FiCreditCard, FiPercent, FiPrinter } from 'react-icons/fi';
@@ -32,7 +33,7 @@ const emptyForm = {
 const PanService = () => {
   const { isDark } = useTheme();
   const { addToCart } = useCart();
-  const navigate = React.useMemo(() => require('react-router-dom').useNavigate(), []); // clean this up if useNavigate is already imported or available
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [panTypes, setPanTypes] = useState([]);
   const [loadingTypes, setLoadingTypes] = useState(true);

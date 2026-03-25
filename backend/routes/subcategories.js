@@ -41,6 +41,9 @@ router.post('/', auth, async (req, res) => {
 
     await subCategory.save();
 
+    // Emit socket event
+    if (req.io) req.io.emit('subCategoryAdded', subCategory);
+
     res.status(201).json({ success: true, subCategory });
   } catch (error) {
     // Handle unique index violation (same sub-category slug within category)
@@ -72,6 +75,9 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Sub-category not found' });
     }
 
+    // Emit socket event
+    if (req.io) req.io.emit('subCategoryUpdated', subCategory);
+
     res.json({ success: true, subCategory });
   } catch (error) {
     if (error?.code === 11000) {
@@ -96,6 +102,9 @@ router.delete('/:id', auth, async (req, res) => {
 
     // Remove products under this sub-category
     await Product.deleteMany({ subCategoryId: subCategory._id });
+
+    // Emit socket event
+    if (req.io) req.io.emit('subCategoryDeleted', subCategory._id);
 
     res.json({ success: true, message: 'Sub-category deleted successfully' });
   } catch (error) {

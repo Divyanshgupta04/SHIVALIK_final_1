@@ -10,7 +10,7 @@ import SubCategoryCard from './SubCategoryCard';
 import { useNavigate } from 'react-router-dom';
 
 const BrowseCategories = () => {
-    const { categories, subCategories, loading: catalogLoading } = useCatalog();
+    const { categories, subCategories, loading: catalogLoading, refreshCatalog } = useCatalog();
     const { product, HandleClickAdd, loading: contextLoading, fetchAllProducts } = useContext(ProductsData);
     const { isDark } = useTheme();
     const navigate = useNavigate();
@@ -29,7 +29,16 @@ const BrowseCategories = () => {
     };
 
     const handleCategoryClick = async (category) => {
-        const relevantSubCats = subCategories.filter(sc => sc.categoryId === category.id);
+        console.log('Category Clicked:', category.name, 'ID:', category.id);
+        const relevantSubCats = subCategories.filter(sc => {
+            const match = String(sc.categoryId) === String(category.id);
+            if (!match && sc.categoryId === category.id) {
+                console.warn('Type mismatch in subcategory filter:', typeof sc.categoryId, typeof category.id);
+            }
+            return match;
+        });
+
+        console.log('Relevant SubCategories count:', relevantSubCats.length);
         setSelectedCategory(category);
         
         if (relevantSubCats.length > 0) {
@@ -37,6 +46,7 @@ const BrowseCategories = () => {
         } else {
             setView('products');
             setIsLocalLoading(true);
+            console.log('No subcategories. Fetching products for category ID:', category.id);
             await fetchAllProducts({ categoryId: category.id, limit: 100 });
             setIsLocalLoading(false);
         }
@@ -65,12 +75,14 @@ const BrowseCategories = () => {
 
     const filteredProducts = useMemo(() => {
         if (view !== 'products') return [];
-        return product.filter(p => {
+        const result = product.filter(p => {
             if (selectedSubCategory) {
-                return p.subCategoryId === selectedSubCategory.id;
+                return String(p.subCategoryId) === String(selectedSubCategory.id);
             }
-            return p.categoryId === selectedCategory?.id;
+            return String(p.categoryId) === String(selectedCategory?.id);
         });
+        console.log('Filtered Products count:', result.length, 'for view:', selectedSubCategory ? 'SubCat' : 'Cat');
+        return result;
     }, [product, view, selectedCategory, selectedSubCategory]);
 
     const containerVariants = {
@@ -239,8 +251,16 @@ const BrowseCategories = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <div className={`py-20 text-center text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    No products found in this category.
+                                <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+                                    <div className={`mb-6 text-lg ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        No products found in this category.
+                                    </div>
+                                    <button 
+                                        onClick={() => refreshCatalog()}
+                                        className="px-6 py-3 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition-all flex items-center gap-2"
+                                    >
+                                        <FiPlus className="w-5 h-5" /> Refresh Catalog
+                                    </button>
                                 </div>
                             )}
                         </motion.div>
