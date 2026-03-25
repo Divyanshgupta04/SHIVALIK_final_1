@@ -68,8 +68,7 @@ const BrowseCategories = () => {
                        String(p.subCategoryId) === String(selectedSubCategory.slug);
             }
             if (selectedCategory) {
-                // If we're in the category-detail level, show ALL products matching this category.
-                // We match by ID, slug, and legacy slug field for maximum reliability.
+                // Determine if this product belongs to the CATEGORY being viewed
                 const catIdMatch = String(p.categoryId) === String(selectedCategory.id);
                 const catSlugMatch = p.category && selectedCategory.name && (
                     p.category === selectedCategory.slug || 
@@ -77,7 +76,11 @@ const BrowseCategories = () => {
                     String(p.category) === String(selectedCategory.id)
                 );
                 
-                return catIdMatch || catSlugMatch;
+                // CRITICAL: ONLY show products that are NOT in a sub-category here.
+                // If they are in a sub-category, they only show up when that sub-category is clicked.
+                const isDirect = !p.subCategoryId || p.subCategoryId === '' || p.subCategoryId === 'null' || p.subCategoryId === 'undefined';
+                
+                return (catIdMatch || catSlugMatch) && isDirect;
             }
             return false;
         });
