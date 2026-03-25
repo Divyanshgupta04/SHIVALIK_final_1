@@ -210,7 +210,7 @@ const BrowseCategories = () => {
                                     <div key={i} className={`h-64 rounded-3xl animate-pulse ${isDark ? 'bg-white/5' : 'bg-gray-100'}`} />
                                 ))
                             ) : (
-                                subCategories.filter(sc => sc.categoryId === selectedCategory?.id).map(sc => (
+                                subCategories.filter(sc => String(sc.categoryId) === String(selectedCategory?.id)).map(sc => (
                                     <motion.div key={sc.id} variants={itemVariants}>
                                         <SubCategoryCard
                                             subCategory={sc}

@@ -55,8 +55,8 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
             <div className="relative aspect-[4/5] overflow-hidden rounded-t-2xl">
                 <motion.img
                     variants={imageVariants}
-                    src={item.src}
-                    alt={item.title}
+                    src={item.imageDataUrl || item.src}
+                    alt={item.name || item.title}
                     className="w-full h-full object-cover"
                 />
 
@@ -110,7 +110,7 @@ const ProductCard = ({ item, onAddToCart, onBuyNow, isDark, index = 0 }) => {
                 <div className="mb-2">
                     <h3 className={`text-lg font-bold mb-1 transition-colors duration-300 ${isDark ? 'text-white group-hover:text-violet-400' : 'text-gray-900 group-hover:text-violet-600'
                         } line-clamp-1`}>
-                        {item.title}
+                        {item.name || item.title}
                     </h3>
                     <div className="flex items-center gap-2">
                         <span className={`text-xl font-black ${isDark ? 'text-white' : 'text-gray-900'}`}>

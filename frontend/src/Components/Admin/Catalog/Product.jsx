@@ -180,6 +180,7 @@ export default function Product({ categories, subCategories, products, setProduc
 
     // Persist to DB (admin auth) so users can see it.
     try {
+      console.log('[Admin] Creating product via API:', cleanName);
       const res = await axios.post(
         `${config.apiUrl}/api/admin/products`,
         {
@@ -189,8 +190,8 @@ export default function Product({ categories, subCategories, products, setProduc
           price: String(parsedPrice),
           src: imageDataUrl || '',
           category: categorySlug,
-          categoryId,
-          subCategoryId,
+          categoryId: String(categoryId),
+          subCategoryId: String(subCategoryId),
           productType,
           hasForm: false,
         },
@@ -199,7 +200,7 @@ export default function Product({ categories, subCategories, products, setProduc
 
       if (res.data?.success && res.data.product) {
         const p = res.data.product;
-        newProduct = {
+        const savedProduct = {
           id: p.id,
           name: p.title,
           price: Number(p.price || 0),
@@ -209,13 +210,16 @@ export default function Product({ categories, subCategories, products, setProduc
           imageDataUrl: p.src || imageDataUrl || '',
           createdAt: p.createdAt,
         };
+        setProducts((prev) => [savedProduct, ...prev.filter(item => item.id !== savedProduct.id)]);
+        resetForm();
+        console.log('[Admin] Product created successfully');
+      } else {
+        throw new Error('Backend response not successful');
       }
     } catch (err) {
-      console.error('Failed to create product in DB (fallback to local):', err);
+      console.error('[Admin] Product sync error:', err);
+      window.alert('Failed to save product to database. Please check your login session.');
     }
-
-    setProducts((prev) => [newProduct, ...prev]);
-    resetForm();
   };
 
   const openEdit = (p) => {

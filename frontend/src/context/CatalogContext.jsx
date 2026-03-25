@@ -17,30 +17,6 @@ export function useCatalog() {
   return ctx;
 }
 
-function safeParse(json) {
-  try {
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
-
-function loadFromStorage() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  return safeParse(raw);
-}
-
-function saveToStorage(state) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore (quota, private mode, etc.)
-  }
-}
-
-const makeId = () => `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-
 export function CatalogProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -48,30 +24,33 @@ export function CatalogProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const refreshCatalog = async () => {
+    console.log('[CatalogContext] Refreshing from DB...');
     setLoading(true);
     try {
       const [catRes, subRes, prodRes] = await Promise.all([
         axios.get(`${config.apiUrl}/api/categories`),
         axios.get(`${config.apiUrl}/api/subcategories`),
-        axios.get(`${config.apiUrl}/api/products?limit=1000`), // Fetch all for catalog
+        axios.get(`${config.apiUrl}/api/products?limit=1000`),
       ]);
 
       const dbCategories = Array.isArray(catRes?.data?.categories) ? catRes.data.categories : [];
       const dbSubCategories = Array.isArray(subRes?.data?.subCategories) ? subRes.data.subCategories : [];
       const dbProducts = Array.isArray(prodRes?.data?.products) ? prodRes.data.products : [];
 
+      console.log(`[CatalogContext] Loaded: ${dbCategories.length} cats, ${dbSubCategories.length} subs, ${dbProducts.length} prods`);
+
       const mappedCats = dbCategories.map(c => ({
-        id: String(c._id),
+        id: String(c._id || ''),
         name: c.name,
         slug: c.slug,
         imageDataUrl: c.imageUrl || '',
       }));
 
       const mappedSubs = dbSubCategories.map(sc => ({
-        id: String(sc._id),
+        id: String(sc._id || ''),
         name: sc.name,
         slug: sc.slug,
-        categoryId: String(sc.categoryId),
+        categoryId: String(sc.categoryId || ''),
         imageDataUrl: sc.imageUrl || '',
       }));
 
@@ -81,7 +60,12 @@ export function CatalogProvider({ children }) {
           id: p.id,
           name: p.title,
           price: Number(p.price || 0),
-          categoryId: String(p.categoryId),
+          originalPrice: Number(p.originalPrice || 0),
+          sellingPrice: Number(p.sellingPrice || 0),
+          discountPercent: Number(p.discountPercent || 0),
+          isNew: !!p.isNew,
+          isBestSeller: !!p.isBestSeller,
+          categoryId: String(p.categoryId || ''),
           subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
           productType: p.productType || 'both',
           imageDataUrl: p.src || '',
@@ -94,22 +78,17 @@ export function CatalogProvider({ children }) {
       setCategories(mappedCats);
       setSubCategories(mappedSubs);
       setProducts(mappedProds);
+      
+      console.log('[CatalogContext] Sync complete.');
     } catch (err) {
-      console.error('Catalog Sync Error:', err);
+      console.error('[CatalogContext] Sync Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // One-time load (local cache) + refresh from DB
+  // refresh from DB on start
   useEffect(() => {
-    const stored = loadFromStorage();
-    if (stored) {
-      setCategories(Array.isArray(stored.categories) ? stored.categories : []);
-      setSubCategories(Array.isArray(stored.subCategories) ? stored.subCategories : []);
-      setProducts(Array.isArray(stored.products) ? stored.products : []);
-    }
-
     refreshCatalog();
   }, []);
 
@@ -118,6 +97,7 @@ export function CatalogProvider({ children }) {
     const socket = io(config.socketUrl);
 
     socket.on('categoryAdded', (cat) => {
+      console.log('[CatalogContext] Local Add Category:', cat._id);
       setCategories(prev => [...prev.filter(c => c.id !== String(cat._id)), {
         id: String(cat._id),
         name: cat.name,
@@ -127,6 +107,7 @@ export function CatalogProvider({ children }) {
     });
 
     socket.on('categoryUpdated', (cat) => {
+      console.log('[CatalogContext] Local Update Category:', cat._id);
       setCategories(prev => prev.map(c => c.id === String(cat._id) ? {
         id: String(cat._id),
         name: cat.name,
@@ -136,10 +117,12 @@ export function CatalogProvider({ children }) {
     });
 
     socket.on('categoryDeleted', (id) => {
+       console.log('[CatalogContext] Local Delete Category:', id);
       setCategories(prev => prev.filter(c => c.id !== String(id)));
     });
 
     socket.on('subCategoryAdded', (sc) => {
+      console.log('[CatalogContext] Local Add SubCategory:', sc._id, 'Parent:', sc.categoryId);
       setSubCategories(prev => [...prev.filter(item => item.id !== String(sc._id)), {
         id: String(sc._id),
         name: sc.name,
@@ -150,6 +133,7 @@ export function CatalogProvider({ children }) {
     });
 
     socket.on('subCategoryUpdated', (sc) => {
+       console.log('[CatalogContext] Local Update SubCategory:', sc._id);
       setSubCategories(prev => prev.map(item => item.id === String(sc._id) ? {
         id: String(sc._id),
         name: sc.name,
@@ -160,16 +144,12 @@ export function CatalogProvider({ children }) {
     });
 
     socket.on('subCategoryDeleted', (id) => {
+       console.log('[CatalogContext] Local Delete SubCategory:', id);
       setSubCategories(prev => prev.filter(item => item.id !== String(id)));
     });
 
     return () => socket.disconnect();
   }, []);
-
-  // Persist
-  useEffect(() => {
-    saveToStorage({ categories, subCategories, products });
-  }, [categories, subCategories, products]);
 
   const categoriesById = useMemo(() => {
     const map = new Map();
@@ -200,7 +180,7 @@ export function CatalogProvider({ children }) {
     setProducts,
 
     // helpers
-    makeId,
+    makeId: () => `${Date.now()}_${Math.random().toString(16).slice(2)}`,
 
     refreshCatalog,
     // reset

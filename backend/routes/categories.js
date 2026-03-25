@@ -45,6 +45,7 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'Category already exists' });
     }
 
+    console.log(`[Backend] Creating category: ${name}, img length: ${imageUrl?.length || 0}`);
     const category = new Category(payload);
     await category.save();
 
@@ -64,6 +65,7 @@ router.post('/', auth, async (req, res) => {
 router.put('/:slug', auth, async (req, res) => {
   try {
     const { name, imageUrl } = req.body;
+    console.log(`[Backend] Updating category: ${req.params.slug}, img length: ${imageUrl?.length || 0}`);
     const update = {};
     if (name) update.name = name;
     if (typeof imageUrl !== 'undefined') update.imageUrl = imageUrl;

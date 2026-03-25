@@ -8,7 +8,7 @@ import Product from './Product';
 
 // AdminCatalog.jsx
 // Category -> Sub-Category -> Product admin flow.
-// Data persists in localStorage (frontend demo). No backend required.
+// Fully connected to DB via CatalogContext.
 
 export default function AdminCatalog() {
   const navigate = useNavigate();
@@ -20,68 +20,19 @@ export default function AdminCatalog() {
     setSubCategories,
     setProducts,
     clearAll,
+    refreshCatalog,
   } = useCatalog();
 
-  // Optional: follow your existing admin pattern
+  // Ensure admin is logged in
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
       navigate('/admin/login');
       return;
     }
-
-    // Load DB data so admin sees what users will see.
-    (async () => {
-      try {
-        const [catRes, subRes, prodRes] = await Promise.all([
-          axios.get(`${config.apiUrl}/api/categories`),
-          axios.get(`${config.apiUrl}/api/subcategories`),
-          axios.get(`${config.apiUrl}/api/products`),
-        ]);
-
-        const dbCategories = Array.isArray(catRes?.data?.categories) ? catRes.data.categories : [];
-        const dbSubCategories = Array.isArray(subRes?.data?.subCategories) ? subRes.data.subCategories : [];
-        const dbProducts = Array.isArray(prodRes?.data?.products) ? prodRes.data.products : [];
-
-        setCategories(
-          dbCategories.map((c) => ({
-            id: String(c._id),
-            name: c.name,
-            slug: c.slug,
-            imageDataUrl: c.imageUrl || '',
-          })),
-        );
-
-        setSubCategories(
-          dbSubCategories.map((sc) => ({
-            id: String(sc._id),
-            name: sc.name,
-            slug: sc.slug,
-            categoryId: String(sc.categoryId),
-            imageDataUrl: sc.imageUrl || '',
-          })),
-        );
-
-        setProducts(
-          dbProducts
-            .filter((p) => !!p.categoryId)
-            .map((p) => ({
-              id: p.id,
-              name: p.title,
-              price: Number(p.price || 0),
-              categoryId: String(p.categoryId),
-              subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
-              productType: p.productType || 'both',
-              imageDataUrl: p.src || '',
-              createdAt: p.createdAt,
-            })),
-        );
-      } catch (err) {
-        // If API isn't available, localStorage CatalogContext data still shows.
-        console.error('Failed to load catalog from DB (using local cache):', err);
-      }
-    })();
-  }, [navigate, setCategories, setSubCategories, setProducts]);
+    // Refresh catalog on mount to ensure fresh data
+    refreshCatalog();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,7 +42,7 @@ export default function AdminCatalog() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin • Catalog Manager</h1>
               <p className="mt-1 text-sm text-gray-600">
-                Category → Sub-Category → Product management (localStorage demo).
+                Manage your storefront categories, sub-categories, and products.
               </p>
             </div>
 
@@ -106,13 +57,13 @@ export default function AdminCatalog() {
               <button
                 type="button"
                 onClick={() => {
-                  const ok = window.confirm('Clear all catalog data (categories, sub-categories, products)?');
+                  const ok = window.confirm('Clear all local catalog state and resync from DB?');
                   if (!ok) return;
-                  clearAll();
+                  refreshCatalog();
                 }}
-                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+                className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
               >
-                Clear All
+                Sync with DB
               </button>
             </div>
           </div>

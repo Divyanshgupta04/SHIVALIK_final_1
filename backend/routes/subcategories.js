@@ -33,6 +33,7 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'name and categoryId are required' });
     }
 
+    console.log(`[Backend] Creating subcategory: ${name}, parent: ${categoryId}, img: ${imageUrl?.length || 0}`);
     const subCategory = new SubCategory({
       name,
       categoryId,
@@ -62,6 +63,7 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     const { name, imageUrl } = req.body;
+    console.log(`[Backend] Updating subcategory: ${req.params.id}, img: ${imageUrl?.length || 0}`);
     const update = {};
     if (typeof name !== 'undefined') update.name = name;
     if (typeof imageUrl !== 'undefined') update.imageUrl = imageUrl;

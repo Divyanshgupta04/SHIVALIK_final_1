@@ -127,33 +127,33 @@ export default function Category({
     }
 
     // Persist to DB (admin auth)
-    let newCategory = { id: makeId(), name, imageDataUrl: categoryImageDataUrl || '' };
     try {
+      console.log('[Admin] Creating category via API:', name);
       const res = await axios.post(
         `${config.apiUrl}/api/categories`,
         { name, imageUrl: categoryImageDataUrl || '' },
         { headers: getAdminHeaders() },
       );
       if (res.data?.success && res.data.category) {
-        newCategory = {
-          id: String(res.data.category._id),
-          name: res.data.category.name,
-          slug: res.data.category.slug,
-          imageDataUrl: res.data.category.imageUrl || '',
+        const cat = res.data.category;
+        const newCategory = {
+          id: String(cat._id),
+          name: cat.name,
+          slug: cat.slug,
+          imageDataUrl: cat.imageUrl || '',
         };
+        setCategories((prev) => [...prev.filter(c => c.id !== newCategory.id), newCategory].sort((a, b) => a.name.localeCompare(b.name)));
+        setCategoryName('');
+        setCategoryImageDataUrl('');
+        setSubCategoryCategoryId(newCategory.id);
+        console.log('[Admin] Category created successfully:', newCategory.id);
+      } else {
+        throw new Error('Backend response not successful');
       }
     } catch (err) {
-      // If backend fails, keep localStorage demo working.
-      console.error('Failed to create category in DB (fallback to local):', err);
+      console.error('[Admin] Category sync error:', err);
+      window.alert('Failed to save category to database. Please check your connection or login again.');
     }
-
-    setCategories((prev) => [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)));
-
-    setCategoryName('');
-    setCategoryImageDataUrl('');
-
-    // Make it easier to add sub-categories immediately
-    setSubCategoryCategoryId(newCategory.id);
   };
 
   const addSubCategory = async (e) => {
@@ -167,7 +167,7 @@ export default function Category({
     }
 
     const exists = subCategories.some(
-      (sc) => sc.categoryId === subCategoryCategoryId && sc.name.toLowerCase() === name.toLowerCase(),
+      (sc) => String(sc.categoryId) === String(subCategoryCategoryId) && String(sc.name || '').toLowerCase() === name.toLowerCase(),
     );
 
     if (exists) {
@@ -176,35 +176,33 @@ export default function Category({
     }
 
     // Persist to DB
-    let newSubCategory = {
-      id: makeId(),
-      name,
-      categoryId: subCategoryCategoryId,
-      imageDataUrl: subCategoryImageDataUrl || '',
-    };
-
     try {
+      console.log('[Admin] Creating subcategory via API:', name, 'for Parent:', subCategoryCategoryId);
       const res = await axios.post(
         `${config.apiUrl}/api/subcategories`,
         { name, categoryId: subCategoryCategoryId, imageUrl: subCategoryImageDataUrl || '' },
         { headers: getAdminHeaders() },
       );
       if (res.data?.success && res.data.subCategory) {
-        newSubCategory = {
-          id: String(res.data.subCategory._id),
-          name: res.data.subCategory.name,
-          slug: res.data.subCategory.slug,
-          categoryId: String(res.data.subCategory.categoryId),
-          imageDataUrl: res.data.subCategory.imageUrl || '',
+        const sc = res.data.subCategory;
+        const newSubCategory = {
+          id: String(sc._id),
+          name: sc.name,
+          slug: sc.slug,
+          categoryId: String(sc.categoryId),
+          imageDataUrl: sc.imageUrl || '',
         };
+        setSubCategories((prev) => [...prev.filter(item => item.id !== newSubCategory.id), newSubCategory]);
+        setSubCategoryName('');
+        setSubCategoryImageDataUrl('');
+        console.log('[Admin] SubCategory created successfully:', newSubCategory.id);
+      } else {
+        throw new Error('Backend response not successful');
       }
     } catch (err) {
-      console.error('Failed to create sub-category in DB (fallback to local):', err);
+      console.error('[Admin] SubCategory sync error:', err);
+      window.alert('Failed to save sub-category to database. Please check your login session.');
     }
-
-    setSubCategories((prev) => [...prev, newSubCategory]);
-    setSubCategoryName('');
-    setSubCategoryImageDataUrl('');
   };
 
   const openEditCategory = (c) => {
