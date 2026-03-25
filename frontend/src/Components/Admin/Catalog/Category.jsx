@@ -67,20 +67,24 @@ export default function Category({
   // Category form
   const [categoryName, setCategoryName] = useState('');
   const [categoryImageDataUrl, setCategoryImageDataUrl] = useState('');
+  const [categoryImageUrl, setCategoryImageUrl] = useState('');
 
   // Sub-category form
   const [subCategoryName, setSubCategoryName] = useState('');
   const [subCategoryImageDataUrl, setSubCategoryImageDataUrl] = useState('');
+  const [subCategoryImageUrl, setSubCategoryImageUrl] = useState('');
   const [subCategoryCategoryId, setSubCategoryCategoryId] = useState('');
 
   // Edit modals
   const [editCategory, setEditCategory] = useState(null);
   const [editCategoryName, setEditCategoryName] = useState('');
   const [editCategoryImageDataUrl, setEditCategoryImageDataUrl] = useState('');
+  const [editCategoryImageUrl, setEditCategoryImageUrl] = useState('');
 
   const [editSubCategory, setEditSubCategory] = useState(null);
   const [editSubCategoryName, setEditSubCategoryName] = useState('');
   const [editSubCategoryImageDataUrl, setEditSubCategoryImageDataUrl] = useState('');
+  const [editSubCategoryImageUrl, setEditSubCategoryImageUrl] = useState('');
 
   const categoriesById = useMemo(() => {
     const map = new Map();
@@ -104,14 +108,24 @@ export default function Category({
 
   const onCategoryFile = async (file) => {
     if (!file) return;
+    if (file.size > 1048576) {
+      window.alert('File is too large! Please select an image under 1MB or use a URL.');
+      return;
+    }
     const dataUrl = await readFileAsDataUrl(file);
     setCategoryImageDataUrl(dataUrl);
+    setCategoryImageUrl(''); // Clear URL if file is chosen
   };
 
   const onSubCategoryFile = async (file) => {
     if (!file) return;
+    if (file.size > 1048576) {
+      window.alert('File is too large! Please select an image under 1MB or use a URL.');
+      return;
+    }
     const dataUrl = await readFileAsDataUrl(file);
     setSubCategoryImageDataUrl(dataUrl);
+    setSubCategoryImageUrl(''); // Clear URL if file is chosen
   };
 
   const addCategory = async (e) => {
@@ -129,9 +143,10 @@ export default function Category({
     // Persist to DB (admin auth)
     try {
       console.log('[Admin] Creating category via API:', name);
+      const finalImageUrl = categoryImageUrl.trim() || categoryImageDataUrl || '';
       const res = await axios.post(
         `${config.apiUrl}/api/categories`,
-        { name, imageUrl: categoryImageDataUrl || '' },
+        { name, imageUrl: finalImageUrl },
         { headers: getAdminHeaders() },
       );
       if (res.data?.success && res.data.category) {
@@ -178,9 +193,10 @@ export default function Category({
     // Persist to DB
     try {
       console.log('[Admin] Creating subcategory via API:', name, 'for Parent:', subCategoryCategoryId);
+      const finalImageUrl = subCategoryImageUrl.trim() || subCategoryImageDataUrl || '';
       const res = await axios.post(
         `${config.apiUrl}/api/subcategories`,
-        { name, categoryId: subCategoryCategoryId, imageUrl: subCategoryImageDataUrl || '' },
+        { name, categoryId: subCategoryCategoryId, imageUrl: finalImageUrl },
         { headers: getAdminHeaders() },
       );
       if (res.data?.success && res.data.subCategory) {
@@ -208,7 +224,8 @@ export default function Category({
   const openEditCategory = (c) => {
     setEditCategory(c);
     setEditCategoryName(c.name || '');
-    setEditCategoryImageDataUrl(c.imageDataUrl || '');
+    setEditCategoryImageDataUrl(c.imageDataUrl && c.imageDataUrl.startsWith('data:') ? c.imageDataUrl : '');
+    setEditCategoryImageUrl(c.imageDataUrl && !c.imageDataUrl.startsWith('data:') ? c.imageDataUrl : '');
   };
 
   const saveEditCategory = async (e) => {
@@ -221,9 +238,10 @@ export default function Category({
     try {
       const slug = editCategory.slug;
       if (slug) {
+        const finalImageUrl = editCategoryImageUrl.trim() || editCategoryImageDataUrl || '';
         await axios.put(
           `${config.apiUrl}/api/categories/${slug}`,
-          { name, imageUrl: editCategoryImageDataUrl || '' },
+          { name, imageUrl: finalImageUrl },
           { headers: getAdminHeaders() },
         );
       }
@@ -247,7 +265,8 @@ export default function Category({
   const openEditSubCategory = (sc) => {
     setEditSubCategory(sc);
     setEditSubCategoryName(sc.name || '');
-    setEditSubCategoryImageDataUrl(sc.imageDataUrl || '');
+    setEditSubCategoryImageDataUrl(sc.imageDataUrl && sc.imageDataUrl.startsWith('data:') ? sc.imageDataUrl : '');
+    setEditSubCategoryImageUrl(sc.imageDataUrl && !sc.imageDataUrl.startsWith('data:') ? sc.imageDataUrl : '');
   };
 
   const saveEditSubCategory = async (e) => {
@@ -257,9 +276,10 @@ export default function Category({
     if (!name) return;
 
     try {
+      const finalImageUrl = editSubCategoryImageUrl.trim() || editSubCategoryImageDataUrl || '';
       await axios.put(
         `${config.apiUrl}/api/subcategories/${editSubCategory.id}`,
-        { name, imageUrl: editSubCategoryImageDataUrl || '' },
+        { name, imageUrl: finalImageUrl },
         { headers: getAdminHeaders() },
       );
     } catch (err) {
@@ -350,14 +370,31 @@ export default function Category({
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Category Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => onCategoryFile(e.target.files?.[0])}
-                className="mt-1 block w-full text-sm text-gray-700"
-              />
-              <div className="mt-2">
-                <ImageThumb src={categoryImageDataUrl} alt="Category preview" />
+              <div className="mt-1 space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => onCategoryFile(e.target.files?.[0])}
+                  className="block w-full text-xs text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">OR</span>
+                  <input
+                    value={categoryImageUrl}
+                    onChange={(e) => {
+                      setCategoryImageUrl(e.target.value);
+                      setCategoryImageDataUrl(''); // Clear file if URL provided
+                    }}
+                    placeholder="Enter image URL..."
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="mt-2 text-center">
+                <ImageThumb src={categoryImageUrl.trim() || categoryImageDataUrl} alt="Category preview" />
+                {!categoryImageUrl && !categoryImageDataUrl && (
+                  <p className="text-[10px] text-gray-400 mt-1">Select file or enter URL</p>
+                )}
               </div>
             </div>
 
@@ -404,14 +441,31 @@ export default function Category({
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Sub-Category Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => onSubCategoryFile(e.target.files?.[0])}
-                className="mt-1 block w-full text-sm text-gray-700"
-              />
-              <div className="mt-2">
-                <ImageThumb src={subCategoryImageDataUrl} alt="Sub-category preview" />
+              <div className="mt-1 space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => onSubCategoryFile(e.target.files?.[0])}
+                  className="block w-full text-xs text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">OR</span>
+                  <input
+                    value={subCategoryImageUrl}
+                    onChange={(e) => {
+                      setSubCategoryImageUrl(e.target.value);
+                      setSubCategoryImageDataUrl(''); // Clear file if URL provided
+                    }}
+                    placeholder="Enter image URL..."
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              <div className="mt-2 text-center">
+                <ImageThumb src={subCategoryImageUrl.trim() || subCategoryImageDataUrl} alt="Sub-category preview" />
+                {!subCategoryImageUrl && !subCategoryImageDataUrl && (
+                  <p className="text-[10px] text-gray-400 mt-1">Select file or enter URL</p>
+                )}
               </div>
             </div>
 
@@ -531,19 +585,38 @@ export default function Category({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Category Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const dataUrl = await readFileAsDataUrl(f);
-                setEditCategoryImageDataUrl(dataUrl);
-              }}
-              className="mt-1 block w-full text-sm text-gray-700"
-            />
-            <div className="mt-2">
-              <ImageThumb src={editCategoryImageDataUrl} alt="Category preview" />
+            <div className="mt-1 space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (f.size > 1048576) {
+                    window.alert('File is too large! Please select an image under 1MB or use a URL.');
+                    return;
+                  }
+                  const dataUrl = await readFileAsDataUrl(f);
+                  setEditCategoryImageDataUrl(dataUrl);
+                  setEditCategoryImageUrl('');
+                }}
+                className="block w-full text-xs text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">OR</span>
+                <input
+                  value={editCategoryImageUrl}
+                  onChange={(e) => {
+                    setEditCategoryImageUrl(e.target.value);
+                    setEditCategoryImageDataUrl('');
+                  }}
+                  placeholder="Enter image URL..."
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            <div className="mt-2 flex justify-center">
+              <ImageThumb src={editCategoryImageUrl.trim() || editCategoryImageDataUrl} alt="Category preview" />
             </div>
           </div>
 
@@ -583,19 +656,38 @@ export default function Category({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Sub-Category Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={async (e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const dataUrl = await readFileAsDataUrl(f);
-                setEditSubCategoryImageDataUrl(dataUrl);
-              }}
-              className="mt-1 block w-full text-sm text-gray-700"
-            />
-            <div className="mt-2">
-              <ImageThumb src={editSubCategoryImageDataUrl} alt="Sub-category preview" />
+            <div className="mt-1 space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (f.size > 1048576) {
+                    window.alert('File is too large! Please select an image under 1MB or use a URL.');
+                    return;
+                  }
+                  const dataUrl = await readFileAsDataUrl(f);
+                  setEditSubCategoryImageDataUrl(dataUrl);
+                  setEditSubCategoryImageUrl('');
+                }}
+                className="block w-full text-xs text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">OR</span>
+                <input
+                  value={editSubCategoryImageUrl}
+                  onChange={(e) => {
+                    setEditSubCategoryImageUrl(e.target.value);
+                    setEditSubCategoryImageDataUrl('');
+                  }}
+                  placeholder="Enter image URL..."
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            <div className="mt-2 flex justify-center">
+              <ImageThumb src={editSubCategoryImageUrl.trim() || editSubCategoryImageDataUrl} alt="Sub-category preview" />
             </div>
           </div>
 
