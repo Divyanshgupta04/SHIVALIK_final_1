@@ -8,6 +8,7 @@ import ProductCard from './ProductCard';
 import ProductCardSkeleton from './ProductCardSkeleton';
 import SubCategoryCard from './SubCategoryCard';
 import { useNavigate } from 'react-router-dom';
+import { slugifyName } from '../utils/slug';
 
 const BrowseCategories = () => {
     const { categories, subCategories, loading: catalogLoading, refreshCatalog } = useCatalog();
