@@ -63,12 +63,19 @@ const BrowseCategories = () => {
         
         return product.filter(p => {
             if (selectedSubCategory) {
-                return String(p.subCategoryId) === String(selectedSubCategory.id);
+                // Specific Sub-Category selection check
+                return String(p.subCategoryId) === String(selectedSubCategory.id) || 
+                       String(p.subCategoryId) === String(selectedSubCategory.slug);
             }
             if (selectedCategory) {
+                // If we're in the category-detail level, show ALL products matching this category.
+                // We match by ID, slug, and legacy slug field for maximum reliability.
                 const catIdMatch = String(p.categoryId) === String(selectedCategory.id);
-                // Also try slug match as fallback for older products or sync issues
-                const catSlugMatch = p.category && selectedCategory.name && (p.category === selectedCategory.slug || p.category === slugifyName(selectedCategory.name));
+                const catSlugMatch = p.category && selectedCategory.name && (
+                    p.category === selectedCategory.slug || 
+                    p.category === slugifyName(selectedCategory.name) ||
+                    String(p.category) === String(selectedCategory.id)
+                );
                 
                 return catIdMatch || catSlugMatch;
             }
