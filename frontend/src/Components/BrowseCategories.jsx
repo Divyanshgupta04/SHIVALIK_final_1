@@ -65,8 +65,8 @@ const BrowseCategories = () => {
                 return String(p.subCategoryId) === String(selectedSubCategory.id);
             }
             if (selectedCategory) {
-                // Show ALL products in this category, regardless of subcategory
-                return String(p.categoryId) === String(selectedCategory.id);
+                // Return ONLY products directly in this category (no specific sub-category)
+                return String(p.categoryId) === String(selectedCategory.id) && (!p.subCategoryId || p.subCategoryId === '');
             }
             return false;
         });
