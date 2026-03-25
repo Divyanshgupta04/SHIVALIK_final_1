@@ -152,13 +152,8 @@ export default function Product({ categories, subCategories, products, setProduc
       return;
     }
 
-    if (!subCategoryId) {
-      window.alert('Please select a sub-category.');
-      return;
-    }
-
-    const sc = subCategoriesById.get(subCategoryId);
-    if (!sc || sc.categoryId !== categoryId) {
+    const sc = subCategoryId ? subCategoriesById.get(subCategoryId) : null;
+    if (subCategoryId && (!sc || sc.categoryId !== categoryId)) {
       window.alert('Selected sub-category does not belong to the selected category.');
       return;
     }
@@ -172,7 +167,7 @@ export default function Product({ categories, subCategories, products, setProduc
       name: cleanName,
       price: parsedPrice,
       categoryId,
-      subCategoryId,
+      subCategoryId: subCategoryId || '',
       productType,
       imageDataUrl: imageDataUrl || '',
       createdAt: new Date().toISOString(),
@@ -218,7 +213,9 @@ export default function Product({ categories, subCategories, products, setProduc
       }
     } catch (err) {
       console.error('[Admin] Product sync error:', err);
-      window.alert('Failed to save product to database. Please check your login session.');
+      // Even if API fails, update local state for immediate feedback
+      setProducts((prev) => [newProduct, ...prev]);
+      resetForm();
     }
   };
 
@@ -247,13 +244,13 @@ export default function Product({ categories, subCategories, products, setProduc
       return;
     }
 
-    if (!editForm.categoryId || !editForm.subCategoryId) {
-      window.alert('Category and Sub-Category are required.');
+    if (!editForm.categoryId) {
+      window.alert('Please select a category.');
       return;
     }
 
-    const sc = subCategoriesById.get(editForm.subCategoryId);
-    if (!sc || sc.categoryId !== editForm.categoryId) {
+    const sc = editForm.subCategoryId ? subCategoriesById.get(editForm.subCategoryId) : null;
+    if (editForm.subCategoryId && (!sc || sc.categoryId !== editForm.categoryId)) {
       window.alert('Selected sub-category does not belong to the selected category.');
       return;
     }
@@ -380,16 +377,9 @@ export default function Product({ categories, subCategories, products, setProduc
                 value={subCategoryId}
                 onChange={(e) => setSubCategoryId(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                disabled={!categoryId || filteredSubCategories.length === 0}
-                required
+                disabled={!categoryId}
               >
-                <option value="">
-                  {!categoryId
-                    ? 'Select a category first'
-                    : filteredSubCategories.length === 0
-                      ? 'No sub-categories in this category'
-                      : 'Select a sub-category'}
-                </option>
+                <option value="">(No Sub-Category - Direct to Category)</option>
                 {filteredSubCategories.map((sc) => (
                   <option key={sc.id} value={sc.id}>
                     {sc.name}

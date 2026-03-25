@@ -65,10 +65,8 @@ const BrowseCategories = () => {
                 return String(p.subCategoryId) === String(selectedSubCategory.id);
             }
             if (selectedCategory) {
-                // If in category-detail view, we might want to show ONLY direct products 
-                // OR all products. User said "if inside some category product and sub category both is there that should alsocome"
-                // which usually means showing the direct ones specifically in that view.
-                return String(p.categoryId) === String(selectedCategory.id) && (!p.subCategoryId || p.subCategoryId === '');
+                // Show ALL products in this category, regardless of subcategory
+                return String(p.categoryId) === String(selectedCategory.id);
             }
             return false;
         });
