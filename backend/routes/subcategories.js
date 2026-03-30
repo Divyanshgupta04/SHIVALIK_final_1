@@ -14,7 +14,9 @@ router.get('/', async (req, res) => {
     const filter = {};
     if (categoryId) filter.categoryId = categoryId;
 
-    const subCategories = await SubCategory.find(filter).sort({ name: 1 });
+    const subCategories = await SubCategory.find(filter).sort({ name: 1 }).lean();
+    // Subcategories rarely change — cache for 2 minutes
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
     res.json({ success: true, subCategories });
   } catch (error) {
     console.error('Get sub-categories error:', error);

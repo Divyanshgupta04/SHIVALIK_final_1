@@ -112,9 +112,22 @@ const ProductSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Optimization Indexes
+// ── Performance Indexes ──────────────────────────────────────────────────────
+
+// Sorting / filtering in public routes
 ProductSchema.index({ homePageOrder: 1 });
+ProductSchema.index({ isHeroFeatured: 1 });
+ProductSchema.index({ id: 1 });              // custom numeric id lookup
+
+// Catalog / category views
 ProductSchema.index({ categoryId: 1 });
 ProductSchema.index({ subCategoryId: 1 });
+ProductSchema.index({ categoryId: 1, subCategoryId: 1 }); // compound
+
+// Full-text search (replaces slow $regex on title/description/category)
+ProductSchema.index(
+  { title: 'text', description: 'text', category: 'text' },
+  { name: 'product_text_search', weights: { title: 3, category: 2, description: 1 } }
+);
 
 module.exports = mongoose.model('Product', ProductSchema);

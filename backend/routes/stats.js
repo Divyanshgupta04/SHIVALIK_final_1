@@ -1,75 +1,74 @@
 const express = require('express');
 const router = express.Router();
 
-// Simulate some stats (you can replace this with actual database queries)
-let siteStats = {
-  totalViews: 0,
-  onlineUsers: 0,
-  totalUsers: 0
+// ── In-memory cache (30 second TTL) ─────────────────────────────────────────
+// Prevents hammering the DB on every frontend poll
+let statsCache = {
+  data: null,
+  expiresAt: 0,
+  totalViews: 0
 };
+const STATS_TTL_MS = 30 * 1000; // 30 seconds
 
 // Get site statistics
 router.get('/', async (req, res) => {
   try {
-    // Try to import User model to get real data
-    let totalUsers = 245; // Default fallback
-    let onlineUsers = 8;  // Default fallback
-    
-    try {
-      // Attempt to load User model if it exists
-      const User = require('../models/User');
-      
-      // Count total registered users
-      totalUsers = await User.countDocuments() || 245;
-      
-      // Count users active in last 5 minutes (online)
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      onlineUsers = await User.countDocuments({ 
-        lastActive: { $gte: fiveMinutesAgo } 
-      }) || Math.floor(Math.random() * 15) + 3;
-      
-    } catch (modelError) {
-      console.log('User model not found, using static data');
-      // Use static realistic numbers if no User model
-      totalUsers = 245;
-      onlineUsers = Math.floor(Math.random() * 15) + 5; // Only online can vary
+    const now = Date.now();
+
+    // Return cached result if still fresh
+    if (statsCache.data && now < statsCache.expiresAt) {
+      return res.json({ success: true, ...statsCache.data });
     }
-    
-    siteStats = {
-      ...siteStats,
-      totalUsers,
+
+    let totalUsers = 245;
+    let onlineUsers = 8;
+
+    try {
+      const User = require('../models/User');
+      const fiveMinutesAgo = new Date(now - 5 * 60 * 1000);
+
+      // Run both counts in parallel
+      const [userCount, activeCount] = await Promise.all([
+        User.countDocuments(),
+        User.countDocuments({ lastActive: { $gte: fiveMinutesAgo } })
+      ]);
+
+      totalUsers = userCount || 245;
+      onlineUsers = activeCount || Math.floor(Math.random() * 15) + 3;
+    } catch (modelError) {
+      totalUsers = 245;
+      onlineUsers = Math.floor(Math.random() * 15) + 5;
+    }
+
+    const fresh = {
+      totalViews: statsCache.totalViews,
       onlineUsers,
+      totalUsers,
       lastUpdated: new Date()
     };
-    
-    res.json({
-      success: true,
-      ...siteStats
-    });
+
+    // Update cache
+    statsCache.data = fresh;
+    statsCache.expiresAt = now + STATS_TTL_MS;
+
+    // Tell browsers/CDN to cache for 30s too
+    res.set('Cache-Control', 'public, max-age=30');
+    res.json({ success: true, ...fresh });
   } catch (error) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch statistics'
-    });
+    res.status(500).json({ success: false, message: 'Failed to fetch statistics' });
   }
 });
 
-// Increment view count (optional - called when user visits site)
+// Increment view count
 router.post('/view', (req, res) => {
   try {
-    siteStats.totalViews += 1;
-    res.json({
-      success: true,
-      totalViews: siteStats.totalViews
-    });
+    statsCache.totalViews += 1;
+    res.json({ success: true, totalViews: statsCache.totalViews });
   } catch (error) {
     console.error('Error updating view count:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update view count'
-    });
+    res.status(500).json({ success: false, message: 'Failed to update view count' });
   }
 });
 
-module.exports = router;
+module.exports = router;

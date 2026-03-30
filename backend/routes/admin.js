@@ -214,12 +214,14 @@ router.get('/users', auth, async (req, res) => {
 // @access  Private (Admin only)
 router.get('/dashboard', auth, async (req, res) => {
   try {
-    const totalProducts = await Product.countDocuments();
-    const recentProducts = await Product.find().sort({ createdAt: -1 }).limit(5);
-
-    const totalUsers = await User.countDocuments();
-    const verifiedUsers = await User.countDocuments({ isVerified: true });
-    const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5).select('name email isVerified createdAt lastLogin');
+    // Run all queries in PARALLEL instead of sequentially
+    const [totalProducts, recentProducts, totalUsers, verifiedUsers, recentUsers] = await Promise.all([
+      Product.countDocuments(),
+      Product.find().sort({ createdAt: -1 }).limit(5).lean(),
+      User.countDocuments(),
+      User.countDocuments({ isVerified: true }),
+      User.find().sort({ createdAt: -1 }).limit(5).select('name email isVerified createdAt lastLogin').lean()
+    ]);
 
     res.json({
       success: true,
@@ -245,36 +247,31 @@ router.get('/orders', auth, async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const status = req.query.status; // Optional status filter
+    const status = req.query.status;
 
     let query = {};
     if (status && status !== 'all') {
       query.status = status;
     } else {
-      // Exclude pending orders by default in admin view
       query.status = { $ne: 'pending' };
     }
 
-    const orders = await Order.find(query)
-      .populate('userId', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const totalOrders = await Order.countDocuments(query);
-    const totalPages = Math.ceil(totalOrders / limit);
-
-    // Calculate order statistics (excluding pending)
-    const orderStats = await Order.aggregate([
-      { $match: { status: { $ne: 'pending' } } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$total' }
-        }
-      }
+    // Run all 3 DB operations in PARALLEL
+    const [orders, totalOrders, orderStats] = await Promise.all([
+      Order.find(query)
+        .populate('userId', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Order.countDocuments(query),
+      Order.aggregate([
+        { $match: { status: { $ne: 'pending' } } },
+        { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$total' } } }
+      ])
     ]);
+
+    const totalPages = Math.ceil(totalOrders / limit);
 
     res.json({
       success: true,

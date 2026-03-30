@@ -76,6 +76,12 @@ const UserSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// ── Performance Indexes ──────────────────────────────────────────────────────
+UserSchema.index({ email: 1 });          // auth lookups (also unique, just ensuring it's indexed)
+UserSchema.index({ isVerified: 1 });     // admin user filtering
+UserSchema.index({ createdAt: -1 });     // admin user list sorting
+UserSchema.index({ lastLogin: -1 });     // recently active users
+
 // Hash password before saving (only if password exists)
 UserSchema.pre('save', async function (next) {
   // Skip if password is not modified or doesn't exist (Google OAuth users)

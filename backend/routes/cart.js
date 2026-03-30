@@ -220,30 +220,43 @@ router.post('/sync', requireAuth, async (req, res) => {
   try {
     const { localCart = [] } = req.body;
 
-    const user = await User.findById(req.session.userId);
+    const [user] = await Promise.all([
+      User.findById(req.session.userId)
+    ]);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Merge local cart with server cart
-    for (const localItem of localCart) {
-      const existingItemIndex = user.cart.findIndex(item => item.productId === localItem.productId);
+    if (localCart.length > 0) {
+      // ── ONE bulk DB query instead of N sequential lookups ─────────────────
+      const localIds = localCart.map(item => item.productId);
+      const existingProducts = await Product.find(
+        { id: { $in: localIds } },
+        { id: 1, title: 1, description: 1, price: 1, src: 1, productType: 1 }
+      ).lean();
 
-      if (existingItemIndex >= 0) {
-        // Add quantities if item exists
-        user.cart[existingItemIndex].quantity += localItem.quantity;
-      } else {
-        // Verify product exists before adding
-        const product = await Product.findOne({ id: localItem.productId });
-        if (product) {
-          user.cart.push({
-            productId: localItem.productId,
-            title: localItem.title,
-            description: localItem.description,
-            price: localItem.price,
-            src: localItem.src,
-            quantity: localItem.quantity
-          });
+      // Build a fast O(1) lookup map
+      const productMap = new Map(existingProducts.map(p => [p.id, p]));
+
+      // Merge local cart with server cart
+      for (const localItem of localCart) {
+        const existingItemIndex = user.cart.findIndex(item => item.productId === localItem.productId);
+
+        if (existingItemIndex >= 0) {
+          user.cart[existingItemIndex].quantity += localItem.quantity;
+        } else {
+          const product = productMap.get(localItem.productId);
+          if (product) {
+            user.cart.push({
+              productId: localItem.productId,
+              title: localItem.title || product.title,
+              description: localItem.description || product.description,
+              price: localItem.price || product.price,
+              src: localItem.src || product.src,
+              productType: localItem.productType || product.productType || 'both',
+              quantity: localItem.quantity
+            });
+          }
         }
       }
     }
@@ -264,5 +277,6 @@ router.post('/sync', requireAuth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 module.exports = router;

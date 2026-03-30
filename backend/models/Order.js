@@ -136,4 +136,10 @@ OrderSchema.pre('save', function (next) {
   next();
 });
 
+// ── Performance Indexes ──────────────────────────────────────────────────────
+OrderSchema.index({ 'payment.payment_request_id': 1 }); // payment verification lookup
+OrderSchema.index({ userId: 1, status: 1 });            // user order history
+OrderSchema.index({ status: 1, createdAt: -1 });        // admin order listing
+OrderSchema.index({ createdAt: -1 });                   // general sorting
+
 module.exports = mongoose.model('Order', OrderSchema);

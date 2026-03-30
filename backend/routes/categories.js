@@ -11,7 +11,9 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find().sort({ name: 1 }).lean();
+    // Categories rarely change — cache for 2 minutes
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
     res.json({ success: true, categories });
   } catch (error) {
     console.error('Get categories error:', error);

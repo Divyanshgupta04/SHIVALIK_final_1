@@ -5,6 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const compression = require('compression');
 require('dotenv').config(); // Load environment variables FIRST
 const passport = require('./config/passport');
 const { verifyEmailTransport } = require('./utils/email');
@@ -35,6 +36,7 @@ const io = socketIo(server, {
 });
 
 // Middleware
+app.use(compression()); // gzip/brotli - reduces response size by 60-80%
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -85,6 +87,12 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/shivalik_service_hub', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      // ── Connection pool: more concurrent DB operations without stalling ──
+      maxPoolSize: 20,           // up from default 5
+      minPoolSize: 5,            // keep warm connections ready
+      serverSelectionTimeoutMS: 5000, // fail fast if DB unreachable
+      socketTimeoutMS: 45000,    // drop hung sockets after 45s
+      family: 4,                 // use IPv4, avoids DNS lookup delays
     });
     console.log('MongoDB connected successfully');
 

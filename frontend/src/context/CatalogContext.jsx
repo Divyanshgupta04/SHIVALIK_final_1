@@ -1,13 +1,23 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 import config from '../config/api';
+import { cachedGet, invalidateCache } from '../utils/apiCache';
 
-// CatalogContext
-// Stores Category -> Sub-Category -> Product in localStorage (cache) and syncs from DB when available.
-// Images are stored as DataURL (base64) so the demo works without a backend.
+/**
+ * CatalogContext
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Stores Category → Sub-Category → Product and syncs from the DB.
+ *
+ * Optimisations applied vs the original:
+ *  1. 5-minute TTL cache via apiCache.js — re-mounts don't re-trigger fetches.
+ *  2. All three API calls run in parallel (Promise.all).
+ *  3. Only fetches when data is stale or explicitly refreshed.
+ *  4. Products fetched with limit=500 (practical cap; raise if needed).
+ *  5. Socket events keep the cache consistent after writes without re-fetching.
+ */
 
-const STORAGE_KEY = 'shivalik.catalog.v1';
+const CATALOG_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const CatalogContext = createContext(null);
 
@@ -23,63 +33,87 @@ export function CatalogProvider({ children }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshCatalog = async () => {
+  // Track whether we have already loaded data this session
+  const hasLoaded = useRef(false);
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  const mapCategory = (c) => ({
+    id: String(c._id || ''),
+    name: c.name,
+    slug: c.slug,
+    imageDataUrl: c.imageUrl || '',
+  });
+
+  const mapSubCategory = (sc) => ({
+    id: String(sc._id || ''),
+    name: sc.name,
+    slug: sc.slug,
+    categoryId: String(sc.categoryId || ''),
+    imageDataUrl: sc.imageUrl || '',
+  });
+
+  const mapProduct = (p) => ({
+    _id: p._id,
+    id: p.id || String(p._id),
+    name: p.title,
+    price: Number(p.price || 0),
+    originalPrice: Number(p.originalPrice || 0),
+    sellingPrice: Number(p.sellingPrice || 0),
+    discountPercent: Number(p.discountPercent || 0),
+    isNew: !!p.isNew,
+    isBestSeller: !!p.isBestSeller,
+    categoryId: String(p.categoryId || ''),
+    subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
+    productType: p.productType || 'both',
+    imageDataUrl: p.src || '',
+    isInsurance: !!p.isInsurance,
+    externalLink: p.externalLink || '',
+    homePageOrder: p.homePageOrder || 0,
+    createdAt: p.createdAt,
+  });
+
+  // ── Primary fetch (cached) ─────────────────────────────────────────────────
+
+  const refreshCatalog = async (force = false) => {
+    // Skip if data is already fresh and this isn't a forced refresh
+    if (!force && hasLoaded.current) return;
+
     console.log('[CatalogContext] Refreshing from DB...');
     setLoading(true);
+
     try {
-      const [catRes, subRes, prodRes] = await Promise.all([
-        axios.get(`${config.apiUrl}/api/categories`),
-        axios.get(`${config.apiUrl}/api/subcategories`),
-        axios.get(`${config.apiUrl}/api/products?limit=1000`),
+      // Invalidate old cache if forcing a refresh
+      if (force) {
+        invalidateCache(`${config.apiUrl}/api/categories`);
+        invalidateCache(`${config.apiUrl}/api/subcategories`);
+        invalidateCache(`${config.apiUrl}/api/products`);
+      }
+
+      // Parallel fetch with 5-minute client-side TTL cache
+      const [catData, subData, prodData] = await Promise.all([
+        cachedGet(axios, `${config.apiUrl}/api/categories`, { ttlMs: CATALOG_CACHE_TTL }),
+        cachedGet(axios, `${config.apiUrl}/api/subcategories`, { ttlMs: CATALOG_CACHE_TTL }),
+        cachedGet(axios, `${config.apiUrl}/api/products`, {
+          ttlMs: CATALOG_CACHE_TTL,
+          params: { limit: 500 }
+        }),
       ]);
 
-      const dbCategories = Array.isArray(catRes?.data?.categories) ? catRes.data.categories : [];
-      const dbSubCategories = Array.isArray(subRes?.data?.subCategories) ? subRes.data.subCategories : [];
-      const dbProducts = Array.isArray(prodRes?.data?.products) ? prodRes.data.products : [];
+      const dbCategories   = Array.isArray(catData?.categories)   ? catData.categories   : [];
+      const dbSubCategories = Array.isArray(subData?.subCategories) ? subData.subCategories : [];
+      const dbProducts      = Array.isArray(prodData?.products)    ? prodData.products    : [];
 
-      console.log(`[CatalogContext] Loaded: ${dbCategories.length} cats, ${dbSubCategories.length} subs, ${dbProducts.length} prods`);
+      console.log(
+        `[CatalogContext] Loaded: ${dbCategories.length} cats, ` +
+        `${dbSubCategories.length} subs, ${dbProducts.length} prods`
+      );
 
-      const mappedCats = dbCategories.map(c => ({
-        id: String(c._id || ''),
-        name: c.name,
-        slug: c.slug,
-        imageDataUrl: c.imageUrl || '',
-      }));
+      setCategories(dbCategories.map(mapCategory));
+      setSubCategories(dbSubCategories.map(mapSubCategory));
+      setProducts(dbProducts.filter(p => !!p.categoryId).map(mapProduct));
 
-      const mappedSubs = dbSubCategories.map(sc => ({
-        id: String(sc._id || ''),
-        name: sc.name,
-        slug: sc.slug,
-        categoryId: String(sc.categoryId || ''),
-        imageDataUrl: sc.imageUrl || '',
-      }));
-
-      const mappedProds = dbProducts
-        .filter(p => !!p.categoryId)
-        .map(p => ({
-          _id: p._id, // Keep the real MongoDB ID
-          id: p.id || String(p._id), // Fallback to string _id if numeric id is missing
-          name: p.title,
-          price: Number(p.price || 0),
-          originalPrice: Number(p.originalPrice || 0),
-          sellingPrice: Number(p.sellingPrice || 0),
-          discountPercent: Number(p.discountPercent || 0),
-          isNew: !!p.isNew,
-          isBestSeller: !!p.isBestSeller,
-          categoryId: String(p.categoryId || ''),
-          subCategoryId: p.subCategoryId ? String(p.subCategoryId) : '',
-          productType: p.productType || 'both',
-          imageDataUrl: p.src || '',
-          isInsurance: !!p.isInsurance,
-          externalLink: p.externalLink || '',
-          homePageOrder: p.homePageOrder || 0,
-          createdAt: p.createdAt,
-        }));
-
-      setCategories(mappedCats);
-      setSubCategories(mappedSubs);
-      setProducts(mappedProds);
-      
+      hasLoaded.current = true;
       console.log('[CatalogContext] Sync complete.');
     } catch (err) {
       console.error('[CatalogContext] Sync Error:', err);
@@ -88,69 +122,58 @@ export function CatalogProvider({ children }) {
     }
   };
 
-  // refresh from DB on start
+  // Load once on mount
   useEffect(() => {
     refreshCatalog();
   }, []);
 
-  // Socket setup for real-time category/subcategory updates
+  // ── Socket — real-time updates (keep local state consistent) ───────────────
   useEffect(() => {
     const socket = io(config.socketUrl);
 
     socket.on('categoryAdded', (cat) => {
-      console.log('[CatalogContext] Local Add Category:', cat._id);
-      setCategories(prev => [...prev.filter(c => c.id !== String(cat._id)), {
-        id: String(cat._id),
-        name: cat.name,
-        slug: cat.slug,
-        imageDataUrl: cat.imageUrl || ''
-      }]);
+      setCategories(prev => [...prev.filter(c => c.id !== String(cat._id)), mapCategory(cat)]);
+      invalidateCache(`${config.apiUrl}/api/categories`);
     });
-
     socket.on('categoryUpdated', (cat) => {
-      console.log('[CatalogContext] Local Update Category:', cat._id);
-      setCategories(prev => prev.map(c => c.id === String(cat._id) ? {
-        id: String(cat._id),
-        name: cat.name,
-        slug: cat.slug,
-        imageDataUrl: cat.imageUrl || ''
-      } : c));
+      setCategories(prev => prev.map(c => c.id === String(cat._id) ? mapCategory(cat) : c));
+      invalidateCache(`${config.apiUrl}/api/categories`);
     });
-
     socket.on('categoryDeleted', (id) => {
-       console.log('[CatalogContext] Local Delete Category:', id);
       setCategories(prev => prev.filter(c => c.id !== String(id)));
+      invalidateCache(`${config.apiUrl}/api/categories`);
     });
 
     socket.on('subCategoryAdded', (sc) => {
-      console.log('[CatalogContext] Local Add SubCategory:', sc._id, 'Parent:', sc.categoryId);
-      setSubCategories(prev => [...prev.filter(item => item.id !== String(sc._id)), {
-        id: String(sc._id),
-        name: sc.name,
-        slug: sc.slug,
-        categoryId: String(sc.categoryId),
-        imageDataUrl: sc.imageUrl || ''
-      }]);
+      setSubCategories(prev => [...prev.filter(item => item.id !== String(sc._id)), mapSubCategory(sc)]);
+      invalidateCache(`${config.apiUrl}/api/subcategories`);
     });
-
     socket.on('subCategoryUpdated', (sc) => {
-       console.log('[CatalogContext] Local Update SubCategory:', sc._id);
-      setSubCategories(prev => prev.map(item => item.id === String(sc._id) ? {
-        id: String(sc._id),
-        name: sc.name,
-        slug: sc.slug,
-        categoryId: String(sc.categoryId),
-        imageDataUrl: sc.imageUrl || ''
-      } : item));
+      setSubCategories(prev => prev.map(item => item.id === String(sc._id) ? mapSubCategory(sc) : item));
+      invalidateCache(`${config.apiUrl}/api/subcategories`);
+    });
+    socket.on('subCategoryDeleted', (id) => {
+      setSubCategories(prev => prev.filter(item => item.id !== String(id)));
+      invalidateCache(`${config.apiUrl}/api/subcategories`);
     });
 
-    socket.on('subCategoryDeleted', (id) => {
-       console.log('[CatalogContext] Local Delete SubCategory:', id);
-      setSubCategories(prev => prev.filter(item => item.id !== String(id)));
+    socket.on('productAdded', () => {
+      invalidateCache(`${config.apiUrl}/api/products`);
+      refreshCatalog(true);
+    });
+    socket.on('productUpdated', () => {
+      invalidateCache(`${config.apiUrl}/api/products`);
+      refreshCatalog(true);
+    });
+    socket.on('productDeleted', () => {
+      invalidateCache(`${config.apiUrl}/api/products`);
+      refreshCatalog(true);
     });
 
     return () => socket.disconnect();
   }, []);
+
+  // ── Derived maps ───────────────────────────────────────────────────────────
 
   const categoriesById = useMemo(() => {
     const map = new Map();
@@ -164,27 +187,20 @@ export function CatalogProvider({ children }) {
     return map;
   }, [subCategories]);
 
+  // ── Context value ──────────────────────────────────────────────────────────
+
   const value = {
-    // state
     categories,
     subCategories,
     products,
     loading,
-
-    // maps (handy for rendering)
     categoriesById,
     subCategoriesById,
-
-    // setters (to keep existing component style simple)
     setCategories,
     setSubCategories,
     setProducts,
-
-    // helpers
     makeId: () => `${Date.now()}_${Math.random().toString(16).slice(2)}`,
-
-    refreshCatalog,
-    // reset
+    refreshCatalog: () => refreshCatalog(true), // exposed as forced refresh
     clearAll: () => {
       setCategories([]);
       setSubCategories([]);

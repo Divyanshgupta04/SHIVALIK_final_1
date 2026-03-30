@@ -11,30 +11,22 @@ router.get('/', async (req, res) => {
     const { category, q, categoryId, subCategoryId, limit = 50, page = 1 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const buildRegex = (s) => ({ $regex: String(s).trim(), $options: 'i' });
-
     // Base filter for exact ids (when present)
     const base = {};
     if (categoryId) base.categoryId = categoryId;
     if (subCategoryId) base.subCategoryId = subCategoryId;
 
     let textFilter = null;
-    if (category) {
-      const rgx = buildRegex(category);
+    if (q) {
+      // Use MongoDB text index (fast) instead of $regex (slow full scan)
+      textFilter = { $text: { $search: String(q).trim() } };
+    } else if (category) {
+      // Category filter uses indexed field — keep as equality when possible
+      const rgx = { $regex: String(category).trim(), $options: 'i' };
       textFilter = {
         $or: [
           { category: rgx },
-          { title: rgx },
-          { description: rgx }
-        ]
-      };
-    } else if (q) {
-      const rgx = buildRegex(q);
-      textFilter = {
-        $or: [
-          { title: rgx },
-          { description: rgx },
-          { category: rgx }
+          { title: rgx }
         ]
       };
     }
@@ -44,12 +36,17 @@ router.get('/', async (req, res) => {
       filter = Object.keys(base).length ? { $and: [base, textFilter] } : textFilter;
     }
 
-    const total = await Product.countDocuments(filter);
-    const products = await Product.find(filter)
-      .sort({ id: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const [total, products] = await Promise.all([
+      Product.countDocuments(filter),
+      Product.find(filter)
+        .sort(q ? { score: { $meta: 'textScore' } } : { id: 1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean() // return plain JS objects — faster serialisation
+    ]);
 
+    // Cache for 30s on public routes (CDN / browser)
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
     res.json({
       success: true,
       count: products.length,
@@ -69,12 +66,13 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findOne({ id: req.params.id });
+    const product = await Product.findOne({ id: req.params.id }).lean();
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    res.set('Cache-Control', 'public, max-age=60');
     res.json({
       success: true,
       product
@@ -90,7 +88,9 @@ router.get('/:id', async (req, res) => {
 // @access  Public
 router.get('/hero/featured', async (req, res) => {
   try {
-    const product = await Product.findOne({ isHeroFeatured: true });
+    const product = await Product.findOne({ isHeroFeatured: true }).lean();
+    // Cache for 2 minutes — hero product rarely changes
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
     res.json({
       success: true,
       product
@@ -108,8 +108,11 @@ router.get('/home/list', async (req, res) => {
   try {
     const products = await Product.find({ homePageOrder: { $gt: 0 } })
       .sort({ homePageOrder: 1 })
-      .limit(14);
-      
+      .limit(14)
+      .lean(); // plain JS objects — faster serialisation
+
+    // Cache for 2 minutes — home page list rarely changes
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
     res.json({
       success: true,
       products
